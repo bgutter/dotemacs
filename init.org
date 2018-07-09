@@ -126,9 +126,16 @@ hook."
   (interactive)
   (do-with-silent-bell
    (keyboard-escape-quit)))
+
+(defun custom-save-buffer ()
+  "Save file, update diff-hl highlighting"
+  (interactive)
+  (when (or (and (boundp 'diff-hl-mode) diff-hl-mode) (and (boundp 'diff-hl-amend-mode) diff-hl-amend-mode))
+    (diff-hl-update))
+  (save-buffer))
 #+END_SRC
 
-* UI Settings
+* User Interface Settings
 This section defines code which modifies how emacs displays buffers and interacts with the user.
 
 ** Tweaks
@@ -173,6 +180,182 @@ Use visual bell instead of audible.
     (sit-for echo-area-bell-delay)
     (message "")))
 (setq ring-bell-function 'echo-area-bell)
+#+END_SRC
+
+** Mode Line & Header Line
+
+This code adds a strongly customized header and mode line.
+
+#+BEGIN_SRC emacs-lisp
+(defmacro my-header-line ()
+  `(list
+    '(:eval
+      (when (and (projectile-project-p) (buffer-file-name))
+        (let*
+            ((mface  (if (window-has-focus)
+                         'mode-line-buffer-name-face
+                       'mode-line-buffer-name-inactive-face)))
+          (propertize (if (and (projectile-project-p) (buffer-file-name))
+                          (concat " " (car (last (split-string (projectile-project-root) "/") 2)) ": ")
+                        " ") 'face mface))))
+
+      '(:eval
+        (let*
+            ((mface (if (window-has-focus)
+                        'my-header-line-face
+                      'my-header-line-inactive-face)))
+          (propertize
+           (concat
+            " "
+            (if (buffer-file-name)
+                (buffer-file-name)
+              (buffer-name))
+            (mode-line-fill mface (if (window-has-focus)
+                                      0;34
+                                    0)))
+           'face mface)))))
+
+(setq-default header-line-format (my-header-line))
+(setq header-line-format (my-header-line))
+
+
+(defvar my-selected-window nil)
+(add-hook 'post-command-hook
+          (lambda ()
+            ;; (when (not (minibuffer-selected-window))
+              (setq my-selected-window (selected-window))))
+
+(defun window-has-focus ()
+  (eq
+   (selected-window)
+   my-selected-window))
+
+(defun debug-window-focus ()
+  (interactive)
+  (format "%s & %s & %s & %s & %s" mode-line-frame-identification (frame-selected-window) (get-buffer-window) (selected-frame) (window-frame (get-buffer-window))))
+
+(defmacro mode-line-notification-entry (check text help-echo)
+  `'(:eval (when ,check
+             (let*
+                 ((mface (if (window-has-focus)
+                             'mode-line-notification-face
+                           'mode-line-notification-inactive-face))
+                  (bface (if (window-has-focus)
+                             'my-header-line-face
+                           'my-header-line-inactive-face)))
+               (concat
+                (propertize ,text
+                           'face mface
+                           'help-echo ,help-echo)
+                (propertize " "
+                            'face bface))))))
+
+(defmacro mode-line-status-entry (check text help-echo)
+  `'(:eval (when ,check
+             (let*
+                  ((mface (if (window-has-focus)
+                              'mode-line-buffer-name-face
+                            'mode-line-buffer-name-inactive-face))
+                   (bface (if (window-has-focus)
+                             'my-header-line-face
+                           'my-header-line-inactive-face)))
+             (concat
+                (propertize ,text
+                            'face mface
+                            'help-echo ,help-echo)
+                (propertize " "
+                            'face bface))))))
+
+(defmacro mode-line-buffer-name-entry (format-str help-echo)
+  `'(:eval
+     (let*
+         ((mface (if (window-has-focus)
+                     'mode-line-buffer-name-face
+                   'mode-line-buffer-name-inactive-face)))
+        (propertize ,format-str
+                    'face mface
+                    'help-echo ,help-echo))))
+
+(defmacro mode-line-str-dflt (body)
+  `'(:eval
+      (let*
+         ((mface (if (window-has-focus)
+                     'my-header-line-face
+                   'my-header-line-inactive-face)))
+       (propertize
+        ,body
+        'face mface))))
+
+(defun mode-line-fill (face reserve)
+  "Return empty space using FACE and leaving RESERVE space on the right."
+  (unless reserve
+    (setq reserve 20))
+  (when (and window-system (eq 'right (get-scroll-bar-mode)))
+    (setq reserve (- reserve 3)))
+  (propertize " "
+              'display `((space :align-to (- (+ right right-fringe right-margin) ,reserve)))
+              'face face))
+
+(setq-default mode-line-format
+  (list
+
+    ;; ; time field
+    ;; '(:eval
+    ;;   (propertize (format-time-string " %I:%M%p ")
+    ;;     'face 'mode-line-time-face
+    ;;     'help-echo
+    ;;     (concat (format-time-string "%c; ")
+    ;;        (emacs-uptime "Uptime:%hh"))))
+
+    ; buffer name field
+    '(:eval
+      (let*
+          ((mface  (if (window-has-focus)
+                              'mode-line-buffer-name-face
+                            'mode-line-buffer-name-inactive-face)))
+        (propertize " %b " 'face mface)))
+
+    ; buffer position field
+    (mode-line-str-dflt " %p (%l,%c) ")
+
+    ; major mode field
+    (mode-line-buffer-name-entry " %m " buffer-file-coding-system)
+
+    (mode-line-str-dflt " ")
+
+    ;;; MODE SPECIFIC AREAS
+
+    ; text mode: Show word, letter, char count
+    '(:eval (when (eq major-mode 'text-mode)
+             (mode-line-str-dflt
+              (if transient-mark-mode
+               (line-word-char-count (point) (mark))
+               (line-word-char-count)))))
+
+    ;;; STATUSES: less important stuff
+    (mode-line-status-entry (/= text-scale-mode-amount 0) (format " ±%d " text-scale-mode-amount) "Font scale")
+    (mode-line-status-entry buffer-read-only              " RO "                                  "Buffer is read-only")
+    (mode-line-status-entry vc-mode                       (concat " VC:" vc-mode " ")             vc-mode)
+    (mode-line-status-entry isearch-mode                  (concat " search: " isearch-string " ") "isearch in progress")
+
+    ;;; NOTIFICATIONS: IMPORTANT STUFF
+    (mode-line-notification-entry (and (buffer-modified-p) (buffer-file-name)) " !! "   "Buffer has been modified")
+    (mode-line-notification-entry (buffer-narrowed-p)                          " >< "   "Buffer is narrowed")
+    
+    ;; '(:eval (debug-window-focus))
+    ;; '(:eval mode-line-frame-identification)
+
+    (mode-line-str-dflt
+     (let*
+         ((gap (if (window-has-focus)
+                 8
+                 0)))
+       (mode-line-fill mface gap)))
+
+    '(:eval
+     (when (window-has-focus)
+       (mode-line-buffer-name-entry (format-time-string " %I:%M%p ") "")))))
+
 #+END_SRC
 
 ** Phrase Highlight
@@ -610,6 +793,12 @@ Highlight and jump through instances of whatever is at point.
 (setq region-occurrence-highlight-mode t)
 #+END_SRC
 
+Ensure that org-mode start up using indentation.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-startup-indented t)
+#+END_SRC
+
 ** Programming Major Modes
 
 The hook =prog-mode-hook= is triggered in all programming major-modes.
@@ -625,7 +814,7 @@ Text mode settings
 #+BEGIN_SRC emacs-lisp
 (add-hook 'text-mode-hook
   (lambda ()
-    (flyspell-mode))))
+    (flyspell-mode)))
 #+END_SRC
 
 * Monkey Patching
