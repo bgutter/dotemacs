@@ -163,7 +163,49 @@ hook."
   (when (or (and (boundp 'diff-hl-mode) diff-hl-mode) (and (boundp 'diff-hl-amend-mode) diff-hl-amend-mode))
     (diff-hl-update))
   (save-buffer))
+
+(defun line-word-char-count (&optional start end)
+   "Prints number of lines, words and characters in region or whole buffer."
+   (interactive)
+   (let ((n 0)
+         (start (if mark-active (region-beginning) (point-min)))
+         (end (if mark-active (region-end) (point-max))))
+     (save-excursion
+       (goto-char start)
+       (while (< (point) end) (if (forward-word 1) (setq n (1+ n)))))
+     (format "[ L%d W%d C%d ] " (count-lines start end) n (- end start))))
+
+(defun line-to-top-of-window ()
+   "Shift current line to the top of the window-  i.e. zt in Vim"
+   (interactive)
+   (set-window-start (selected-window) (point)))
+
+(defun purge-buffers ()
+  (interactive)
+  (mapcar 'kill-buffer (remove-if '(lambda (x) (with-current-buffer x (get-buffer-window))) (buffer-list))))
+
+(defun save-config-die ()
+  (interactive)
+  (save-current-configuration)
+  (save-buffers-kill-terminal))
 #+END_SRC
+
+** Minor Modes
+
+*** Sticky Buffer Mode
+
+Marries a buffer to a window.
+
+#+BEGIN_SRC emacs-lisp
+(define-minor-mode sticky-buffer-mode
+  "Make the current window always display this buffer."
+  nil " sticky" nil
+  (set-window-dedicated-p (selected-window) sticky-buffer-mode))
+#+END_SRC
+
+** Buffer Monitoring
+
+This is a purely TODO item. Previous version had some code to monitor a buffer and alert upon new appearances of a particular regex.
 
 * User Interface Settings
 This section defines code which modifies how emacs displays buffers and interacts with the user.
@@ -479,6 +521,24 @@ Do note that this leaves the apps key unusable in emacs, except as a secondary h
 
 The following key-bindings provide more convenient ways to navigate source code.
 
+*** Basic Navigation
+
+Replace home with a "smart home".
+
+#+BEGIN_SRC emacs-lisp
+(defun smart-beginning-of-line ()
+  "Move point to first non-whitespace character or beginning-of-line.
+   Move point to the first non-whitespace character on this line.
+   If point was already at that position, move point to beginning of line."
+  (interactive) ; Use (interactive "^") in Emacs 23 to make shift-select work
+  (let ((oldpos (point)))
+    (back-to-indentation)
+    (and (= oldpos (point))
+         (beginning-of-line))))
+
+(global-set-key (kbd "<home>") 'smart-beginning-of-line)
+#+END_SRC
+
 *** Search and Replace
 
 Search current buffer for regular expression.
@@ -650,6 +710,40 @@ Place undo/redo on the expected keys. Add a shortcut to show the undo history tr
 (global-set-key (kbd "H-z")   'undo-tree-visualize)
 #+END_SRC
 
+Add a "smart" tab key. It indents at the start of a line, or when right of whitespace, but autocompletes elsewhere.
+
+*This binding does not use hyper, and may cause collisions.*
+
+#+BEGIN_SRC emacs-lisp
+(defun smart-tab-key (indent autocomplete indent-count)
+  "Indent when at left margin or right of whitespace, autocomplete elsewhere."
+  (cond (( or (eq last-command 'yank) (eq last-command 'yank-pop)) (yank-pop))
+        (( or
+           (eq last-command 'find-tag)
+           (eq last-command 'find-tag-other-window)
+           (eq last-command 'find-tag-wrapped)
+           (eq last-command 'find-tag-wrapped-new-window))
+         (progn
+           (let ((current-prefix-arg '(4)))
+             (message "Finding next possible definition...")
+             (call-interactively 'find-tag))
+           (recenter-top-bottom)
+           (setq this-command 'find-tag)))
+        ((use-region-p) (indent-rigidly (region-beginning) (region-end) indent-count))
+        ((or (= 0 (current-column)) (= ?\s (char-before))) (funcall indent))
+        (t (funcall autocomplete))))
+
+(defun generic-smart-tab-key ()
+  "Indent when at left margin or right of whitespace, autocomplete elsewhere"
+  (interactive)
+  (smart-tab-key 'indent-for-tab-command 'ac-fuzzy-complete 1))
+
+(add-hook 'prog-mode-hook
+  '(lambda ()
+    (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
+    (local-set-key (kbd "TAB")   'generic-smart-tab-key)))
+#+END_SRC
+
 ** Buffer Operations
 
 These bindings control buffer switching, naming, etc.
@@ -660,6 +754,13 @@ Switch to buffer by name
 
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "H-b") 'switch-to-buffer)
+#+END_SRC
+
+The following autoscroll the buffer based on the point.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "H-u") 'line-to-top-of-window)
+(global-set-key (kbd "H-j") 'recenter)
 #+END_SRC
 
 ** Window and Frame Operations
@@ -829,7 +930,9 @@ Ensure that org-mode start up using indentation.
 (setq org-startup-indented t)
 #+END_SRC
 
-** Programming Major Modes
+** Mode Triggers
+
+*** prog-mode
 
 The hook =prog-mode-hook= is triggered in all programming major-modes.
 
@@ -839,12 +942,21 @@ The hook =prog-mode-hook= is triggered in all programming major-modes.
     (flyspell-prog-mode)))
 #+END_SRC
 
-Text mode settings
+*** text-mode
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'text-mode-hook
   (lambda ()
-    (flyspell-mode)))
+    (flyspell-mode)
+    (visual-line-mode)))
+#+END_SRC
+
+*** org-mode
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'org-mode-hook
+  (lambda ()
+    (visual-line-mode)))
 #+END_SRC
 
 * Monkey Patching
@@ -862,4 +974,44 @@ This advice modifies isearch such that it will always auto-wrap whenever a match
     (isearch-repeat (if isearch-forward 'forward))
     (ad-enable-advice 'isearch-search 'after 'isearch-no-fail)
     (ad-activate 'isearch-search)))
+#+END_SRC
+
+This advice causes isearch, the split-window-*, compilation mode, etc, functions to recenter the buffer. This means less time spent searching for the cursor, without having a distracting cursor design.
+
+#+BEGIN_SRC emacs-lisp
+ (defadvice isearch-forward
+    (after isearch-forward-recenter activate)
+    (recenter))
+
+(defadvice isearch-repeat-forward
+  (after isearch-repeat-forward-recenter activate)
+  (recenter))
+
+(defadvice isearch-repeat-backward
+  (after isearch-repeat-backward-recenter activate)
+  (recenter))
+
+(defadvice isearch-printing-char
+  (after isearch-printing-char-then-recenter activate)
+  (recenter))
+
+(defadvice split-window-below
+  (after split-window-below-recenter activate)
+  (recenter))
+
+(defadvice split-window-left
+  (after split-window-left-recenter activate)
+  (recenter))
+
+(defadvice split-window-right
+  (after split-window-right-recenter activate)
+  (recenter))
+
+(defadvice split-window-above
+  (after split-window-above-recenter activate)
+  (recenter))
+
+(defadvice compile-goto-error
+  (after compile-goto-error-then-recenter activate)
+  (recenter))
 #+END_SRC
