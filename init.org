@@ -47,6 +47,36 @@ TODO: Replace all of this with =use-package=.
 (package-require 'bm)
 #+END_SRC
 
+* Localization
+
+Specify paths to basic utilities on Windows
+
+#+BEGIN_SRC emacs-lisp
+(if (equal system-type 'windows-nt)
+  (progn
+    (setq
+      find-program        "\"C:/Program Files (x86)/Git/bin/find.exe\""
+      grep-program        "\"C:/Program Files (x86)/Git/bin/grep.exe\""
+      diff-program        "\"C:/Program Files (x86)/Git/bin/diff.exe\""
+      diff-command        "\"C:/Program Files (x86)/Git/bin/diff.exe\""
+      git-program         "\"C:/Program Files (x86)/Git/bin/git.exe\""
+      ispell-program-name "\"C:/Program Files (x86)/Aspell/bin/aspell.exe\""
+      scheme-program      "\"C:/Program Files (x86)/MIT-GNU Scheme/bin/mit-scheme.exe\""
+      ctags-bin-name      "\"C:/Program Files (x86)/ctags/ctags.exe\"")
+    (add-to-list 'exec-path "C:/cygwin64/bin")
+    (add-to-list 'exec-path "C:/Program Files (x86)/Git/bin")
+    (setenv "PATH" (concat "C:\\Program Files (x86)\\Git\\bin;" (getenv "PATH")))))
+#+END_SRC
+
+Special hacks for Windows
+
+#+BEGIN_SRC emacs-lisp
+(if (equal system-type 'windows-nt)
+  (progn
+    (autoload 'ansi-color-for-comint-mode-on "ansi-color" nil t)
+    (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)))
+#+END_SRC
+
 * Utility
 This section defines general purpose code snippets, which are used throughout the rest of the file.
 
