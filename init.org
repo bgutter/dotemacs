@@ -1,0 +1,541 @@
+#+TITLE:  Brandon's Emacs Init
+#+AUTHOR: Brandon Guttersohn
+#+EMAIL:  bguttersohn@gmail.com
+
+This is my emacs init file, written in org-babel.
+
+* Required Packages
+This section ensures that all required packages are loaded.
+
+TODO: Replace all of this with ==use-package==.
+
+#+BEGIN_SRC emacs-lisp
+(require 'package)
+
+(add-to-list 'load-path "~/.emacs.d/lisp/")
+(add-to-list 'load-path "~/.emacs.d/elpa/")
+
+(add-to-list 'package-archives
+    '("melpa" . "http://melpa.milkbox.net/packages/") t)
+
+(package-initialize)
+(setq package-enable-at-startup nil)
+
+(defvar refreshed-packages nil)
+(defun package-require (package)
+  "Require package, install if needed."
+   ; source: babcore
+  (package-activate package '(0))
+  (condition-case nil (require package)
+    (progn
+      (if (not refreshed-packages)
+          (progn
+            (package-refresh-contents)
+            (setq refreshed-packages t))))
+      (error (package-install package))))
+
+(package-require 'revive)          ; restore buffers and windows from previous session
+(package-require 'buffer-move)     ; swap buffers between adjacent windows
+(package-require 'diff-hl)         ; show changes from last commit with edge highlighting
+(package-require 'uniquify)        ; rename buffers of same name intelligently
+(package-require 'undo-tree)       ; incredible undo/redo support
+(package-require 'auto-complete)   ; neat autocompletion
+(package-require 'framemove)       ; jump between frames and windows
+(package-require 'fuzzy)           ; fuzzy completion
+(package-require 'hi-lock)
+(package-require 'button-lock)
+(package-require 'bm)
+#+END_SRC
+
+* Utility
+This section defines general purpose code snippets, which are used throughout the rest of the file.
+
+#+BEGIN_SRC emacs-lisp
+(defmacro recenter-on-jump (&rest body)
+  "If, during the evaulation of body, point moves past the window's limits,
+   in either direction, recenter the buffer in the window."
+  `(let*
+       ((last-pt (window-end))
+        (first-pt (window-start)))
+     ,@body
+     (when (or (> (point) last-pt) (< (point) first-pt))
+            (recenter))))
+
+(defmacro retain-position-from-symbol-start (&rest body)
+  "Any change of point in this macro body will be readjusted to retain
+   the starting distance from the beginning of the current symbol. Most
+   reasonable use is when jumping between occurrences of the same symbol."
+  `(let*
+       ((pos (point))
+        (offset (save-excursion
+                  (when (not (looking-at "\\_<"))
+                    (search-backward-regexp "\\_<"))
+                  (- pos (point)))))
+     ,@body
+     (when (not (looking-at "\\_<"))
+       (search-backward-regexp "\\_<"))
+     (right-char offset)))
+
+(defun kill-current-buffer ()
+  "kill the current buffer."
+  (interactive)
+  (kill-buffer (current-buffer))
+  (previous-appropriate-buffer-if-hidden))
+
+(defun delete-window-ex (&optional window)
+  (interactive)
+  (let*
+      ((frame  (window-frame window)))
+    (if (eq (length (window-list frame)) 1)
+        (delete-frame frame)
+      (delete-window window))))
+
+(defun delete-window-and-buffer (&optional window-arg skip-window)
+"Intelligent buffer/window closing. If the buffer is not displayed anywhere else, then
+delete it along with the window. Defaults to current window. skip-window lets you skip
+the actual window-deletion step, so that this can be safely used in the frame-delete-functions
+hook."
+  (interactive)
+  (message "Closing window...")
+  (let*
+      ((window (or window-arg (get-buffer-window)))
+       (buffer (window-buffer window)))
+    (if (and (= 1 (length (get-buffer-window-list buffer nil t)))
+             (buffer-file-name buffer)
+             (not (buffer-modified-p buffer)));; if we're the only window showing the buffer, and it is an unmodified file, kill it
+        (progn
+          (message (concat "Killing buffer " (buffer-name buffer)))
+          (kill-buffer buffer)
+          ;;(previous-appropriate-buffer-if-hidden))
+          ))
+    (unless skip-window
+      (delete-window-ex window))))
+
+(defun strip-text-properties(txt)
+  (set-text-properties 0 (length txt) nil txt)
+      txt)
+
+(defmacro do-with-silent-bell (&rest body)
+  `(let
+       ((ring-bell-function-backup ring-bell-function))
+     (setq ring-bell-function nil)
+     ,@body
+     (setq ring-bell-function ring-bell-function-backup)))
+
+(defun m-keyboard-escape-quit ()
+  (interactive)
+  (do-with-silent-bell
+   (keyboard-escape-quit)))
+#+END_SRC
+
+* Graphical Settings
+This section defines code which modifies how emacs displays buffers.
+
+** Phrase Highlight
+
+This highlights all occurrences of the thing at point, automatically.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'pre-command-hook 'clear-phrase-highlight)
+(defvar-local hlight-region-face-var nil)
+(defvar-local hlight-regex nil)
+(defvar-local hlight-region-type nil)
+(defvar-local hlight-region-active nil)
+(defvar-local region-occurrence-highlight-mode nil)
+(defvar-local region-occurrence-highlight-at-point t)
+(setq-default region-occurrence-highlight-at-point t)
+
+(defun clear-phrase-highlight ()
+  "Remove region phrase highlight"
+  (if hlight-region-active
+      (progn
+        (unhighlight-regexp (hi-lock-process-phrase hlight-regex))
+        (setq hlight-region-active nil)
+        (font-lock-fontify-buffer))))
+
+(defun update-phrase-highlight ()
+  "Highlight region if active"
+  (clear-phrase-highlight)
+  (if (and region-occurrence-highlight-mode (not isearch-mode) (not (minibufferp)))
+      (progn
+        (setq hlight-regex nil)
+        (if mark-active
+            (setq
+             hlight-regex           (buffer-substring-no-properties (region-beginning) (region-end))
+             hlight-region-face-var 'region-occurrence-highlight-face
+             hlight-region-type     'region)
+          (let
+              ((sym (thing-at-point 'symbol)))
+            (if (and region-occurrence-highlight-at-point sym (> (length sym) 0))
+                (setq hlight-regex           (concat "\\_<" (hi-lock-process-phrase (strip-text-properties (thing-at-point 'symbol))) "\\_>")
+                      hlight-region-face-var 'region-occurrence-no-region-highlight-face
+                      hlight-region-type     'at-pt))))
+        (if hlight-regex
+            (progn
+              ;; (message (format "Occurrences of %s" hlight-regex))
+              (highlight-phrase (hi-lock-process-phrase hlight-regex) hlight-region-face-var)
+              (setq hlight-region-active t)
+              (font-lock-fontify-buffer))))))
+
+(run-with-idle-timer 0.25 t 'update-phrase-highlight)
+#+END_SRC
+
+* Key-bindings
+Most of my custom key-bindings use the hyper key. The goal here is to prevent any reasonable possibility of collision between personal keybindings and package keybindings. In my case, the hyper modifier is bound to caps lock.
+
+To map caps lock to hyper under Xorg, you may do the following:
+
+#+BEGIN_SRC bash
+clear mod4
+keycode 66 = Hyper_L
+add mod4 = Super_L Super_R
+clear lock
+add mod3 = Hyper_L
+#+END_SRC
+
+In windows, install AutoHotkey, and place the following in a startup script...
+
+#+BEGIN_SRC autohotkey
+SetTitleMatchMode, 2
+IfWinActive, emacs
+{
+    CapsLock::AppsKey
+    return
+}
+#+END_SRC
+
+...with the following elisp...
+
+#+BEGIN_SRC emacs-lisp
+(if (equal system-type 'windows-nt)
+  (setq w32-pass-lwindow-to-system nil
+        w32-pass-rwindow-to-system nil
+        w32-pass-apps-to-system nil
+        w32-lwindow-modifier 'super
+        w32-rwindow-modifier 'super
+        w32-apps-modifier 'hyper))
+#+END_SRC
+
+Do note that this leave the apps key unusable in emacs, except as a secondary hyper modifier. I have not yet found another way to do this which works well for me.
+
+** Source Code Navigation
+
+The following key-bindings prvoide more convenient ways to navigate source code.
+
+*** Search and Replace
+
+Search current buffer for regular expression.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "H-a") 'isearch-forward-regexp)
+#+END_SRC
+
+Search and replace text in current buffer with regular expressions
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "H-r") 'query-replace-regexp)
+#+END_SRC
+
+*** Version Control
+
+Jump to next and previous modified region of file, as determined by the current version control extension.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "H-[") (lambda() (interactive) (diff-hl-previous-hunk) (recenter)))
+(global-set-key (kbd "H-]") (lambda() (interactive) (diff-hl-next-hunk)     (recenter)))
+#+END_SRC
+
+*** Next & Previous thing-at-point
+
+Jump to next and previous instance of whatever is below the cursor. As a TODO, I'd like to make these behave a little better in org mode. Currently, they'll stop at matches in collapsed sections, and further jumping is not possible.
+
+#+BEGIN_SRC emacs-lisp
+(defun forward-thing-symbol ()
+  (interactive)
+  (update-phrase-highlight)
+  (recenter-on-jump
+   (if hlight-region-active
+       (cond
+        ((eq hlight-region-type 'at-pt) (retain-position-from-symbol-start
+                                         (when (not (looking-at "\\_>"))
+                                           (search-forward-regexp "\\_>"))
+                                         (if (search-forward-regexp (concat "\\_<" (thing-at-point 'symbol) "\\_>") nil t nil)
+                                             (message (format "Next instance of %s" (thing-at-point 'symbol)))
+                                           (progn
+                                             (ding)
+                                             (message (format "No more instances of %s" (thing-at-point 'symbol)))))
+                                         (search-backward-regexp "\\_<")))
+        ((eq hlight-region-type 'region) (let*
+                                             ((exchange (if (> (point) (mark)) t nil))
+                                              (count    (if (> (point) (mark)) 1 2))
+                                              (loc (save-excursion
+                                                     (search-forward-regexp (hi-lock-process-phrase hlight-regex) nil t count))))
+                                           (if loc
+                                               (progn
+                                                 (set-mark loc)
+                                                 (goto-char loc)
+                                                 (left-char (length hlight-regex))
+                                                 (if exchange
+                                                     (exchange-point-and-mark))
+                                                 (message (format "Next instance of region content")))
+                                             (progn
+                                               (ding)
+                                               (message (format "No more instances of region content"))))))))))
+
+(defun backward-thing-symbol ()
+  (interactive)
+  (update-phrase-highlight)
+  (recenter-on-jump
+   (if hlight-region-active
+       (cond
+        ((eq hlight-region-type 'at-pt) (retain-position-from-symbol-start
+                                         (if (search-backward-regexp (concat "\\_<" (thing-at-point 'symbol) "\\_>") nil t nil)
+                                             (message (format "Previous instance of %s" (thing-at-point 'symbol)))
+                                           (progn
+                                             (ding)
+                                             (message (format "First instance of %s" (thing-at-point 'symbol)))))))
+        ((eq hlight-region-type 'region) (let*
+                                             ((exchange (if (> (point) (mark)) nil t))
+                                              (count    (if (> (point) (mark)) 2 1))
+                                              (loc (save-excursion
+                                                     (search-backward-regexp (hi-lock-process-phrase hlight-regex) nil t count))))
+                                           (if loc
+                                               (progn
+                                                 (set-mark loc)
+                                                 (goto-char (+ loc (length hlight-regex)))
+                                                 (if exchange
+                                                     (exchange-point-and-mark))
+                                                 (message (format "Previous instance of region content")))
+                                             (progn
+                                               (ding)
+                                               (message (format "First instance of region content"))))))))))
+
+(global-set-key (kbd "<H-down>")   'forward-thing-symbol)
+(global-set-key (kbd "<H-up>")     'backward-thing-symbol)
+#+END_SRC
+
+*** Next & Previous Symbol
+
+Jump to the next or previous symbol.
+
+#+BEGIN_SRC emacs-lisp
+(defun backward-symbol (&optional arg)
+ "Move backward until encountering the beginning of a symbol.
+With argument, do this that many times."
+ (interactive "p")
+ (forward-symbol (- (or arg 1))))
+
+(defun forward-symbol-beginning ()
+  (interactive)
+  (when (not (looking-at "\\_>"))
+    (search-forward-regexp "\\_>"))
+  (call-interactively 'forward-symbol)
+  (search-backward-regexp "\\_<"))
+
+(defun backward-symbol-beginning ()
+  (interactive)
+  (call-interactively 'backward-symbol))
+
+(global-set-key (kbd "<H-left>")   'backward-symbol-beginning)
+(global-set-key (kbd "<H-right>")  'forward-symbol-beginning)
+#+END_SRC
+
+*** Go To Line Number
+
+Interactively prompt for line number, then jump to it.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "H-g") (lambda () (interactive) (call-interactively 'goto-line) (recenter)))
+#+END_SRC
+
+** Buffer Operations
+
+These bindings control buffer switching, naming, etc.
+
+*** Navigation
+
+Switch to buffer by name
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "H-b") 'switch-to-buffer)
+#+END_SRC
+
+** Window and Frame Operations
+
+These bindings control the size, shape, position, and opacity of windows and frames.
+
+*** Toggle Fullscreen Display
+
+Toggles emacs between full-screen and windowed mode.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "<H-f11>") 'toggle-frame-fullscreen)
+#+END_SRC
+
+*** Navigate Windows
+
+Move between windows.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "H-S-<right>") 'windmove-right)
+(global-set-key (kbd "H-S-<left>")  'windmove-left)
+(global-set-key (kbd "H-S-<down>")  'windmove-down)
+(global-set-key (kbd "H-S-<up>")    'windmove-up)
+#+END_SRC
+
+*** Split Current Window
+
+This code lets you split the current window vertically or horizontally, while remaining in either the top, bottom, left, or right window.
+
+#+BEGIN_SRC emacs-lisp
+;; Defined for parity with their opposites
+
+(defun split-window-above ()
+  "Split current window into top and bottom, with focus left in bottom."
+  (interactive)
+  (split-window-below)
+  (windmove-down))
+
+(defun split-window-left ()
+  "Split current window into left and right, with focus left in right."
+  (interactive)
+  (split-window-right)
+  (windmove-right))
+
+(global-set-key (kbd "H-s <down>")  'split-window-above)
+(global-set-key (kbd "H-s <up>")    'split-window-below)
+(global-set-key (kbd "H-s <left>")  'split-window-right)
+(global-set-key (kbd "H-s <right>") 'split-window-left)
+#+END_SRC
+
+** Filesystem Operations
+
+These key-bindings are used for modifying or navigating the filesystem.
+
+*** Searching
+
+Search for a regular expression recursively in a directory tree, display results interactively in an emacs buffer.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "H-f") 'rgrep)
+#+END_SRC
+
+** Other Shortcuts
+
+*** Controlling Emacs
+
+Take a page from Vim's notebook at use the escape key as a command toggle & mode exiting switch.
+
+#+BEGIN_SRC emacs-lisp
+(defun execute-command-toggle (prefixes)
+  "If region active, clear it. Else, toggle the M-x menu."
+  (interactive "P")
+  (cond
+    ((window-minibuffer-p)                    (m-keyboard-escape-quit))
+    (mark-active                              (progn (setq mark-active nil) (run-hooks 'deactivate-mark-hook)))
+    (t                                        (execute-extended-command prefixes))))
+
+(defun execute-command-toggle-ignore-region (prefixes)
+  "Toggle M-x menu."
+  (interactive "P")
+  (if (window-minibuffer-p)
+      (m-keyboard-escape-quit)
+    (execute-extended-command prefixes)))
+
+(global-set-key (kbd "<escape>")   'execute-command-toggle)
+(global-set-key (kbd "S-<escape>") 'execute-command-toggle-ignore-region)
+#+END_SRC
+
+*** Common Operations (F5-F8)
+
+Set open-file, save-file, save-file-as, and close-file -like functions to function keys F5-F8.
+
+*These bindings do not use the hyper modifier, and may case collisions!*
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "<f5>")   'find-file)
+(global-set-key (kbd "<f6>")   'custom-save-buffer)
+(global-set-key (kbd "<f7>")   'write-file)
+(global-set-key (kbd "<S-f8>") 'delete-window-ex)
+(global-set-key (kbd "<H-f8>") 'kill-current-buffer)
+(global-set-key (kbd "<f8>")   'delete-window-and-buffer)
+#+END_SRC
+
+** Mode-Specific Key-Bindings
+
+Key bindings that apply only in certain contexts.
+
+*** isearch-mode
+
+*These bindings do not use hyper, and may cause collisions!*
+
+#+BEGIN_SRC emacs-lisp
+(define-key isearch-mode-map (kbd "<backspace>") 'isearch-del-char)
+(define-key isearch-mode-map (kbd "<escape>")    'isearch-exit)
+(define-key isearch-mode-map (kbd "<C-escape>")  'isearch-abort)
+(define-key isearch-mode-map (kbd "<return>")    'isearch-repeat-forward)
+(define-key isearch-mode-map (kbd "S-<return>")  'isearch-repeat-backward)
+(define-key isearch-mode-map (kbd "C-SPC")       'misearch-regionify)
+(define-key isearch-mode-map (kbd "<right>")     'isearch-yank-word-or-char)
+(define-key isearch-mode-map (kbd "<left>")      'isearch-del-char)
+(define-key isearch-mode-map (kbd "<down>")      'isearch-repeat-forward)
+(define-key isearch-mode-map (kbd "<up>")        'isearch-repeat-backward)
+#+END_SRC
+
+*** query-replace Advice
+
+*These bindings do not use hyper, and may cause collisions!*
+
+#+BEGIN_SRC emacs-lisp
+(define-key query-replace-map (kbd "<up>")     'backup)
+(define-key query-replace-map (kbd "<down>")   'skip)
+(define-key query-replace-map (kbd "<escape>") 'exit)
+(define-key query-replace-map (kbd "<return>") 'act)
+(define-key query-replace-map (kbd "<insert>") 'edit)
+#+END_SRC
+
+* Mode Management
+
+Handle which modes/settings are triggered where.
+
+** Global Default Modes
+
+Hide the toolbar and menu bar.
+
+#+BEGIN_SRC emacs-lisp
+(tool-bar-mode -1)
+(menu-bar-mode  0)
+#+END_SRC
+
+Hilight and jump through instances of whatever is at point.
+
+#+BEGIN_SRC emacs-lisp
+(setq region-occurrence-highlight-mode t)
+#+END_SRC
+
+** Programming Major Modes
+
+The hook ==prog-mode-hook== is triggered in all programming major-modes.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'prog-mode-hook
+  '(lambda ()
+    ))
+#+END_SRC
+
+* Monkey Patching
+
+** isearch Advice
+
+Autowrap isearch.
+
+#+BEGIN_SRC emacs-lisp
+(defadvice isearch-search (after isearch-no-fail activate)
+  "Autowrap searches."
+  (unless isearch-success
+    (ad-disable-advice 'isearch-search 'after 'isearch-no-fail)
+    (ad-activate 'isearch-search)
+    (isearch-repeat (if isearch-forward 'forward))
+    (ad-enable-advice 'isearch-search 'after 'isearch-no-fail)
+    (ad-activate 'isearch-search)))
+#+END_SRC
