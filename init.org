@@ -128,8 +128,52 @@ hook."
    (keyboard-escape-quit)))
 #+END_SRC
 
-* Graphical Settings
-This section defines code which modifies how emacs displays buffers.
+* UI Settings
+This section defines code which modifies how emacs displays buffers and interacts with the user.
+
+** Tweaks
+
+Use visual bell instead of audible.
+
+#+BEGIN_SRC emacs-lisp
+;; nice little alternative visual bell; Miles Bader <miles /at/ gnu.org>
+(defcustom echo-area-bell-string "*DING* "
+  "Message displayed in mode-line by `echo-area-bell' function."
+  :group 'user)
+
+(defcustom echo-area-bell-delay 0.1
+  "Number of seconds `echo-area-bell' displays its message."
+  :group 'user)
+;; internal variables
+
+(defvar echo-area-bell-cached-string nil)
+
+(defvar echo-area-bell-propertized-string nil)
+
+(defun echo-area-bell ()
+  "Briefly display a highlighted message in the echo-area.
+    The string displayed is the value of `echo-area-bell-string',
+    with a red background; the background highlighting extends to the
+    right margin.  The string is displayed for `echo-area-bell-delay'
+    seconds.
+    This function is intended to be used as a value of `ring-bell-function'."
+  (unless (memq this-command '(keyboard-quit keyboard-escape-quit))
+    (unless (equal echo-area-bell-string echo-area-bell-cached-string)
+      (setq echo-area-bell-propertized-string
+            (propertize
+             (concat
+              (propertize
+               "x"
+               'display
+               `(space :align-to (- right ,(+ 2 (length echo-area-bell-string)))))
+              echo-area-bell-string)
+             'face '(:background "red" :foreground "white" :weight bold)))
+      (setq echo-area-bell-cached-string echo-area-bell-string))
+    (message echo-area-bell-propertized-string)
+    (sit-for echo-area-bell-delay)
+    (message "")))
+(setq ring-bell-function 'echo-area-bell)
+#+END_SRC
 
 ** Phrase Highlight
 
@@ -552,11 +596,12 @@ Handle which modes/settings are triggered where.
 
 ** Global Default Modes
 
-Hide the toolbar and menu bar.
+Hide the toolbar, menu bar, and scroll bars.
 
 #+BEGIN_SRC emacs-lisp
-(tool-bar-mode -1)
-(menu-bar-mode  0)
+(tool-bar-mode   -1)
+(menu-bar-mode    0)
+(scroll-bar-mode -1)
 #+END_SRC
 
 Highlight and jump through instances of whatever is at point.
