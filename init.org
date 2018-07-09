@@ -7,7 +7,7 @@ This is my emacs init file, written in org-babel.
 * Required Packages
 This section ensures that all required packages are loaded.
 
-TODO: Replace all of this with ==use-package==.
+TODO: Replace all of this with =use-package=.
 
 #+BEGIN_SRC emacs-lisp
 (require 'package)
@@ -348,6 +348,41 @@ Interactively prompt for line number, then jump to it.
 (global-set-key (kbd "H-g") (lambda () (interactive) (call-interactively 'goto-line) (recenter)))
 #+END_SRC
 
+** Editing
+
+Copy/paste with insert key, depending on whether region is active.
+
+*This binding does not use hyper, and may cause collisions.*
+
+#+BEGIN_SRC emacs-lisp
+(defun smart-copy-paste ()
+  "Smart copy or paste"
+  (interactive)
+  (if (use-region-p)
+      (if (and (boundp 'rectangle-mark-mode) rectangle-mark-mode)
+          (copy-rectangle-as-kill (region-beginning) (region-end))
+        (kill-ring-save (region-beginning) (region-end)))
+    (yank)))
+
+(global-set-key (kbd "<insert>") 'smart-copy-paste)
+#+END_SRC
+
+Place cut behavior on the delete key when region is active.
+
+*This binding does not use hyper, and may cause collisions.*
+
+#+BEGIN_SRC emacs-lisp
+
+(defun smart-cut-or-delete ()
+  "If region, cut, else, delete char"
+  (interactive)
+  (if (use-region-p)
+    (kill-region (region-beginning) (region-end))
+    (delete-forward-char 1)))
+
+(global-set-key (kbd "<delete>") 'smart-cut-or-delete)
+#+END_SRC
+
 ** Buffer Operations
 
 These bindings control buffer switching, naming, etc.
@@ -515,7 +550,7 @@ Hilight and jump through instances of whatever is at point.
 
 ** Programming Major Modes
 
-The hook ==prog-mode-hook== is triggered in all programming major-modes.
+The hook =prog-mode-hook= is triggered in all programming major-modes.
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'prog-mode-hook
