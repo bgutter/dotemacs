@@ -216,11 +216,11 @@ IfWinActive, emacs
         w32-apps-modifier 'hyper))
 #+END_SRC
 
-Do note that this leave the apps key unusable in emacs, except as a secondary hyper modifier. I have not yet found another way to do this which works well for me.
+Do note that this leaves the apps key unusable in emacs, except as a secondary hyper modifier. I have not yet found another way to do this which works well for me.
 
 ** Source Code Navigation
 
-The following key-bindings prvoide more convenient ways to navigate source code.
+The following key-bindings provide more convenient ways to navigate source code.
 
 *** Search and Replace
 
@@ -496,6 +496,14 @@ Set open-file, save-file, save-file-as, and close-file -like functions to functi
 (global-set-key (kbd "<f8>")   'delete-window-and-buffer)
 #+END_SRC
 
+*** Corrections
+
+Shortcut for flyspell autocorrect.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "H-c") 'flyspell-auto-correct-word)
+#+END_SRC
+
 ** Mode-Specific Key-Bindings
 
 Key bindings that apply only in certain contexts.
@@ -510,7 +518,6 @@ Key bindings that apply only in certain contexts.
 (define-key isearch-mode-map (kbd "<C-escape>")  'isearch-abort)
 (define-key isearch-mode-map (kbd "<return>")    'isearch-repeat-forward)
 (define-key isearch-mode-map (kbd "S-<return>")  'isearch-repeat-backward)
-(define-key isearch-mode-map (kbd "C-SPC")       'misearch-regionify)
 (define-key isearch-mode-map (kbd "<right>")     'isearch-yank-word-or-char)
 (define-key isearch-mode-map (kbd "<left>")      'isearch-del-char)
 (define-key isearch-mode-map (kbd "<down>")      'isearch-repeat-forward)
@@ -542,7 +549,7 @@ Hide the toolbar and menu bar.
 (menu-bar-mode  0)
 #+END_SRC
 
-Hilight and jump through instances of whatever is at point.
+Highlight and jump through instances of whatever is at point.
 
 #+BEGIN_SRC emacs-lisp
 (setq region-occurrence-highlight-mode t)
@@ -555,14 +562,22 @@ The hook =prog-mode-hook= is triggered in all programming major-modes.
 #+BEGIN_SRC emacs-lisp
 (add-hook 'prog-mode-hook
   '(lambda ()
-    ))
+    (flyspell-prog-mode)))
+#+END_SRC
+
+Text mode settings
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'text-mode-hook
+  (lambda ()
+    (flyspell-mode))))
 #+END_SRC
 
 * Monkey Patching
 
 ** isearch Advice
 
-Autowrap isearch.
+This advice modifies isearch such that it will always auto-wrap whenever a match is not found between point and the end of the buffer.
 
 #+BEGIN_SRC emacs-lisp
 (defadvice isearch-search (after isearch-no-fail activate)
