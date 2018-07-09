@@ -383,6 +383,16 @@ Place cut behavior on the delete key when region is active.
 (global-set-key (kbd "<delete>") 'smart-cut-or-delete)
 #+END_SRC
 
+Place undo/redo on the expected keys. Add a shortcut to show the undo history tree.
+
+*Some of these bindings do not use hyper, and may cause collisions.*
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-z")   'undo-tree-undo)
+(global-set-key (kbd "C-S-z") 'undo-tree-redo)
+(global-set-key (kbd "H-z")   'undo-tree-visualize)
+#+END_SRC
+
 ** Buffer Operations
 
 These bindings control buffer switching, naming, etc.
@@ -524,7 +534,7 @@ Key bindings that apply only in certain contexts.
 (define-key isearch-mode-map (kbd "<up>")        'isearch-repeat-backward)
 #+END_SRC
 
-*** query-replace Advice
+*** query-replace
 
 *These bindings do not use hyper, and may cause collisions!*
 
