@@ -45,6 +45,7 @@ TODO: Replace all of this with =use-package=.
 (package-require 'hi-lock)
 (package-require 'button-lock)
 (package-require 'bm)
+(package-require 'yasnippet)
 #+END_SRC
 
 * Localization
@@ -65,7 +66,8 @@ Specify paths to basic utilities on Windows
       ctags-bin-name      "\"C:/Program Files (x86)/ctags/ctags.exe\"")
     (add-to-list 'exec-path "C:/cygwin64/bin")
     (add-to-list 'exec-path "C:/Program Files (x86)/Git/bin")
-    (setenv "PATH" (concat "C:\\Program Files (x86)\\Git\\bin;" (getenv "PATH")))))
+    (setenv "PATH" (concat "C:\\Program Files (x86)\\Git\\bin;" (getenv "PATH")))
+    (setenv "CYGWIN" "nodosfilewarning"))) ;; I don't remember but this did, but I remember it being very frustrating
 #+END_SRC
 
 Special hacks for Windows
@@ -77,6 +79,117 @@ Special hacks for Windows
     (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)))
 #+END_SRC
 
+* Theme & Custom Variables
+
+I just copy/pasted this from the old init.el. Frankly, I'm not sure what to do with this mess.
+
+#+BEGIN_SRC emacs-lisp
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(ac-auto-show-menu t)
+ '(ac-delay 0.01)
+ '(ac-use-fuzzy t)
+ '(bm-highlight-style (quote bm-highlight-only-line))
+ '(bm-recenter t)
+ '(c-basic-offset 4)
+ '(comint-buffer-maximum-size 999999)
+ '(comint-prompt-read-only nil)
+ '(comint-use-prompt-regexp t)
+ '(custom-enabled-themes (quote (tango-dark)))
+ '(ediff-split-window-function (quote split-window-horizontally))
+ '(flex-isearch-auto t)
+ '(font-lock-maximum-decoration (quote ((c-mode . 2) (compilation-mode . 3) (t . t))))
+ '(font-lock-support-mode (quote jit-lock-mode))
+ '(global-auto-revert-non-file-buffers t)
+ '(helm-buffers-fuzzy-matching t)
+ '(ido-default-buffer-method (quote selected-window))
+ '(ido-default-file-method (quote selected-window))
+ '(ido-enable-flex-matching t)
+ '(indent-tabs-mode nil)
+ '(ispell-dictionary "english")
+ '(large-file-warning-threshold 100000000)
+ '(magit-git-executable "git")
+ '(mode-line-in-non-selected-windows nil)
+ '(org-replace-disputed-keys t)
+ '(package-selected-packages
+   (quote
+    (toml-mode company-math graphviz-dot-mode todotxt flymd markdown-mode auto-complete minimap xkcd web w3m tidy thing-cmds tabbar stripe-buffer string-utils smooth-scroll revive popwin oneonone nyan-mode number-font-lock-mode nlinum move-text mo-git-blame magit linum-relative key-chord jira inf-ruby icicles hydra highlight-indentation highlight-escape-sequences hide-region help-fns+ helm-projectile helm-mode-manager grep-a-lot gnuplot-mode gitignore-mode gitconfig-mode git-timemachine fuzzy framemove focus fit-frame expand-region evil emms edit-server ecb diff-hl csv-mode company command-log-mode centered-cursor-mode button-lock buffer-move bongo bm android-mode aggressive-indent ace-jump-mode ac-etags)))
+ '(proced-auto-update-flag t)
+ '(proced-auto-update-interval 1)
+ '(projectile-git-command
+   " git ls-files -zco && git submodule foreach --quiet 'for file in $(git ls-files -zco); do echo -n \"$path/$file\"; done'")
+ '(projectile-project-root-files-functions
+   (quote
+    (projectile-root-top-down-recurring projectile-root-bottom-up projectile-root-top-down)))
+ '(smooth-scroll/hscroll-step-size 2)
+ '(smooth-scroll/vscroll-step-size 2)
+ '(tags-revert-without-query t)
+ '(uniquify-buffer-name-style (quote post-forward) nil (uniquify)))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(default ((t (:inherit nil :stipple nil :background "gray6" :foreground "white" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 75 :width normal :foundry "outline" :family "Liberation Mono"))))
+ '(bm-face ((t (:background "hot pink" :foreground "Black"))))
+ '(bm-fringe-face ((t (:foreground "hot pink"))))
+ '(column-marker-1 ((t (:background "red"))))
+ '(comint-highlight-prompt ((t (:inherit nil :slant italic :weight bold))))
+ '(compilation-info ((t (:inherit success :foreground "violet"))))
+ '(compilation-line-number ((t (:inherit font-lock-keyword-face :foreground "light slate blue"))))
+ '(cursor ((t (:background "white"))))
+ '(diff-file-header ((t (:background "ghost white" :foreground "black" :weight bold))))
+ '(diff-hl-change ((t (:background "DarkGoldenrod4" :foreground "yellow"))))
+ '(ecb-default-highlight-face ((t (:inherit show-paren-match))))
+ '(font-lock-comment-face ((t (:foreground "gray53" :slant oblique))))
+ '(font-lock-debug-tag-face ((t (:background "dark green" :foreground "white" :underline t :weight bold))) t)
+ '(font-lock-function-name-face ((t (:foreground "violet"))))
+ '(font-lock-keyword-face ((t (:foreground "HotPink1"))))
+ '(font-lock-preprocessor-face ((t (:foreground "yellow green"))))
+ '(font-lock-string-face ((t (:foreground "burlywood3"))))
+ '(font-lock-type-face ((t (:foreground "light slate blue"))))
+ '(font-lock-variable-name-face ((t (:foreground "light sky blue"))))
+ '(font-lock-warning-tag-face ((t (:inherit font-lock-warning-face :background "red" :foreground "white" :underline t :weight bold))) t)
+ '(fringe ((t (:background "gray6"))))
+ '(header-line ((t (:inherit default :background "gray17" :foreground "gray80" :box nil :weight bold))))
+ '(hide-region-after-string-face ((t (:inherit region :background "red" :weight bold))))
+ '(hide-region-before-string-face ((t (:inherit region :background "red" :weight bold))))
+ '(highlight-indentation-face ((t (:inherit fringe :background "gray13"))))
+ '(hl-line ((t (:background "gray20"))))
+ '(isearch ((t (:background "purple1" :foreground "#eeeeec"))))
+ '(lazy-highlight ((t (:background "purple4"))))
+ '(linum ((t (:inherit (shadow default) :background "gray14"))))
+ '(magit-item-highlight ((t (:inherit show-paren-match))))
+ '(menu ((t (:background "dim gray" :foreground "ghost white" :inverse-video t))))
+ '(minibuffer-prompt ((t (:inherit my-header-line-face :foreground "white" :width semi-expanded))))
+ '(mode-line ((t (:background "gray16" :foreground "gray69" :weight light))))
+ '(mode-line-buffer-id ((t (:foreground "lemon chiffon" :weight bold))))
+ '(mode-line-buffer-name-face ((t (:inherit my-header-line-face :background "#978ECD" :foreground "#2c2656" :weight extra-bold :family "Liberation Sans"))) t)
+ '(mode-line-buffer-name-inactive-face ((t (:inherit mode-line-buffer-name-face :background "gray16" :foreground "grey80" :box (:line-width 1 :color "grey7")))) t)
+ '(mode-line-emphasis ((t (:foreground "red" :weight bold))))
+ '(mode-line-inactive ((t (:inherit mode-line))))
+ '(mode-line-major-mode-face ((t (:family "Liberation Sans"))) t)
+ '(mode-line-notification-face ((t (:inherit my-header-line-face :background "firebrick" :foreground "gray100" :weight extra-bold :family "liberation mono"))) t)
+ '(mode-line-notification-inactive-face ((t (:inherit mode-line-notification-face :background "gray22" :box nil))) t)
+ '(mode-line-status-face ((t (:background "gray43" :foreground "gray100" :weight normal :family "liberation mono"))) t)
+ '(mode-line-status-inactive-face ((t (:inherit mode-line-status-face :foreground "black"))) t)
+ '(mode-line-time-face ((t (:weight bold))) t)
+ '(mode-line-vc-face ((t (:family "Liberation Sans"))) t)
+ '(my-header-line-face ((t (:background "#2c2656" :foreground "white" :box (:line-width 1 :color "#978ECD") :weight bold))) t)
+ '(my-header-line-inactive-face ((t (:inherit my-header-line-face :background "grey12" :foreground "gray62" :box (:line-width 1 :color "grey7")))) t)
+ '(number-font-lock-face ((t (:inherit font-lock-string-face))))
+ '(region ((t (:background "gray30"))))
+ '(region-occurrence-highlight-face ((t (:inherit region-occurrence-no-region-highlight-face :underline t))) t)
+ '(region-occurrence-no-region-highlight-face ((t (:background "dark slate blue"))) t)
+ '(show-paren-match ((t (:background "SlateBlue4"))))
+ '(stripe-highlight ((t (:background "gray10")))))
+#+END_SRC
 * Utility
 This section defines general purpose code snippets, which are used throughout the rest of the file.
 
@@ -188,6 +301,11 @@ hook."
   (interactive)
   (save-current-configuration)
   (save-buffers-kill-terminal))
+
+(defun opacity (value)
+   "Sets the opacity of the frame window. 0=transparent/100=opaque"
+   (interactive "nOpacity Value 0 - 100 opaque:")
+   (set-frame-parameter (selected-frame) 'alpha value))
 #+END_SRC
 
 ** Minor Modes
@@ -211,6 +329,13 @@ This is a purely TODO item. Previous version had some code to monitor a buffer a
 This section defines code which modifies how emacs displays buffers and interacts with the user.
 
 ** Tweaks
+
+Show whitespace
+
+#+BEGIN_SRC emacs-lisp
+(global-whitespace-mode 0)
+(setq whitespace-style '(face trailing))
+#+END_SRC
 
 Use visual bell instead of audible.
 
@@ -252,6 +377,118 @@ Use visual bell instead of audible.
     (sit-for echo-area-bell-delay)
     (message "")))
 (setq ring-bell-function 'echo-area-bell)
+#+END_SRC
+
+Get ride of blinking cursor
+
+#+BEGIN_SRC emacs-lisp
+(setq default-cursor-type 'box)
+(blink-cursor-mode -1)
+#+END_SRC
+
+Display trailing whitespace
+
+#+BEGIN_SRC emacs-lisp
+(setq-default show-trailing-whitespace t)
+#+END_SRC
+
+Highlight body of parens
+
+#+BEGIN_SRC emacs-lisp
+(setq show-paren-style 'expression)
+(show-paren-mode 1)
+#+END_SRC
+
+Use a consistent window name. This helps with AutoHotkey recognition on Windows, in addition to being a little more usable in Linux.
+
+#+BEGIN_SRC emacs-lisp
+(setq frame-title-format "emacs")
+#+END_SRC
+
+Make sure we push any kill-ring data into OS clipboard.
+
+#+BEGIN_SRC emacs-lisp
+(setq save-interprogram-paste-before-kill t)
+#+END_SRC
+
+Highlight the current line
+
+#+BEGIN_SRC emacs-lisp
+(global-hl-line-mode)
+#+END_SRC
+
+When buffer is not modified in emacs, automatically reload it when its file changes on disk.
+
+#+BEGIN_SRC emacs-lisp
+(global-auto-revert-mode)
+#+END_SRC
+
+Tweak the text shown when hiding regions of a buffer.
+
+#+BEGIN_SRC emacs-lisp
+(setq hide-region-before-string "hidden-region-->")
+(setq hide-region-after-string "<--hidden-region")
+#+END_SRC
+
+Make sure that diff-hl-mode is showing changes between now and the last commit, only.
+
+#+BEGIN_SRC emacs-lisp
+(global-diff-hl-amend-mode 1)
+#+END_SRC
+
+Set frame to 95% opacity, because I'm easily amused.
+
+#+BEGIN_SRC emacs-lisp
+(setq default-opacity 95)
+(opacity default-opacity)
+(add-to-list 'default-frame-alist `(alpha  . ,default-opacity))
+#+END_SRC
+
+Fall back to frame-moving if window-moving doesn't cut it.
+
+#+BEGIN_SRC emacs-lisp
+(setq framemove-hook-into-windmove t)
+#+END_SRC
+
+Remove flashy splash stuff
+
+#+BEGIN_SRC emacs-lisp
+(setq inhibit-splash-screen t)
+(setq inhibit-startup-echo-area-message t)
+(setq inhibit-startup-screen t)
+(setq inhibit-startup-message t)
+#+END_SRC
+
+Show prefix keys in the echo area much faster.
+
+#+BEGIN_SRC emacs-lisp
+(setq echo-keystrokes 0.001)
+#+END_SRC
+
+Tabs are not okay.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'font-lock-mode-hook
+  (lambda ()
+    (font-lock-add-keywords
+      nil
+      '(("\t" 0 'trailing-whitespace prepend)))))
+#+END_SRC
+
+Highlight some common tags.
+
+#+BEGIN_SRC emacs-lisp
+(font-lock-add-keywords nil
+  '(("\\<\\(DEBUG\\)" 1 font-lock-warning-face prepend)
+    ("\\<\\(FIXME\\)" 1 font-lock-warning-face prepend)
+    ("\\<\\(TODO\\)"  1 font-lock-warning-face prepend)
+    ("\\<\\(JIRA\\)"  1 font-lock-warning-face prepend)))
+#+END_SRC
+
+Clear the minibuffer.
+
+#+BEGIN_SRC emacs-lisp
+(delete-minibuffer-contents)
 #+END_SRC
 
 ** Mode Line & Header Line
@@ -480,7 +717,7 @@ This highlights all occurrences of the thing at point, automatically.
 #+END_SRC
 
 * Key-bindings
-Most of my custom key-bindings use the hyper key. The goal here is to prevent any reasonable possibility of collision between personal keybindings and package keybindings. In my case, the hyper modifier is bound to caps lock.
+Most of my custom key-bindings use the hyper key. The goal here is to prevent any reasonable possibility of collision between personal keybindings and package keybindings. By convention, C-<key> is already reserved for the user, but we have another modifier available anyway, so why not use it? In my case, the hyper modifier is bound to caps lock.
 
 To map caps lock to hyper under Xorg, you may do the following:
 
@@ -665,6 +902,18 @@ Interactively prompt for line number, then jump to it.
 (global-set-key (kbd "H-g") (lambda () (interactive) (call-interactively 'goto-line) (recenter)))
 #+END_SRC
 
+*** Bookmarking
+
+Keys to toggle bookmark for current line, then jump between bookmarked lines in file.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "H-SPC")      'bm-toggle)
+(global-set-key (kbd "H-S-SPC")    (lambda () (interactive) (let* ((bm-annotate-on-create t)) (bm-toggle))))
+(global-set-key (kbd "H-}")        'bm-next)
+(global-set-key (kbd "H-{")        'bm-previous)
+(global-set-key (kbd "<left-margin> <mouse-1>") 'bm-toggle-mouse)
+#+END_SRC
+
 ** Editing
 
 Copy/paste with insert key, depending on whether region is active.
@@ -710,6 +959,30 @@ Place undo/redo on the expected keys. Add a shortcut to show the undo history tr
 (global-set-key (kbd "H-z")   'undo-tree-visualize)
 #+END_SRC
 
+Add a "smart" delete key.
+
+*This binding does not use hyper, and may cause collisions.*
+
+#+BEGIN_SRC emacs-lisp
+(defun whack-whitespace-after-point (arg)
+  ;; https://www.emacswiki.org/emacs/DeletingWhitespace
+  "Delete all white space from point to the next word.  With prefix ARG
+  delete across newlines as well.  The only danger in this is that you
+  don't have to actually be at the end of a word to make it work.  It
+  skips over to the next whitespace and then whacks it all to the next
+  word."
+  ;; (interactive "P")
+    (let ((regexp (if arg "[ \t\n]+" "[ \t]+")))
+      (re-search-forward regexp nil t)
+      (replace-match "" nil nil)))
+(defun smart-batch-delete ()
+  (interactive)
+  (if (or (looking-at "$") (looking-at " "))
+      (whack-whitespace-after-point t)
+    (kill-word nil)))
+(global-set-key (kbd "C-<delete>") 'smart-batch-delete)
+#+END_SRC
+
 Add a "smart" tab key. It indents at the start of a line, or when right of whitespace, but autocompletes elsewhere.
 
 *This binding does not use hyper, and may cause collisions.*
@@ -741,7 +1014,49 @@ Add a "smart" tab key. It indents at the start of a line, or when right of white
 (add-hook 'prog-mode-hook
   '(lambda ()
     (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
-    (local-set-key (kbd "TAB")   'generic-smart-tab-key)))
+    (local-set-key (kbd "TAB")   'generic-smart-tab-key)
+    (local-set-key (kbd "H-;")   'comment-or-uncomment-region-or-line)))
+#+END_SRC
+
+Add binding to insert snippets from yasnippet.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "H-y") 'yas-insert-snippet)
+#+END_SRC
+
+Insert new lines before/after the current line.
+
+#+BEGIN_SRC emacs-lisp
+(defun newline-after-current ()
+  "Skip to end of this line, insert a new one, autoindent, recenter cursor."
+  (interactive)
+  (move-end-of-line nil)
+  (newline-and-indent)
+  (scroll-up 1))
+
+(defun newline-before-current ()
+  "Move this line down, go to beginning of a new line where this one was."
+  (interactive)
+  (move-beginning-of-line nil)
+  (newline-and-indent)
+  (move-beginning-of-line nil)
+  (when (looking-at "[ \t]+$")
+    (kill-line)
+    (setq kill-ring (cdr kill-ring))
+    (insert "\n")
+    (forward-line -1))
+  (forward-line -1)
+  (indent-for-tab-command))
+
+(global-set-key (kbd "C-<return>") 'newline-after-current)
+(global-set-key (kbd "M-<return>") 'newline-before-current)
+(global-set-key (kbd "C-M-<return>")  (lambda() (interactive) (newline-after-current)(newline-before-current)))
+#+END_SRC
+
+Correct indentation on a line.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-t") 'indent-according-to-mode)
 #+END_SRC
 
 ** Buffer Operations
@@ -756,11 +1071,118 @@ Switch to buffer by name
 (global-set-key (kbd "H-b") 'switch-to-buffer)
 #+END_SRC
 
-The following autoscroll the buffer based on the point.
+Cycle through buffers (normal or hidden, depending on current buffer).
+
+#+BEGIN_SRC emacs-lisp
+(defun previous-appropriate-buffer-if-hidden ()
+  (when (or
+         (and (hidden-buffer-p) (not (dumping-window-p)))
+         (and (not (hidden-buffer-p)) (dumping-window-p)))
+    (previous-appropriate-buffer)))
+
+(defun hidden-buffer-p ()
+  (or
+   (string-match "\*.*\*" (buffer-name))      ; *buffer*s
+   (string-match "^COM[0-9]*$" (buffer-name)) ; windows serial buffer
+   (string-match "^/dev/tty*" (buffer-name))  ; *nix serial buffer
+   (string-match "^TAGS$" (buffer-name))))    ; TAGS file
+
+(defun next-non-sys-buffer ()
+  ""
+  (interactive)
+  (let
+      ((start-buffer (buffer-name)))
+    (next-non-sys-buffer-with-basecase 'next-buffer start-buffer)))
+
+(defun previous-non-sys-buffer ()
+  ""
+  (interactive)
+  (let
+      ((start-buffer (buffer-name)))
+    (next-non-sys-buffer-with-basecase 'previous-buffer start-buffer)))
+
+(defun next-non-sys-buffer-with-basecase (advance-f base)
+  (funcall advance-f)
+  (if (and
+       (not (eq base (buffer-name)))
+       (hidden-buffer-p))
+      (next-non-sys-buffer-with-basecase advance-f base)))
+
+(defun next-sys-buffer ()
+  ""
+  (interactive)
+  (let
+      ((start-buffer (buffer-name)))
+    (next-sys-buffer-with-basecase 'next-buffer start-buffer)))
+
+(defun previous-sys-buffer ()
+  ""
+  (interactive)
+  (let
+      ((start-buffer (buffer-name)))
+    (next-sys-buffer-with-basecase 'previous-buffer start-buffer)))
+
+(defun next-sys-buffer-with-basecase (advance-f base)
+  (funcall advance-f)
+  (if (and
+       (not (eq base (buffer-name)))
+       (not( hidden-buffer-p)))
+      (next-sys-buffer-with-basecase advance-f base)))
+
+(defun next-appropriate-buffer ()
+  (interactive)
+  ; (message (apply 'concat (mapcar (lambda (x) (format "%s -- " x)) (buffer-list))))
+  (if (dumping-window-p)
+      (next-sys-buffer)
+    (next-non-sys-buffer)))
+
+(defun previous-appropriate-buffer ()
+  (interactive)
+  (if (dumping-window-p)
+      (previous-sys-buffer)
+    (previous-non-sys-buffer)))
+
+(global-set-key (kbd "<prior>") 'previous-appropriate-buffer)
+(global-set-key (kbd "<next>")  'next-appropriate-buffer)
+#+END_SRC
+
+Swap buffers between windows.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-c C-<up>")    'buf-move-up)
+(global-set-key (kbd "C-c C-<down>")  'buf-move-down)
+(global-set-key (kbd "C-c C-<right>") 'buf-move-right)
+(global-set-key (kbd "C-c C-<left>")  'buf-move-left)
+#+END_SRC
+
+Manually scroll the buffer 15 lines vertically, or 5 laterally.
+
+#+BEGIN_SRC emacs-lisp
+(defun scroll-up-15-lines ()
+  (interactive)
+  (scroll-down 15)) ;invert axis
+
+(defun scroll-down-15-lines ()
+  (interactive)
+  (scroll-up 15)) ;; invert axes
+
+(global-set-key (kbd "C-<up>")    'scroll-up-15-lines)
+(global-set-key (kbd "C-<down>")  'scroll-down-15-lines)
+(global-set-key (kbd "C-<right>") '(lambda () "" (interactive) (scroll-left 5))) ; invert-axis
+(global-set-key (kbd "C-<left>")  '(lambda () "" (interactive) (scroll-right 5))) ; invert-axis
+#+END_SRC
+
+The following keys autoscroll the buffer based on the point.
 
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "H-u") 'line-to-top-of-window)
 (global-set-key (kbd "H-j") 'recenter)
+#+END_SRC
+
+Select all text in the buffer.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-c a") 'mark-whole-buffer)
 #+END_SRC
 
 ** Window and Frame Operations
@@ -779,11 +1201,13 @@ Toggles emacs between full-screen and windowed mode.
 
 Move between windows.
 
+*These bindings do not use hyper, and may cause collisions!*
+
 #+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "H-S-<right>") 'windmove-right)
-(global-set-key (kbd "H-S-<left>")  'windmove-left)
-(global-set-key (kbd "H-S-<down>")  'windmove-down)
-(global-set-key (kbd "H-S-<up>")    'windmove-up)
+(global-set-key (kbd "S-<right>") 'windmove-right)
+(global-set-key (kbd "S-<left>")  'windmove-left)
+(global-set-key (kbd "S-<down>")  'windmove-down)
+(global-set-key (kbd "S-<up>")    'windmove-up)
 #+END_SRC
 
 *** Split Current Window
@@ -805,12 +1229,38 @@ This code lets you split the current window vertically or horizontally, while re
   (split-window-right)
   (windmove-right))
 
-(global-set-key (kbd "H-s <down>")  'split-window-above)
-(global-set-key (kbd "H-s <up>")    'split-window-below)
-(global-set-key (kbd "H-s <left>")  'split-window-right)
-(global-set-key (kbd "H-s <right>") 'split-window-left)
+(global-set-key (kbd "C-c <down>")  'split-window-above)
+(global-set-key (kbd "C-c <up>")    'split-window-below)
+(global-set-key (kbd "C-c <left>")  'split-window-right)
+(global-set-key (kbd "C-c <right>") 'split-window-left)
 #+END_SRC
 
+*** Resize Current Window
+
+*These bindings do not use hyper, and may cause collisions!*
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-S-<up>")      (lambda () (interactive) (enlarge-window 5)))
+(global-set-key (kbd "C-S-<right>")   'enlarge-window-horizontally)
+(global-set-key (kbd "C-S-<down>")    (lambda () (interactive) (shrink-window 5)))
+(global-set-key (kbd "C-S-<left>")    'shrink-window-horizontally)
+#+END_SRC
+
+*** Change Frame Opacity
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "H-<prior>") 'decrement-opacity)
+(global-set-key (kbd "H-<next>")  'increment-opacity)
+(global-set-key (kbd "H-1")       '(lambda () "" (interactive) (opacity 10)))
+(global-set-key (kbd "H-2")       '(lambda () "" (interactive) (opacity 20)))
+(global-set-key (kbd "H-3")       '(lambda () "" (interactive) (opacity 30)))
+(global-set-key (kbd "H-4")       '(lambda () "" (interactive) (opacity 40)))
+(global-set-key (kbd "H-5")       '(lambda () "" (interactive) (opacity 50)))
+(global-set-key (kbd "H-6")       '(lambda () "" (interactive) (opacity 60)))
+(global-set-key (kbd "H-7")       '(lambda () "" (interactive) (opacity 70)))
+(global-set-key (kbd "H-8")       '(lambda () "" (interactive) (opacity 80)))
+(global-set-key (kbd "H-9")       '(lambda () "" (interactive) (opacity 90)))
+(global-set-key (kbd "H-0")       '(lambda () "" (interactive) (opacity 100)))
+#+END_SRC
 ** Filesystem Operations
 
 These key-bindings are used for modifying or navigating the filesystem.
@@ -821,6 +1271,38 @@ Search for a regular expression recursively in a directory tree, display results
 
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "H-f") 'rgrep)
+#+END_SRC
+
+** Keyboard Macros
+
+Allocate F1-F4 specifically for saving and executing keyboard macros.
+
+#+BEGIN_SRC emacs-lisp
+(defun auto-name-macro (name)
+  (if defining-kbd-macro
+      (progn
+        (kmacro-end-or-call-macro nil)
+        (fset
+         (intern (format "mcr-%s" name))
+         last-kbd-macro))
+    (execute-kbd-macro
+     (intern
+      (format "mcr-%s" name)))))
+
+(defun force-execute-auto-name-macro (name)
+  (execute-kbd-macro
+     (intern
+      (format "mcr-%s" name))))
+
+(global-set-key (kbd "H-*")        'kmacro-start-macro)
+(global-set-key (kbd "<f1>")       (lambda () (interactive) (auto-name-macro "f1")))
+(global-set-key (kbd "<f2>")       (lambda () (interactive) (auto-name-macro "f2")))
+(global-set-key (kbd "<f3>")       (lambda () (interactive) (auto-name-macro "f3")))
+(global-set-key (kbd "<f4>")       (lambda () (interactive) (auto-name-macro "f4")))
+(global-set-key (kbd "C-<f1>")     (lambda () (interactive) (force-execute-auto-name-macro "f1")))
+(global-set-key (kbd "C-<f2>")     (lambda () (interactive) (force-execute-auto-name-macro "f2")))
+(global-set-key (kbd "C-<f3>")     (lambda () (interactive) (force-execute-auto-name-macro "f3")))
+(global-set-key (kbd "C-<f4>")     (lambda () (interactive) (force-execute-auto-name-macro "f4")))
 #+END_SRC
 
 ** Other Shortcuts
@@ -864,12 +1346,30 @@ Set open-file, save-file, save-file-as, and close-file -like functions to functi
 (global-set-key (kbd "<f8>")   'delete-window-and-buffer)
 #+END_SRC
 
+*** Special Modes (F9-F12)
+
+Give shell and magit dedicated keys.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "<f9>") 'shell)
+(global-set-key (kbd "<f10>") 'magit-status)
+(global-set-key (kbd "<f11>") 'magit-blame)
+;; f12 saved for recompilation in prog-mode and code evaluation in org-mode
+#+END_SRC
+
 *** Corrections
 
 Shortcut for flyspell autocorrect.
 
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "H-c") 'flyspell-auto-correct-word)
+#+END_SRC
+
+*** Adjust Text Scale
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "H-=") '(lambda () (interactive) (text-scale-increase 1)))
+(global-set-key (kbd "H--") '(lambda () (interactive) (text-scale-decrease 1)))
 #+END_SRC
 
 ** Mode-Specific Key-Bindings
@@ -904,6 +1404,209 @@ Key bindings that apply only in certain contexts.
 (define-key query-replace-map (kbd "<insert>") 'edit)
 #+END_SRC
 
+*** c-mode
+
+These are applied later in the c-mode-hook
+
+#+BEGIN_SRC emacs-lisp
+(defun c-smart-tab-key ()
+  "Indent when at left margin or right of whitespace, autocomplete elsewhere"
+  (interactive)
+  (smart-tab-key 'c-indent-line-or-region 'dabbrev-expand c-basic-offset))
+
+;; TODO: Wrote these long ago, should probably move to yasnippet.
+(define-prefix-command 'c-shortcut-map)
+(define-key c-shortcut-map (kbd "1") 'c-insert-region-heading)
+(define-key c-shortcut-map (kbd "2") 'c-insert-function-skeleton)
+(define-key c-shortcut-map (kbd "3") 'c-insert-forced-todo)
+(define-key c-shortcut-map (kbd "4") 'c-insert-debugging-printf)
+(define-key c-shortcut-map (kbd "5") 'c-insert-ternary-for-boolean-to-string)
+(define-key c-shortcut-map (kbd "6") 'c-insert-todo-comment)
+(define-key c-shortcut-map (kbd "f") 'c-insert-if-block)
+(define-key c-shortcut-map (kbd "o") 'c-insert-for-block)
+(define-key c-shortcut-map (kbd "w") 'c-insert-while-block)
+(define-key c-shortcut-map (kbd "d") 'c-insert-do-while-block)
+(define-key c-shortcut-map (kbd "F") 'c-insert-preproc-if-block)
+(define-key c-shortcut-map (kbd "D") 'c-insert-preproc-ifdef-block)
+(define-key c-shortcut-map (kbd "N") 'c-insert-preproc-ifndef-block)
+(define-key c-shortcut-map (kbd "I") 'c-insert-preproc-include-block)
+
+(defun c-insert-debugging-printf ()
+  "Insert a debugging tag in C -- Garmin compatible."
+  (interactive)
+  (insert "printf(\"%50s:%d \\t .\\n\", __FILE__, __LINE__ ); // TODO BJG: DEBUG!")
+  (left-char 64))
+
+(defun c-insert-todo-comment ()
+  "Insert a todo tag (C-compliant)."
+  (interactive)
+  (insert " /* TODO BJG:  */ ")
+  (left-char 4))
+
+(defun c-insert-function-skeleton (name desc ret-type)
+  "Insert the skeleton for a new function -- Garmin compatible."
+  (interactive "sFunction Name: \nsDescription: \nsReturn Type: ")
+  (insert "/*********************************************************************\n")
+  (insert "*\n")
+  (insert "*   PROCEDURE NAME:\n")
+  (insert "*       ")
+  (insert name)
+  (insert "\n*\n")
+  (insert "*   DESCRIPTION:\n")
+  (insert "*       ")
+  (insert desc)
+  (insert "\n*\n")
+  (insert "*********************************************************************/\n")
+  (insert ret-type)
+  (insert " ")
+  (insert name)
+  (insert "\n")
+  (insert-c-basic-offset-spaces)
+  (insert "(\n")
+  (insert-c-basic-offset-spaces)
+  (insert "\n")
+  (insert-c-basic-offset-spaces)
+  (insert ")\n")
+  (insert "{\n\n} ")
+  (insert "/* ")
+  (insert name)
+  (insert "() */")
+  (left-char ( + 20 (length name))))
+
+(defun c-insert-region-heading ()
+  "Insert a region heading (variables, initializations, etc)."
+  (interactive "")
+  (insert "/*----------------------------------------------------------\n")
+  (indent-for-tab-command)
+  (insert "\n")
+  (indent-for-tab-command)
+  (insert "----------------------------------------------------------*/")
+  (indent-for-tab-command)
+  (beginning-of-line)
+  (delete-char 2)
+  (previous-line)
+  (end-of-line)
+  (backward-delete-char 2))
+
+(defun c-insert-forced-todo ()
+  ""
+  (interactive)
+  (insert "#error \"You forgot to come back to this, so you're not allowed to compile.\""))
+
+(defun c-insert-if-block ()
+  ""
+  (interactive)
+  (insert "if(  )")
+  (newline-and-indent)
+  (insert "{")
+  (newline-and-indent)
+  (newline-and-indent)
+  (insert "}")
+  (previous-line 3)
+  (end-of-line)
+  (left-char 2))
+
+(defun c-insert-while-block ()
+  ""
+  (interactive)
+  (insert "while(  )")
+  (newline-and-indent)
+  (insert "{")
+  (newline-and-indent)
+  (newline-and-indent)
+  (insert "}")
+  (previous-line 3)
+  (end-of-line)
+  (left-char 2))
+
+(defun c-insert-for-block (var-name start-val end-val)
+  ""
+  (interactive "sIterator: \nsStart Val (inclusive): \nsEnd Val (Exclusive): ")
+  (interactive)
+  (insert (format "for( %s = %s; %s < %s; %s++ )" var-name start-val var-name end-val var-name))
+  (newline-and-indent)
+  (insert "{")
+  (newline-and-indent)
+  (newline-and-indent)
+  (insert "}")
+  (previous-line 1)
+  (end-of-line)
+  (indent-for-tab-command))
+
+(defun c-insert-do-while-block ()
+  ""
+  (interactive)
+  (insert "do")
+  (newline-and-indent)
+  (insert "{")
+  (newline-and-indent)
+  (newline-and-indent)
+  (insert "} while(  );")
+  (previous-line 1)
+  (c-indent-line-or-region)
+  (end-of-line))
+
+(defun c-insert-preproc-if ()
+  ""
+  (interactive)
+  (insert "#if(  )")
+  (newline)
+  (c-indent-line-or-region)
+  (newline)
+  (c-indent-line-or-region)
+  (insert "#endif")
+  (previous-line 2)
+  (c-indent-line-or-region)
+  (end-of-line)
+  (left-char 2))
+
+(add-hook 'c-mode-common-hook
+  '(lambda ()
+     (local-set-key (kbd "<tab>")   'c-smart-tab-key)
+     (local-set-key (kbd "TAB")     'c-smart-tab-key)
+     (local-set-key (kbd "C-t")     'c-indent-line-or-region)
+     (local-set-key (kbd "C-r")     'align-current)
+     (local-set-key (kbd "H-c")     'c-shortcut-map)))
+#+END_SRC
+
+* File Associations
+
+** Quick Mappings
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'auto-mode-alist '("\\.plt\\'" . gnuplot-mode))
+(add-to-list 'auto-mode-alist '("\\.m$"     . octave-mode ))
+#+END_SRC
+
+** Generic Modes
+
+B2C, T2C, and F2C files
+
+#+BEGIN_SRC emacs-lisp
+(define-generic-mode 
+  '2c-mode                       ; name of the mode to create
+  '("*")                         ; comments start with '!!'
+  '("c_dep")                     ; keywords
+  nil                            ; special words
+  ;; '(("=" . 'font-lock-operator)     ;; '=' is an operator
+  ;; (";" . 'font-lock-builtin))     ;; ';' is a built-in 
+  '("\\.t2c\\'"  "\\.b2c\\'" "\\.f2c\\'")    ; files for which to activate this mode 
+  '((lambda () (run-hooks 'prog-mode-hook)))                            ; other functions to call
+  "A mode for B2C, T2C, & F2C files")   ; doc string for this mode
+#+END_SRC
+
+Monkey-C Mode
+
+#+BEGIN_SRC emacs-lisp
+(define-generic-mode
+  'monkey-c-mode
+  '("//")
+  '("using" "as" "class" "extends" "function" "hidden" "return")
+  '("initialize" "onUpdate")
+  '("\\.mc\\'")
+  '((lambda () (run-hooks 'prog-mode-hook)))
+  "A mode for Monkey-C")
+#+END_SRC
+
 * Mode Management
 
 Handle which modes/settings are triggered where.
@@ -930,6 +1633,18 @@ Ensure that org-mode start up using indentation.
 (setq org-startup-indented t)
 #+END_SRC
 
+Use yasnippet everywhere.
+
+#+BEGIN_SRC emacs-lisp
+(yas-global-mode t)
+#+END_SRC
+
+Use ido by default.
+
+#+BEGIN_SRC emacs-lisp
+(ido-mode)
+#+END_SRC
+
 ** Mode Triggers
 
 *** prog-mode
@@ -939,7 +1654,8 @@ The hook =prog-mode-hook= is triggered in all programming major-modes.
 #+BEGIN_SRC emacs-lisp
 (add-hook 'prog-mode-hook
   '(lambda ()
-    (flyspell-prog-mode)))
+    (flyspell-prog-mode) ;; Spelling corrections in comments
+    (linum-mode)))       ;; Needed to catch compiler errors when compiling outside of emacs
 #+END_SRC
 
 *** text-mode
@@ -948,17 +1664,125 @@ The hook =prog-mode-hook= is triggered in all programming major-modes.
 (add-hook 'text-mode-hook
   (lambda ()
     (flyspell-mode)
-    (visual-line-mode)))
+    (visual-line-mode)
+    (variable-pitch-mode t)
+    (text-scale-increase 1)))
 #+END_SRC
 
 *** org-mode
 
+Mode hooks
+
 #+BEGIN_SRC emacs-lisp
 (add-hook 'org-mode-hook
   (lambda ()
-    (visual-line-mode)))
+    (visual-line-mode)
+    (variable-pitch-mode nil)
+    (text-scale-increase 0)))
 #+END_SRC
 
+Adjust the keymap just a bit...
+
+#+BEGIN_SRC emacs-lisp
+(define-key org-mode-map (kbd "S-<right>")   'windmove-right)
+(define-key org-mode-map (kbd "S-<left>")    'windmove-left)
+(define-key org-mode-map (kbd "S-<down>")    'windmove-down)
+(define-key org-mode-map (kbd "S-<up>")      'windmove-up)
+(define-key org-mode-map (kbd "C-S-<up>")    (lambda () (interactive) (enlarge-window 5)))
+(define-key org-mode-map (kbd "C-S-<right>") 'enlarge-window-horizontally)
+(define-key org-mode-map (kbd "C-S-<down>")  (lambda () (interactive) (shrink-window 5)))
+(define-key org-mode-map (kbd "C-S-<left>")  'shrink-window-horizontally)
+#+END_SRC
+
+Use employer's preferred C format...
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'c-mode-common-hook
+  '(lambda ()
+     (set 'c-basic-offset  4)            ; 4 spaces for indentation
+     (set 'c-electric-flag nil)          ; don't fuck with my indentation as I type
+     (c-set-style "whitesmith")
+     (setq comment-start "// ")
+     (setq comment-end   "")))
+#+END_SRC
+
+*** octave-mode
+#+BEGIN_SRC emacs-lisp
+(add-hook 'octave-mode-hook
+  (lambda ()
+    (local-set-key (kbd "C-\\") 'octave-send-region-or-line)))
+#+END_SRC
+*** compilation-mode
+#+BEGIN_SRC emacs-lisp
+(add-hook 'compilation-mode-hook
+  (lambda ()
+    (visual-line-mode)
+    (local-set-key (kbd "H-]") 'next-error)
+    (local-set-key (kbd "H-[") 'previous-error)))
+#+END_SRC
+*** shell-mode
+#+BEGIN_SRC emacs-lisp
+(add-hook 'shell-mode-hook
+  (lambda ()
+    (local-set-key (kbd "C-M-l") nil)
+    (local-set-key (kbd "C-<up>") 'scroll-up-15-lines)
+    (local-set-key (kbd "C-<down>") 'scroll-down-15-lines)
+    (local-set-key (kbd "C-p") 'comint-previous-input)
+    (local-set-key (kbd "C-n") 'comint-next-input)
+    (setq show-trailing-whitespace nil)
+    (visual-line-mode t)))
+#+END_SRC
+*** python-mode
+#+BEGIN_SRC emacs-lisp
+(add-hook 'python-mode-hook
+  (lambda ()
+    (local-set-key (kbd "<tab>")         'generic-smart-tab-key)
+    (local-set-key (kbd "TAB")           'generic-smart-tab-key)
+    (local-set-key (kbd "C-t")           'indent-for-tab-command)
+    (local-set-key (kbd "<backspace>")   'backward-delete-char-untabify)
+    (local-set-key (kbd "C-\\")          'run-python-in-shell)
+    (local-set-key (kbd "C-r")           'align-current)
+    (local-set-key (kbd "C-|")           'python-shell-send-buffer)))
+#+END_SRC
+*** ruby-mode
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'ruby-mode-hook
+  (lambda ()
+    (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
+    (local-set-key (kbd "TAB")   'generic-smart-tab-key) 
+    (local-set-key (kbd "C-t") 'indent-for-tab-command)))
+#+END_SRC
+
+*** scheme-mode
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'scheme-mode-hook
+  (lambda ()
+    (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
+    (local-set-key (kbd "TAB")   'generic-smart-tab-key) 
+    (local-set-key (kbd "C-t")   'indent-for-tab-command)))
+#+END_SRC
+
+*** emacs-lisp-mode
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'emacs-lisp-mode-hook
+  (lambda ()
+    (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
+    (local-set-key (kbd "TAB")   'generic-smart-tab-key) 
+    (local-set-key (kbd "C-t")   'indent-for-tab-command)))
+#+END_SRC
+
+*** term-mode
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'term-mode-hook
+  (lambda ()
+    (linum-mode -1)
+    (setq show-trailing-whitespace nil)
+    (term-pager-toggle)))
+#+END_SRC
 * Monkey Patching
 
 ** isearch Advice
@@ -1014,4 +1838,15 @@ This advice causes isearch, the split-window-*, compilation mode, etc, functions
 (defadvice compile-goto-error
   (after compile-goto-error-then-recenter activate)
   (recenter))
+#+END_SRC
+** diff-hl Triggers
+
+Whenever a file in version control is opened, enable diff-hl mode.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'find-file-hook
+  (lambda ()
+    (when (vc-backend (buffer-file-name))
+        (diff-hl-mode)
+        (diff-hl-update))))
 #+END_SRC
