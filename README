@@ -1,0 +1,9 @@
+Process:
+
+1. Create ~/.emacs.d/init.el in the following way:
+   (setq device-name 'my-name)
+   (load "~/.emacs.d/emacs-config/bootstrap.el")
+
+2. Clone this repo into ~/.emacs.d/emacs-config
+
+3. Done

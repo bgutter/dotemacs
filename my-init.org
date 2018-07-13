@@ -4,6 +4,31 @@
 
 This is my emacs init file, written in org-babel.
 
+* Localization (pre-package)
+
+Set config variables on a per-system basis. TODO need a better approach.
+
+#+BEGIN_SRC emacs-lisp
+(cond
+  ((eq device-name 'brandon-babypad-archlinux) ;; x230
+     (progn
+        (setq load-org t)
+        ))
+   ((eq device-name 'brandon-thinkpad-archlinux) ;; p51
+     (progn
+       (setq load-org t)
+        ))
+   (t
+     (progn
+       (setq load-org t)
+       )))
+
+(unless (boundp 'use-exwm)
+  (setq use-exwm nil))
+#+END_SRC
+
+#+RESULTS:
+
 * Required Packages
 This section ensures that all required packages are loaded.
 
@@ -34,21 +59,36 @@ TODO: Replace all of this with =use-package=.
             (setq refreshed-packages t))))
       (error (package-install package))))
 
-(package-require 'revive)          ; restore buffers and windows from previous session
-(package-require 'buffer-move)     ; swap buffers between adjacent windows
-(package-require 'diff-hl)         ; show changes from last commit with edge highlighting
-(package-require 'uniquify)        ; rename buffers of same name intelligently
-(package-require 'undo-tree)       ; incredible undo/redo support
-(package-require 'auto-complete)   ; neat autocompletion
-(package-require 'framemove)       ; jump between frames and windows
-(package-require 'fuzzy)           ; fuzzy completion
-(package-require 'hi-lock)
-(package-require 'button-lock)
-(package-require 'bm)
-(package-require 'yasnippet)
+(package-require 'revive)           ; restore buffers and windows from previous session
+(package-require 'buffer-move)      ; swap buffers between adjacent windows
+(package-require 'diff-hl)          ; show changes from last commit with edge highlighting
+(package-require 'uniquify)         ; rename buffers of same name intelligently
+(package-require 'undo-tree)        ; incredible undo/redo support
+(package-require 'auto-complete)    ; neat autocompletion
+(package-require 'framemove)        ; jump between frames and windows
+(package-require 'fuzzy)            ; fuzzy completion
+(package-require 'hi-lock)          ; arbitrary text hilighting
+(package-require 'button-lock)      ; face attribute that makes links from text
+(package-require 'bm)               ; bookmark manager
+(package-require 'yasnippet)        ; snippet pasting framework
+(package-require 'anzu)             ; show total/current matches in isearch
+(package-require 'helm)             ; awesome completions
+(package-require 'shackle)          ; control window placement
+(package-require 'visual-regexp)    ; visualize regular expressions in real-time
+(package-require 'expand-region)    ; Expand region
+(package-require 'eyebrowse)        ; Workspace management
+(package-require 'origami)          ; awesome code folding
+(package-require 'general)          ; sane key mapping architecture
+(package-require 'which-key)        ; Display options after prefix keys are entered
+(package-require 'helm-swoop)       ; Quick content based line navigation
+(package-require 'ivy)              ; More friendly helm
+(package-require 'swiper)           ; ivy's swoop
+(package-require 'counsel)          ; ivy's (awesome) bloat
+(package-require 'hy-mode)          ; Lisp on Python
+(package-require 'org-autolist)     ; Automatically add bullets on return
 #+END_SRC
 
-* Localization
+* Localization (post-package)
 
 Specify paths to basic utilities on Windows
 
@@ -80,9 +120,17 @@ Special hacks for Windows
 #+END_SRC
 
 * Utility
+
 This section defines general purpose code snippets, which are used throughout the rest of the file.
 
 #+BEGIN_SRC emacs-lisp
+(defun dumping-window-p ()
+  "Hack, need to clean up.."
+  nil)
+(defun projectile-project-p ()
+  "ditto"
+  nil)
+
 (defmacro recenter-on-jump (&rest body)
   "If, during the evaulation of body, point moves past the window's limits,
    in either direction, recenter the buffer in the window."
@@ -134,7 +182,7 @@ hook."
        (buffer (window-buffer window)))
     (if (and (= 1 (length (get-buffer-window-list buffer nil t)))
              (buffer-file-name buffer)
-             (not (buffer-modified-p buffer)));; if we're the only window showing the buffer, and it is an unmodified file, kill it
+             (not (buffer-modified-p buffer)));; if we're the only0 window showing the buffer, and it is an unmodified file, kill it
         (progn
           (message (concat "Killing buffer " (buffer-name buffer)))
           (kill-buffer buffer)
@@ -197,6 +245,9 @@ hook."
    (set-frame-parameter (selected-frame) 'alpha value))
 #+END_SRC
 
+#+RESULTS:
+: opacity
+
 ** Minor Modes
 
 *** Sticky Buffer Mode
@@ -214,10 +265,75 @@ Marries a buffer to a window.
 
 This is a purely TODO item. Previous version had some code to monitor a buffer and alert upon new appearances of a particular regex.
 
+** Package Extensions
+
+Preload swiper with thing at point.
+
+#+BEGIN_SRC emacs-lisp
+;; https://github.com/abo-abo/swiper/issues/1068
+(defun ivy-with-thing-at-point (cmd)
+  (let ((ivy-initial-inputs-alist
+         (list
+          (cons cmd (thing-at-point 'symbol)))))
+    (funcall cmd)))
+
+;; Example 2
+(defun swiper-thing-at-point ()
+  (interactive)
+  (ivy-with-thing-at-point 'swiper))
+#+END_SRC
+
 * User Interface Settings
 This section defines code which modifies how emacs displays buffers and interacts with the user.
 
 ** Tweaks
+
+DISABLED: Use fuzzy matching in ivy
+
+#+BEGIN_SRC
+(setq ivy-re-builders-alist
+      '((t . ivy--regex-fuzzy)))
+#+END_SRC
+
+Allow file management in counsel's file-find
+
+#+BEGIN_SRC emacs-lisp
+;; https://github.com/abo-abo/swiper/wiki/Copy,-move-and-delete-file-actions-for-counsel-find-file
+(defun reloading (cmd)
+    (lambda (x)
+      (funcall cmd x)
+      (ivy--reset-state ivy-last)))
+  (defun given-file (cmd prompt) ; needs lexical-binding
+    (lambda (source)
+      (let ((target
+      (let ((enable-recursive-minibuffers t))
+      (read-file-name
+      (format "%s %s to:" prompt source)))))
+      (funcall cmd source target 1))))
+(defun confirm-delete-file (x)
+    (dired-delete-file x 'confirm-each-subdirectory))
+
+  (ivy-add-actions
+   'counsel-find-file
+   `(("c" ,(given-file #'copy-file "Copy") "copy")
+     ("d" ,(reloading #'confirm-delete-file) "delete")
+     ("m" ,(reloading (given-file #'rename-file "Move")) "move")))
+  (ivy-add-actions
+   'counsel-projectile-find-file
+   `(("c" ,(given-file #'copy-file "Copy") "copy")
+     ("d" ,(reloading #'confirm-delete-file) "delete")
+     ("m" ,(reloading (given-file #'rename-file "Move")) "move")
+     ("b" counsel-find-file-cd-bookmark-action "cd bookmark")))
+#+END_SRC
+
+#+RESULTS:
+: .*\*helm.*\|.*\*Minibuf-.*
+
+Show current/total matches in isearch
+
+#+BEGIN_SRC emacs-lisp
+(global-anzu-mode +1)
+#+END_SRC
 
 Show whitespace
 
@@ -268,7 +384,7 @@ Use visual bell instead of audible.
 (setq ring-bell-function 'echo-area-bell)
 #+END_SRC
 
-Get ride of blinking cursor
+Get rid of blinking cursor
 
 #+BEGIN_SRC emacs-lisp
 (setq default-cursor-type 'box)
@@ -323,14 +439,6 @@ Make sure that diff-hl-mode is showing changes between now and the last commit, 
 
 #+BEGIN_SRC emacs-lisp
 (global-diff-hl-amend-mode 1)
-#+END_SRC
-
-Set frame to 95% opacity, because I'm easily amused.
-
-#+BEGIN_SRC emacs-lisp
-(setq default-opacity 95)
-(opacity default-opacity)
-(add-to-list 'default-frame-alist `(alpha  . ,default-opacity))
 #+END_SRC
 
 Fall back to frame-moving if window-moving doesn't cut it.
@@ -531,6 +639,7 @@ This code adds a strongly customized header and mode line.
                (line-word-char-count)))))
 
     ;;; STATUSES: less important stuff
+    (mode-line-status-entry (and (window-has-focus) (fboundp 'eyebrowse--get))     (format " W:%d " (eyebrowse--get 'current-slot)) "Current Workspace")
     (mode-line-status-entry (/= text-scale-mode-amount 0) (format " ±%d " text-scale-mode-amount) "Font scale")
     (mode-line-status-entry buffer-read-only              " RO "                                  "Buffer is read-only")
     (mode-line-status-entry vc-mode                       (concat " VC:" vc-mode " ")             vc-mode)
@@ -539,7 +648,7 @@ This code adds a strongly customized header and mode line.
     ;;; NOTIFICATIONS: IMPORTANT STUFF
     (mode-line-notification-entry (and (buffer-modified-p) (buffer-file-name)) " !! "   "Buffer has been modified")
     (mode-line-notification-entry (buffer-narrowed-p)                          " >< "   "Buffer is narrowed")
-    
+
     ;; '(:eval (debug-window-focus))
     ;; '(:eval mode-line-frame-identification)
 
@@ -605,7 +714,401 @@ This highlights all occurrences of the thing at point, automatically.
 (run-with-idle-timer 0.25 t 'update-phrase-highlight)
 #+END_SRC
 
-* Key-bindings
+* File Associations
+
+** Quick Mappings
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'auto-mode-alist '("\\.plt\\'" . gnuplot-mode))
+(add-to-list 'auto-mode-alist '("\\.m$"     . octave-mode ))
+#+END_SRC
+
+** Generic Modes
+
+B2C, T2C, and F2C files
+
+#+BEGIN_SRC emacs-lisp
+(define-generic-mode 
+  '2c-mode                       ; name of the mode to create
+  '("*")                         ; comments start with '!!'
+  '("c_dep")                     ; keywords
+  nil                            ; special words
+  ;; '(("=" . 'font-lock-operator)     ;; '=' is an operator
+  ;; (";" . 'font-lock-builtin))     ;; ';' is a built-in 
+  '("\\.t2c\\'"  "\\.b2c\\'" "\\.f2c\\'")    ; files for which to activate this mode 
+  '((lambda () (run-hooks 'prog-mode-hook)))                            ; other functions to call
+  "A mode for B2C, T2C, & F2C files")   ; doc string for this mode
+#+END_SRC
+
+Monkey-C Mode
+
+#+BEGIN_SRC emacs-lisp
+(define-generic-mode
+  'monkey-c-mode
+  '("//")
+  '("using" "as" "class" "extends" "function" "hidden" "return")
+  '("initialize" "onUpdate")
+  '("\\.mc\\'")
+  '((lambda () (run-hooks 'prog-mode-hook)))
+  "A mode for Monkey-C")
+#+END_SRC
+
+* Mode Management
+
+Handle which modes/settings are triggered where.
+
+** Global Default Modes
+
+Truncate lines, don't wrap.
+
+#+BEGIN_SRC emacs-lisp
+(setq-default truncate-lines t)
+#+END_SRC
+
+Don't use lockfiles....SeaFile shits the bed.
+
+#+BEGIN_SRC emacs-lisp
+(setq create-lockfiles nil)
+#+END_SRC
+
+Manage workspaces
+
+#+BEGIN_SRC emacs-lisp
+(eyebrowse-mode t)
+#+END_SRC
+
+Persist workspaces, etc.
+
+TODO: this actually causes me many problems
+
+#+BEGIN_SRC
+(desktop-save-mode 1)
+#+END_SRC
+
+Help me with my keys
+
+#+BEGIN_SRC emacs-lisp
+(which-key-mode)
+#+END_SRC
+
+
+Enable helm by default
+
+#+BEGIN_SRC emacs-lisp
+(helm-mode)
+#+END_SRC
+
+Enable shackle window rules
+
+#+BEGIN_SRC emacs-lisp
+(shackle-mode)
+#+END_SRC
+
+Hide the toolbar, menu bar, and scroll bars.
+
+#+BEGIN_SRC emacs-lisp
+(tool-bar-mode   -1)
+(menu-bar-mode    0)
+(scroll-bar-mode -1)
+#+END_SRC
+
+Open the speedbar
+
+TODO: Need to tweak this more before I want it enabled...
+
+#+BEGIN_SRC emacs-lisp
+;; (sr-speedbar-open)
+#+END_SRC
+
+Highlight and jump through instances of whatever is at point.
+
+#+BEGIN_SRC emacs-lisp
+(setq region-occurrence-highlight-mode t)
+#+END_SRC
+
+Use yasnippet everywhere.
+
+#+BEGIN_SRC emacs-lisp
+(yas-global-mode t)
+#+END_SRC
+
+Use ido by default.
+
+#+BEGIN_SRC emacs-lisp
+(ido-mode)
+#+END_SRC
+
+** Mode Triggers
+*** prog-mode
+
+The hook =prog-mode-hook= is triggered in all programming major-modes.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'prog-mode-hook
+  '(lambda ()
+    (flyspell-prog-mode) ;; Spelling corrections in comments
+    (linum-mode))       ;; Needed to catch compiler errors when compiling outside of emacs
+    (setq region-occurrence-highlight-mode t))
+#+END_SRC
+
+*** text-mode
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'text-mode-hook
+  (lambda ()
+    (flyspell-mode)
+    (visual-line-mode)
+    (variable-pitch-mode t)
+    (text-scale-increase 1)))
+#+END_SRC
+
+*** org-mode
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'org-mode-hook
+  (lambda ()
+    (visual-line-mode nil)
+    (setq truncate-lines t)
+    (variable-pitch-mode nil)
+    (org-autolist-mode)
+    (text-scale-increase 0)))
+#+END_SRC
+
+*** c-mode
+
+Use employer's preferred C format...
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'c-mode-common-hook
+  '(lambda ()
+     (set 'c-basic-offset  4)            ; 4 spaces for indentation
+     (set 'c-electric-flag nil)          ; don't fuck with my indentation as I type
+     (c-set-style "whitesmith")
+     (setq comment-start "// ")
+     (setq comment-end   "")))
+#+END_SRC
+
+*** octave-mode
+#+BEGIN_SRC emacs-lisp
+(add-hook 'octave-mode-hook
+  (lambda ()
+    (local-set-key (kbd "C-\\") 'octave-send-region-or-line)))
+#+END_SRC
+*** compilation-mode
+#+BEGIN_SRC emacs-lisp
+(add-hook 'compilation-mode-hook
+  (lambda ()
+    (visual-line-mode)
+    (local-set-key (kbd "H-]") 'next-error)
+    (local-set-key (kbd "H-[") 'previous-error)))
+#+END_SRC
+*** shell-mode
+#+BEGIN_SRC emacs-lisp
+(add-hook 'shell-mode-hook
+  (lambda ()
+    (setq show-trailing-whitespace nil)
+    (visual-line-mode t)))
+#+END_SRC
+*** python-mode
+#+BEGIN_SRC emacs-lisp
+(add-hook 'python-mode-hook
+  (lambda ()
+    (local-set-key (kbd "<tab>")         'generic-smart-tab-key)
+    (local-set-key (kbd "TAB")           'generic-smart-tab-key)
+    (local-set-key (kbd "C-t")           'indent-for-tab-command)
+    (local-set-key (kbd "<backspace>")   'backward-delete-char-untabify)
+    (local-set-key (kbd "C-\\")          'run-python-in-shell)
+    (local-set-key (kbd "C-r")           'align-current)
+    (local-set-key (kbd "C-|")           'python-shell-send-buffer)))
+#+END_SRC
+*** ruby-mode
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'ruby-mode-hook
+  (lambda ()
+    (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
+    (local-set-key (kbd "TAB")   'generic-smart-tab-key)
+    (local-set-key (kbd "C-t") 'indent-for-tab-command)))
+#+END_SRC
+
+*** scheme-mode
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'scheme-mode-hook
+  (lambda ()
+    (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
+    (local-set-key (kbd "TAB")   'generic-smart-tab-key)
+    (local-set-key (kbd "C-t")   'indent-for-tab-command)))
+#+END_SRC
+
+*** emacs-lisp-mode
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'emacs-lisp-mode-hook
+  (lambda ()
+    (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
+    (local-set-key (kbd "TAB")   'generic-smart-tab-key)
+    (local-set-key (kbd "C-t")   'indent-for-tab-command)))
+#+END_SRC
+
+*** term-mode
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'term-mode-hook
+  (lambda ()
+    (linum-mode -1)
+    (setq show-trailing-whitespace nil)
+    (term-pager-toggle)))
+#+END_SRC
+* Package Configurations
+** org-mode
+
+Set the base location for my org tree.
+
+#+BEGIN_SRC emacs-lisp
+(setq my-org-file-tree-base-path "/encrypted_data/org")
+#+END_SRC
+
+Load the tree's initialization code.
+
+#+BEGIN_SRC emacs-lisp
+(if load-org
+  (org-babel-load-file (concat my-org-file-tree-base-path "/init.org")))
+#+END_SRC
+
+** sr-speedbar
+
+Don't automatically change directory on me!
+
+TODO: See speedbar enable above
+
+#+BEGIN_SRC emacs-lisp
+;;(sr-speedbar-refresh-turn-off)
+;;(setq speedbar-use-images nil) ;; I'd actually like better looking images..
+#+END_SRC
+
+* Monkey Patching
+
+** isearch Advice
+
+This advice modifies isearch such that it will always auto-wrap whenever a match is not found between point and the end of the buffer.
+
+#+BEGIN_SRC emacs-lisp
+(defadvice isearch-search (after isearch-no-fail activate)
+  "Autowrap searches."
+  (unless isearch-success
+    (ad-disable-advice 'isearch-search 'after 'isearch-no-fail)
+    (ad-activate 'isearch-search)
+    (isearch-repeat (if isearch-forward 'forward))
+    (ad-enable-advice 'isearch-search 'after 'isearch-no-fail)
+    (ad-activate 'isearch-search)))
+#+END_SRC
+
+This advice causes isearch, the split-window-*, compilation mode, etc, functions to recenter the buffer. This means less time spent searching for the cursor, without having a distracting cursor design.
+
+#+BEGIN_SRC emacs-lisp
+ (defadvice isearch-forward
+    (after isearch-forward-recenter activate)
+    (recenter))
+
+(defadvice isearch-repeat-forward
+  (after isearch-repeat-forward-recenter activate)
+  (recenter))
+
+(defadvice isearch-repeat-backward
+  (after isearch-repeat-backward-recenter activate)
+  (recenter))
+
+(defadvice isearch-printing-char
+  (after isearch-printing-char-then-recenter activate)
+  (recenter))
+
+(defadvice split-window-below
+  (after split-window-below-recenter activate)
+  (recenter))
+
+(defadvice split-window-left
+  (after split-window-left-recenter activate)
+  (recenter))
+
+(defadvice split-window-right
+  (after split-window-right-recenter activate)
+  (recenter))
+
+(defadvice split-window-above
+  (after split-window-above-recenter activate)
+  (recenter))
+
+(defadvice compile-goto-error
+  (after compile-goto-error-then-recenter activate)
+  (recenter))
+#+END_SRC
+** diff-hl Triggers
+
+Whenever a file in version control is opened, enable diff-hl mode.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'find-file-hook
+  (lambda ()
+    (when (vc-backend (buffer-file-name))
+        (diff-hl-mode)
+        (diff-hl-update))))
+#+END_SRC
+** find-file
+
+Yes, I do want to create the directories....
+
+#+BEGIN_SRC emacs-lisp
+(defadvice find-file (before make-directory-maybe (filename &optional wildcards) activate)
+  "Create parent directory if not exists while visiting file."
+  (unless (file-exists-p filename)
+    (let ((dir (file-name-directory filename)))
+      (unless (file-exists-p dir)
+        (make-directory dir)))))
+#+END_SRC
+* OS Integration
+
+Sometimes, I want emacs to be my window manager.
+
+** EXWM
+
+Use emacs as window manager. :)
+
+#+BEGIN_SRC emacs-lisp
+(defun my:launch-de()
+    (package-require 'exwm)
+    (package-require 'exwm-systemtray)
+    (package-require 'exwm-edit)
+    (package-require 'clipmon)
+    (clipmon-mode-start)
+    (exwm-enable)
+    (defun exwm-rename-buffer ()
+      (interactive)
+      (exwm-workspace-rename-buffer
+       (concat exwm-class-name ":"
+               (if (<= (length exwm-title) 50) exwm-title
+                 (concat (substring exwm-title 0 49) "...")))))
+
+    ;; Add these hooks in a suitable place (e.g., as done in exwm-config-default)
+    (add-hook 'exwm-update-class-hook 'exwm-rename-buffer)
+    (add-hook 'exwm-update-title-hook 'exwm-rename-buffer)
+    (setq window-divider-default-right-width 4)
+    (window-divider-mode t)
+    (exwm-systemtray-enable))
+    ;(setq exwm-manage-configurations '((t char-mode t))))
+#+END_SRC
+
+#+RESULTS:
+: my:launch-de
+
+* Window Placement
+
+Place helm completions in a temp window at the bottom of the frame, period. Thankfully, ivy doesn't need this.
+
+#+BEGIN_SRC emacs-lisp
+(setq shackle-rules '(("\\`\\*helm.*?\\*\\'" :regexp t :align t :ratio 0.4)))
+#+END_SRC
+
+* Key Mappings
 Most of my custom key-bindings use the hyper key. The goal here is to prevent any reasonable possibility of collision between personal keybindings and package keybindings. By convention, C-<key> is already reserved for the user, but we have another modifier available anyway, so why not use it? In my case, the hyper modifier is bound to caps lock.
 
 To map caps lock to hyper under Xorg, you may do the following:
@@ -643,666 +1146,11 @@ IfWinActive, emacs
 
 Do note that this leaves the apps key unusable in emacs, except as a secondary hyper modifier. I have not yet found another way to do this which works well for me.
 
-** Source Code Navigation
+** Functions
 
-The following key-bindings provide more convenient ways to navigate source code.
+Functions designed specifically to be used as key mappings.
 
-*** Basic Navigation
-
-Replace home with a "smart home".
-
-#+BEGIN_SRC emacs-lisp
-(defun smart-beginning-of-line ()
-  "Move point to first non-whitespace character or beginning-of-line.
-   Move point to the first non-whitespace character on this line.
-   If point was already at that position, move point to beginning of line."
-  (interactive) ; Use (interactive "^") in Emacs 23 to make shift-select work
-  (let ((oldpos (point)))
-    (back-to-indentation)
-    (and (= oldpos (point))
-         (beginning-of-line))))
-
-(global-set-key (kbd "<home>") 'smart-beginning-of-line)
-#+END_SRC
-
-Forward/Backward Paragraph
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "M-<up>")   'backward-paragraph)
-(global-set-key (kbd "M-<down>") 'forward-paragraph)
-#+END_SRC
-
-*** Search and Replace
-
-Search current buffer for regular expression.
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "H-a") 'isearch-forward-regexp)
-#+END_SRC
-
-Search and replace text in current buffer with regular expressions
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "H-r") 'query-replace-regexp)
-#+END_SRC
-
-*** Version Control
-
-Jump to next and previous modified region of file, as determined by the current version control extension.
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "H-[") (lambda() (interactive) (diff-hl-previous-hunk) (recenter)))
-(global-set-key (kbd "H-]") (lambda() (interactive) (diff-hl-next-hunk)     (recenter)))
-#+END_SRC
-
-*** Next & Previous thing-at-point
-
-Jump to next and previous instance of whatever is below the cursor. As a TODO, I'd like to make these behave a little better in org mode. Currently, they'll stop at matches in collapsed sections, and further jumping is not possible.
-
-#+BEGIN_SRC emacs-lisp
-(defun forward-thing-symbol ()
-  (interactive)
-  (update-phrase-highlight)
-  (recenter-on-jump
-   (if hlight-region-active
-       (cond
-        ((eq hlight-region-type 'at-pt) (retain-position-from-symbol-start
-                                         (when (not (looking-at "\\_>"))
-                                           (search-forward-regexp "\\_>"))
-                                         (if (search-forward-regexp (concat "\\_<" (thing-at-point 'symbol) "\\_>") nil t nil)
-                                             (message (format "Next instance of %s" (thing-at-point 'symbol)))
-                                           (progn
-                                             (ding)
-                                             (message (format "No more instances of %s" (thing-at-point 'symbol)))))
-                                         (search-backward-regexp "\\_<")))
-        ((eq hlight-region-type 'region) (let*
-                                             ((exchange (if (> (point) (mark)) t nil))
-                                              (count    (if (> (point) (mark)) 1 2))
-                                              (loc (save-excursion
-                                                     (search-forward-regexp (hi-lock-process-phrase hlight-regex) nil t count))))
-                                           (if loc
-                                               (progn
-                                                 (set-mark loc)
-                                                 (goto-char loc)
-                                                 (left-char (length hlight-regex))
-                                                 (if exchange
-                                                     (exchange-point-and-mark))
-                                                 (message (format "Next instance of region content")))
-                                             (progn
-                                               (ding)
-                                               (message (format "No more instances of region content"))))))))))
-
-(defun backward-thing-symbol ()
-  (interactive)
-  (update-phrase-highlight)
-  (recenter-on-jump
-   (if hlight-region-active
-       (cond
-        ((eq hlight-region-type 'at-pt) (retain-position-from-symbol-start
-                                         (if (search-backward-regexp (concat "\\_<" (thing-at-point 'symbol) "\\_>") nil t nil)
-                                             (message (format "Previous instance of %s" (thing-at-point 'symbol)))
-                                           (progn
-                                             (ding)
-                                             (message (format "First instance of %s" (thing-at-point 'symbol)))))))
-        ((eq hlight-region-type 'region) (let*
-                                             ((exchange (if (> (point) (mark)) nil t))
-                                              (count    (if (> (point) (mark)) 2 1))
-                                              (loc (save-excursion
-                                                     (search-backward-regexp (hi-lock-process-phrase hlight-regex) nil t count))))
-                                           (if loc
-                                               (progn
-                                                 (set-mark loc)
-                                                 (goto-char (+ loc (length hlight-regex)))
-                                                 (if exchange
-                                                     (exchange-point-and-mark))
-                                                 (message (format "Previous instance of region content")))
-                                             (progn
-                                               (ding)
-                                               (message (format "First instance of region content"))))))))))
-
-(global-set-key (kbd "<H-down>")   'forward-thing-symbol)
-(global-set-key (kbd "<H-up>")     'backward-thing-symbol)
-#+END_SRC
-
-*** Next & Previous Symbol
-
-Jump to the next or previous symbol.
-
-#+BEGIN_SRC emacs-lisp
-(defun backward-symbol (&optional arg)
- "Move backward until encountering the beginning of a symbol.
-With argument, do this that many times."
- (interactive "p")
- (forward-symbol (- (or arg 1))))
-
-(defun forward-symbol-beginning ()
-  (interactive)
-  (when (not (looking-at "\\_>"))
-    (search-forward-regexp "\\_>"))
-  (call-interactively 'forward-symbol)
-  (search-backward-regexp "\\_<"))
-
-(defun backward-symbol-beginning ()
-  (interactive)
-  (call-interactively 'backward-symbol))
-
-(global-set-key (kbd "<H-left>")   'backward-symbol-beginning)
-(global-set-key (kbd "<H-right>")  'forward-symbol-beginning)
-#+END_SRC
-
-*** Go To Line Number
-
-Interactively prompt for line number, then jump to it.
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "H-g") (lambda () (interactive) (call-interactively 'goto-line) (recenter)))
-#+END_SRC
-
-*** Bookmarking
-
-Keys to toggle bookmark for current line, then jump between bookmarked lines in file.
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "H-SPC")      'bm-toggle)
-(global-set-key (kbd "H-S-SPC")    (lambda () (interactive) (let* ((bm-annotate-on-create t)) (bm-toggle))))
-(global-set-key (kbd "H-}")        'bm-next)
-(global-set-key (kbd "H-{")        'bm-previous)
-(global-set-key (kbd "<left-margin> <mouse-1>") 'bm-toggle-mouse)
-#+END_SRC
-
-** Editing
-
-Copy/paste with insert key, depending on whether region is active.
-
-*This binding does not use hyper, and may cause collisions.*
-
-#+BEGIN_SRC emacs-lisp
-(defun smart-copy-paste ()
-  "Smart copy or paste"
-  (interactive)
-  (if (use-region-p)
-      (if (and (boundp 'rectangle-mark-mode) rectangle-mark-mode)
-          (copy-rectangle-as-kill (region-beginning) (region-end))
-        (kill-ring-save (region-beginning) (region-end)))
-    (yank)))
-
-(global-set-key (kbd "<insert>") 'smart-copy-paste)
-#+END_SRC
-
-Place cut behavior on the delete key when region is active.
-
-*This binding does not use hyper, and may cause collisions.*
-
-#+BEGIN_SRC emacs-lisp
-
-(defun smart-cut-or-delete ()
-  "If region, cut, else, delete char"
-  (interactive)
-  (if (use-region-p)
-    (kill-region (region-beginning) (region-end))
-    (delete-forward-char 1)))
-
-(global-set-key (kbd "<delete>") 'smart-cut-or-delete)
-#+END_SRC
-
-Place undo/redo on the expected keys. Add a shortcut to show the undo history tree.
-
-*Some of these bindings do not use hyper, and may cause collisions.*
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "C-z")   'undo-tree-undo)
-(global-set-key (kbd "C-S-z") 'undo-tree-redo)
-(global-set-key (kbd "H-z")   'undo-tree-visualize)
-#+END_SRC
-
-Add a "smart" delete key.
-
-*This binding does not use hyper, and may cause collisions.*
-
-#+BEGIN_SRC emacs-lisp
-(defun whack-whitespace-after-point (arg)
-  ;; https://www.emacswiki.org/emacs/DeletingWhitespace
-  "Delete all white space from point to the next word.  With prefix ARG
-  delete across newlines as well.  The only danger in this is that you
-  don't have to actually be at the end of a word to make it work.  It
-  skips over to the next whitespace and then whacks it all to the next
-  word."
-  ;; (interactive "P")
-    (let ((regexp (if arg "[ \t\n]+" "[ \t]+")))
-      (re-search-forward regexp nil t)
-      (replace-match "" nil nil)))
-(defun smart-batch-delete ()
-  (interactive)
-  (if (or (looking-at "$") (looking-at " "))
-      (whack-whitespace-after-point t)
-    (kill-word nil)))
-(global-set-key (kbd "C-<delete>") 'smart-batch-delete)
-#+END_SRC
-
-Add a "smart" tab key. It indents at the start of a line, or when right of whitespace, but autocompletes elsewhere.
-
-*This binding does not use hyper, and may cause collisions.*
-
-#+BEGIN_SRC emacs-lisp
-(defun smart-tab-key (indent autocomplete indent-count)
-  "Indent when at left margin or right of whitespace, autocomplete elsewhere."
-  (cond (( or (eq last-command 'yank) (eq last-command 'yank-pop)) (yank-pop))
-        (( or
-           (eq last-command 'find-tag)
-           (eq last-command 'find-tag-other-window)
-           (eq last-command 'find-tag-wrapped)
-           (eq last-command 'find-tag-wrapped-new-window))
-         (progn
-           (let ((current-prefix-arg '(4)))
-             (message "Finding next possible definition...")
-             (call-interactively 'find-tag))
-           (recenter-top-bottom)
-           (setq this-command 'find-tag)))
-        ((use-region-p) (indent-rigidly (region-beginning) (region-end) indent-count))
-        ((or (= 0 (current-column)) (= ?\s (char-before))) (funcall indent))
-        (t (funcall autocomplete))))
-
-(defun generic-smart-tab-key ()
-  "Indent when at left margin or right of whitespace, autocomplete elsewhere"
-  (interactive)
-  (smart-tab-key 'indent-for-tab-command 'ac-fuzzy-complete 1))
-
-(add-hook 'prog-mode-hook
-  '(lambda ()
-    (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
-    (local-set-key (kbd "TAB")   'generic-smart-tab-key)
-    (local-set-key (kbd "H-;")   'comment-or-uncomment-region-or-line)))
-#+END_SRC
-
-Add binding to insert snippets from yasnippet.
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "H-y") 'yas-insert-snippet)
-#+END_SRC
-
-Insert new lines before/after the current line.
-
-#+BEGIN_SRC emacs-lisp
-(defun newline-after-current ()
-  "Skip to end of this line, insert a new one, autoindent, recenter cursor."
-  (interactive)
-  (move-end-of-line nil)
-  (newline-and-indent)
-  (scroll-up 1))
-
-(defun newline-before-current ()
-  "Move this line down, go to beginning of a new line where this one was."
-  (interactive)
-  (move-beginning-of-line nil)
-  (newline-and-indent)
-  (move-beginning-of-line nil)
-  (when (looking-at "[ \t]+$")
-    (kill-line)
-    (setq kill-ring (cdr kill-ring))
-    (insert "\n")
-    (forward-line -1))
-  (forward-line -1)
-  (indent-for-tab-command))
-
-(global-set-key (kbd "C-<return>") 'newline-after-current)
-(global-set-key (kbd "M-<return>") 'newline-before-current)
-(global-set-key (kbd "C-M-<return>")  (lambda() (interactive) (newline-after-current)(newline-before-current)))
-#+END_SRC
-
-Correct indentation on a line.
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "C-t") 'indent-according-to-mode)
-#+END_SRC
-
-** Buffer Operations
-
-These bindings control buffer switching, naming, etc.
-
-*** Navigation
-
-Switch to buffer by name
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "H-b") 'switch-to-buffer)
-#+END_SRC
-
-Cycle through buffers (normal or hidden, depending on current buffer).
-
-#+BEGIN_SRC emacs-lisp
-(defun previous-appropriate-buffer-if-hidden ()
-  (when (or
-         (and (hidden-buffer-p) (not (dumping-window-p)))
-         (and (not (hidden-buffer-p)) (dumping-window-p)))
-    (previous-appropriate-buffer)))
-
-(defun hidden-buffer-p ()
-  (or
-   (string-match "\*.*\*" (buffer-name))      ; *buffer*s
-   (string-match "^COM[0-9]*$" (buffer-name)) ; windows serial buffer
-   (string-match "^/dev/tty*" (buffer-name))  ; *nix serial buffer
-   (string-match "^TAGS$" (buffer-name))))    ; TAGS file
-
-(defun next-non-sys-buffer ()
-  ""
-  (interactive)
-  (let
-      ((start-buffer (buffer-name)))
-    (next-non-sys-buffer-with-basecase 'next-buffer start-buffer)))
-
-(defun previous-non-sys-buffer ()
-  ""
-  (interactive)
-  (let
-      ((start-buffer (buffer-name)))
-    (next-non-sys-buffer-with-basecase 'previous-buffer start-buffer)))
-
-(defun next-non-sys-buffer-with-basecase (advance-f base)
-  (funcall advance-f)
-  (if (and
-       (not (eq base (buffer-name)))
-       (hidden-buffer-p))
-      (next-non-sys-buffer-with-basecase advance-f base)))
-
-(defun next-sys-buffer ()
-  ""
-  (interactive)
-  (let
-      ((start-buffer (buffer-name)))
-    (next-sys-buffer-with-basecase 'next-buffer start-buffer)))
-
-(defun previous-sys-buffer ()
-  ""
-  (interactive)
-  (let
-      ((start-buffer (buffer-name)))
-    (next-sys-buffer-with-basecase 'previous-buffer start-buffer)))
-
-(defun next-sys-buffer-with-basecase (advance-f base)
-  (funcall advance-f)
-  (if (and
-       (not (eq base (buffer-name)))
-       (not( hidden-buffer-p)))
-      (next-sys-buffer-with-basecase advance-f base)))
-
-(defun next-appropriate-buffer ()
-  (interactive)
-  ; (message (apply 'concat (mapcar (lambda (x) (format "%s -- " x)) (buffer-list))))
-  (if (dumping-window-p)
-      (next-sys-buffer)
-    (next-non-sys-buffer)))
-
-(defun previous-appropriate-buffer ()
-  (interactive)
-  (if (dumping-window-p)
-      (previous-sys-buffer)
-    (previous-non-sys-buffer)))
-
-(global-set-key (kbd "<prior>") 'previous-appropriate-buffer)
-(global-set-key (kbd "<next>")  'next-appropriate-buffer)
-#+END_SRC
-
-Swap buffers between windows.
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "C-c C-<up>")    'buf-move-up)
-(global-set-key (kbd "C-c C-<down>")  'buf-move-down)
-(global-set-key (kbd "C-c C-<right>") 'buf-move-right)
-(global-set-key (kbd "C-c C-<left>")  'buf-move-left)
-#+END_SRC
-
-Manually scroll the buffer 15 lines vertically, or 5 laterally.
-
-#+BEGIN_SRC emacs-lisp
-(defun scroll-up-15-lines ()
-  (interactive)
-  (scroll-down 15)) ;invert axis
-
-(defun scroll-down-15-lines ()
-  (interactive)
-  (scroll-up 15)) ;; invert axes
-
-(global-set-key (kbd "C-<up>")    'scroll-up-15-lines)
-(global-set-key (kbd "C-<down>")  'scroll-down-15-lines)
-(global-set-key (kbd "C-<right>") '(lambda () "" (interactive) (scroll-left 5))) ; invert-axis
-(global-set-key (kbd "C-<left>")  '(lambda () "" (interactive) (scroll-right 5))) ; invert-axis
-#+END_SRC
-
-The following keys autoscroll the buffer based on the point.
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "H-u") 'line-to-top-of-window)
-(global-set-key (kbd "H-j") 'recenter)
-#+END_SRC
-
-Select all text in the buffer.
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "C-c a") 'mark-whole-buffer)
-#+END_SRC
-
-** Window and Frame Operations
-
-These bindings control the size, shape, position, and opacity of windows and frames.
-
-*** Toggle Fullscreen Display
-
-Toggles emacs between full-screen and windowed mode.
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "<H-f11>") 'toggle-frame-fullscreen)
-#+END_SRC
-
-*** Navigate Windows
-
-Move between windows.
-
-*These bindings do not use hyper, and may cause collisions!*
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "S-<right>") 'windmove-right)
-(global-set-key (kbd "S-<left>")  'windmove-left)
-(global-set-key (kbd "S-<down>")  'windmove-down)
-(global-set-key (kbd "S-<up>")    'windmove-up)
-#+END_SRC
-
-*** Split Current Window
-
-This code lets you split the current window vertically or horizontally, while remaining in either the top, bottom, left, or right window.
-
-#+BEGIN_SRC emacs-lisp
-;; Defined for parity with their opposites
-
-(defun split-window-above ()
-  "Split current window into top and bottom, with focus left in bottom."
-  (interactive)
-  (split-window-below)
-  (windmove-down))
-
-(defun split-window-left ()
-  "Split current window into left and right, with focus left in right."
-  (interactive)
-  (split-window-right)
-  (windmove-right))
-
-(global-set-key (kbd "C-c <down>")  'split-window-above)
-(global-set-key (kbd "C-c <up>")    'split-window-below)
-(global-set-key (kbd "C-c <left>")  'split-window-right)
-(global-set-key (kbd "C-c <right>") 'split-window-left)
-#+END_SRC
-
-*** Resize Current Window
-
-*These bindings do not use hyper, and may cause collisions!*
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "C-S-<up>")      (lambda () (interactive) (enlarge-window 5)))
-(global-set-key (kbd "C-S-<right>")   'enlarge-window-horizontally)
-(global-set-key (kbd "C-S-<down>")    (lambda () (interactive) (shrink-window 5)))
-(global-set-key (kbd "C-S-<left>")    'shrink-window-horizontally)
-#+END_SRC
-
-*** Change Frame Opacity
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "H-<prior>") 'decrement-opacity)
-(global-set-key (kbd "H-<next>")  'increment-opacity)
-(global-set-key (kbd "H-1")       '(lambda () "" (interactive) (opacity 10)))
-(global-set-key (kbd "H-2")       '(lambda () "" (interactive) (opacity 20)))
-(global-set-key (kbd "H-3")       '(lambda () "" (interactive) (opacity 30)))
-(global-set-key (kbd "H-4")       '(lambda () "" (interactive) (opacity 40)))
-(global-set-key (kbd "H-5")       '(lambda () "" (interactive) (opacity 50)))
-(global-set-key (kbd "H-6")       '(lambda () "" (interactive) (opacity 60)))
-(global-set-key (kbd "H-7")       '(lambda () "" (interactive) (opacity 70)))
-(global-set-key (kbd "H-8")       '(lambda () "" (interactive) (opacity 80)))
-(global-set-key (kbd "H-9")       '(lambda () "" (interactive) (opacity 90)))
-(global-set-key (kbd "H-0")       '(lambda () "" (interactive) (opacity 100)))
-#+END_SRC
-** Filesystem Operations
-
-These key-bindings are used for modifying or navigating the filesystem.
-
-*** Searching
-
-Search for a regular expression recursively in a directory tree, display results interactively in an emacs buffer.
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "H-f") 'rgrep)
-#+END_SRC
-
-** Keyboard Macros
-
-Allocate F1-F4 specifically for saving and executing keyboard macros.
-
-#+BEGIN_SRC emacs-lisp
-(defun auto-name-macro (name)
-  (if defining-kbd-macro
-      (progn
-        (kmacro-end-or-call-macro nil)
-        (fset
-         (intern (format "mcr-%s" name))
-         last-kbd-macro))
-    (execute-kbd-macro
-     (intern
-      (format "mcr-%s" name)))))
-
-(defun force-execute-auto-name-macro (name)
-  (execute-kbd-macro
-     (intern
-      (format "mcr-%s" name))))
-
-(global-set-key (kbd "H-*")        'kmacro-start-macro)
-(global-set-key (kbd "<f1>")       (lambda () (interactive) (auto-name-macro "f1")))
-(global-set-key (kbd "<f2>")       (lambda () (interactive) (auto-name-macro "f2")))
-(global-set-key (kbd "<f3>")       (lambda () (interactive) (auto-name-macro "f3")))
-(global-set-key (kbd "<f4>")       (lambda () (interactive) (auto-name-macro "f4")))
-(global-set-key (kbd "C-<f1>")     (lambda () (interactive) (force-execute-auto-name-macro "f1")))
-(global-set-key (kbd "C-<f2>")     (lambda () (interactive) (force-execute-auto-name-macro "f2")))
-(global-set-key (kbd "C-<f3>")     (lambda () (interactive) (force-execute-auto-name-macro "f3")))
-(global-set-key (kbd "C-<f4>")     (lambda () (interactive) (force-execute-auto-name-macro "f4")))
-#+END_SRC
-
-** Other Shortcuts
-
-*** Controlling Emacs
-
-Take a page from Vim's notebook at use the escape key as a command toggle & mode exiting switch.
-
-#+BEGIN_SRC emacs-lisp
-(defun execute-command-toggle (prefixes)
-  "If region active, clear it. Else, toggle the M-x menu."
-  (interactive "P")
-  (cond
-    ((window-minibuffer-p)                    (m-keyboard-escape-quit))
-    (mark-active                              (progn (setq mark-active nil) (run-hooks 'deactivate-mark-hook)))
-    (t                                        (execute-extended-command prefixes))))
-
-(defun execute-command-toggle-ignore-region (prefixes)
-  "Toggle M-x menu."
-  (interactive "P")
-  (if (window-minibuffer-p)
-      (m-keyboard-escape-quit)
-    (execute-extended-command prefixes)))
-
-(global-set-key (kbd "<escape>")   'execute-command-toggle)
-(global-set-key (kbd "S-<escape>") 'execute-command-toggle-ignore-region)
-#+END_SRC
-
-*** Common Operations (F5-F8)
-
-Set open-file, save-file, save-file-as, and close-file -like functions to function keys F5-F8.
-
-*These bindings do not use the hyper modifier, and may case collisions!*
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "<f5>")   'find-file)
-(global-set-key (kbd "<f6>")   'custom-save-buffer)
-(global-set-key (kbd "<f7>")   'write-file)
-(global-set-key (kbd "<S-f8>") 'delete-window-ex)
-(global-set-key (kbd "<H-f8>") 'kill-current-buffer)
-(global-set-key (kbd "<f8>")   'delete-window-and-buffer)
-#+END_SRC
-
-*** Special Modes (F9-F12)
-
-Give shell and magit dedicated keys.
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "<f9>") 'shell)
-(global-set-key (kbd "<f10>") 'magit-status)
-(global-set-key (kbd "<f11>") 'magit-blame)
-;; f12 saved for recompilation in prog-mode and code evaluation in org-mode
-#+END_SRC
-
-*** Corrections
-
-Shortcut for flyspell autocorrect.
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "H-c") 'flyspell-auto-correct-word)
-#+END_SRC
-
-*** Adjust Text Scale
-
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "H-=") '(lambda () (interactive) (text-scale-increase 1)))
-(global-set-key (kbd "H--") '(lambda () (interactive) (text-scale-decrease 1)))
-#+END_SRC
-
-** Mode-Specific Key-Bindings
-
-Key bindings that apply only in certain contexts.
-
-*** isearch-mode
-
-*These bindings do not use hyper, and may cause collisions!*
-
-#+BEGIN_SRC emacs-lisp
-(define-key isearch-mode-map (kbd "<backspace>") 'isearch-del-char)
-(define-key isearch-mode-map (kbd "<escape>")    'isearch-exit)
-(define-key isearch-mode-map (kbd "<C-escape>")  'isearch-abort)
-(define-key isearch-mode-map (kbd "<return>")    'isearch-repeat-forward)
-(define-key isearch-mode-map (kbd "S-<return>")  'isearch-repeat-backward)
-(define-key isearch-mode-map (kbd "<right>")     'isearch-yank-word-or-char)
-(define-key isearch-mode-map (kbd "<left>")      'isearch-del-char)
-(define-key isearch-mode-map (kbd "<down>")      'isearch-repeat-forward)
-(define-key isearch-mode-map (kbd "<up>")        'isearch-repeat-backward)
-#+END_SRC
-
-*** query-replace
-
-*These bindings do not use hyper, and may cause collisions!*
-
-#+BEGIN_SRC emacs-lisp
-(define-key query-replace-map (kbd "<up>")     'backup)
-(define-key query-replace-map (kbd "<down>")   'skip)
-(define-key query-replace-map (kbd "<escape>") 'exit)
-(define-key query-replace-map (kbd "<return>") 'act)
-(define-key query-replace-map (kbd "<insert>") 'edit)
-#+END_SRC
-
-*** c-mode
-
-These are applied later in the c-mode-hook
+*** C stuff
 
 #+BEGIN_SRC emacs-lisp
 (defun c-smart-tab-key ()
@@ -1310,25 +1158,8 @@ These are applied later in the c-mode-hook
   (interactive)
   (smart-tab-key 'c-indent-line-or-region 'dabbrev-expand c-basic-offset))
 
-;; TODO: Wrote these long ago, should probably move to yasnippet.
-(define-prefix-command 'c-shortcut-map)
-(define-key c-shortcut-map (kbd "1") 'c-insert-region-heading)
-(define-key c-shortcut-map (kbd "2") 'c-insert-function-skeleton)
-(define-key c-shortcut-map (kbd "3") 'c-insert-forced-todo)
-(define-key c-shortcut-map (kbd "4") 'c-insert-debugging-printf)
-(define-key c-shortcut-map (kbd "5") 'c-insert-ternary-for-boolean-to-string)
-(define-key c-shortcut-map (kbd "6") 'c-insert-todo-comment)
-(define-key c-shortcut-map (kbd "f") 'c-insert-if-block)
-(define-key c-shortcut-map (kbd "o") 'c-insert-for-block)
-(define-key c-shortcut-map (kbd "w") 'c-insert-while-block)
-(define-key c-shortcut-map (kbd "d") 'c-insert-do-while-block)
-(define-key c-shortcut-map (kbd "F") 'c-insert-preproc-if-block)
-(define-key c-shortcut-map (kbd "D") 'c-insert-preproc-ifdef-block)
-(define-key c-shortcut-map (kbd "N") 'c-insert-preproc-ifndef-block)
-(define-key c-shortcut-map (kbd "I") 'c-insert-preproc-include-block)
-
 (defun c-insert-debugging-printf ()
-  "Insert a debugging tag in C -- Garmin compatible."
+  "Insert a debugging tag in C."
   (interactive)
   (insert "printf(\"%50s:%d.\\n\", __FILE__, __LINE__ ); // TODO BJG: DEBUG!")
   (left-char 64))
@@ -1340,7 +1171,7 @@ These are applied later in the c-mode-hook
   (left-char 4))
 
 (defun c-insert-function-skeleton (name desc ret-type)
-  "Insert the skeleton for a new function -- Garmin compatible."
+  "Insert the skeleton for a new function."
   (interactive "sFunction Name: \nsDescription: \nsReturn Type: ")
   (insert "/*********************************************************************\n")
   (insert "*\n")
@@ -1455,312 +1286,604 @@ These are applied later in the c-mode-hook
   (c-indent-line-or-region)
   (end-of-line)
   (left-char 2))
-
-(add-hook 'c-mode-common-hook
-  '(lambda ()
-     (local-set-key (kbd "<tab>")   'c-smart-tab-key)
-     (local-set-key (kbd "TAB")     'c-smart-tab-key)
-     (local-set-key (kbd "C-t")     'c-indent-line-or-region)
-     (local-set-key (kbd "C-r")     'align-current)
-     (local-set-key (kbd "H-c")     'c-shortcut-map)))
 #+END_SRC
 
-* File Associations
-
-** Quick Mappings
-#+BEGIN_SRC emacs-lisp
-(add-to-list 'auto-mode-alist '("\\.plt\\'" . gnuplot-mode))
-(add-to-list 'auto-mode-alist '("\\.m$"     . octave-mode ))
-#+END_SRC
-
-** Generic Modes
-
-B2C, T2C, and F2C files
+*** Org stuff
 
 #+BEGIN_SRC emacs-lisp
-(define-generic-mode 
-  '2c-mode                       ; name of the mode to create
-  '("*")                         ; comments start with '!!'
-  '("c_dep")                     ; keywords
-  nil                            ; special words
-  ;; '(("=" . 'font-lock-operator)     ;; '=' is an operator
-  ;; (";" . 'font-lock-builtin))     ;; ';' is a built-in 
-  '("\\.t2c\\'"  "\\.b2c\\'" "\\.f2c\\'")    ; files for which to activate this mode 
-  '((lambda () (run-hooks 'prog-mode-hook)))                            ; other functions to call
-  "A mode for B2C, T2C, & F2C files")   ; doc string for this mode
+(defun my:org-journal-open-today()
+  "Open today's journal file."
+  (interactive)
+  (find-file (my-org-journal-current-day-path)))
+
+(defun my:org-concept-open ()
+  (interactive)
+  (find-file (my-org-find-concept)))
 #+END_SRC
 
-Monkey-C Mode
+*** Window stuff.
+
+Defined to balance existing function names.
 
 #+BEGIN_SRC emacs-lisp
-(define-generic-mode
-  'monkey-c-mode
-  '("//")
-  '("using" "as" "class" "extends" "function" "hidden" "return")
-  '("initialize" "onUpdate")
-  '("\\.mc\\'")
-  '((lambda () (run-hooks 'prog-mode-hook)))
-  "A mode for Monkey-C")
+(defun split-window-above ()
+  "Split current window into top and bottom, with focus left in bottom."
+  (interactive)
+  (split-window-below)
+  (windmove-down))
+
+(defun split-window-left ()
+  "Split current window into left and right, with focus left in right."
+  (interactive)
+  (split-window-right)
+  (windmove-right))
+
+(defun my:set-window-opacity (percent)
+  "Set window opacity. Prefix arg is level. arg 1 is special and means
+   opaque because my elisp sucks."
+  (interactive "p")
+  (opacity (if (eq percent 1) 100 percent)))
 #+END_SRC
 
-* Mode Management
+#+RESULTS:
+: my:set-window-opacity
 
-Handle which modes/settings are triggered where.
-
-** Global Default Modes
-
-Hide the toolbar, menu bar, and scroll bars.
+*** Text stuff
 
 #+BEGIN_SRC emacs-lisp
-(tool-bar-mode   -1)
-(menu-bar-mode    0)
-(scroll-bar-mode -1)
+(defun smart-beginning-of-line ()
+  "Move point to first non-whitespace character or beginning-of-line.
+   Move point to the first non-whitespace character on this line.
+   If point was already at that position, move point to beginning of line."
+  (interactive) ; Use (interactive "^") in Emacs 23 to make shift-select work
+  (let ((oldpos (point)))
+    (back-to-indentation)
+    (and (= oldpos (point))
+         (beginning-of-line))))
+
+(defun smart-copy-paste ()
+  "Smart copy or paste"
+  (interactive)
+  (if (use-region-p)
+      (if (and (boundp 'rectangle-mark-mode) rectangle-mark-mode)
+          (copy-rectangle-as-kill (region-beginning) (region-end))
+        (kill-ring-save (region-beginning) (region-end)))
+    (yank)))
+
+(defun smart-set-mark ()
+  "Consecutive calls expand region. First sets mark."
+  (interactive)
+  (if mark-active
+    (call-interactively 'er/expand-region)
+  (call-interactively 'set-mark-command)))
+
+(defun smart-cut-or-delete ()
+  "If region, cut, else, delete char"
+  (interactive)
+  (if (use-region-p)
+    (kill-region (region-beginning) (region-end))
+    (delete-forward-char 1)))
+
+(defun whack-whitespace-after-point (arg)
+  ;; https://www.emacswiki.org/emacs/DeletingWhitespace
+  "Delete all white space from point to the next word.  With prefix ARG
+  delete across newlines as well.  The only danger in this is that you
+  don't have to actually be at the end of a word to make it work.  It
+  skips over to the next whitespace and then whacks it all to the next
+  word."
+  ;; (interactive "P")
+    (let ((regexp (if arg "[ \t\n]+" "[ \t]+")))
+      (re-search-forward regexp nil t)
+      (replace-match "" nil nil)))
+
+(defun smart-batch-delete ()
+  (interactive)
+  (if (or (looking-at "$") (looking-at " "))
+      (whack-whitespace-after-point t)
+    (kill-word nil)))
+
+(defun my:comment-region-or-line ()
+  "If region active, comment it. Else, comment current line."
+  (interactive)
+  (call-interactively (if (use-region-p)
+        'comment-region
+      'comment-line)))
+
+(defun newline-after-current ()
+  "Skip to end of this line, insert a new one, autoindent, recenter cursor."
+  (interactive)
+  (move-end-of-line nil)
+  (newline-and-indent)
+  (scroll-up 1))
+
+(defun newline-before-current ()
+  "Move this line down, go to beginning of a new line where this one was."
+  (interactive)
+  (move-beginning-of-line nil)
+  (newline-and-indent)
+  (move-beginning-of-line nil)
+  (when (looking-at "[ \t]+$")
+    (kill-line)
+    (setq kill-ring (cdr kill-ring))
+    (insert "\n")
+    (forward-line -1))
+  (forward-line -1)
+  (indent-for-tab-command))
+
+(defun newline-before-and-after-current()
+  "Insert new lines above and below current line."
+  (interactive)
+  (newline-after-current)
+  (newline-before-current))
+
+(defun previous-appropriate-buffer-if-hidden ()
+  (when (or
+         (and (hidden-buffer-p) (not (dumping-window-p)))
+         (and (not (hidden-buffer-p)) (dumping-window-p)))
+    (previous-appropriate-buffer)))
+
+(defun hidden-buffer-p ()
+  (or
+   (string-match "\*.*\*" (buffer-name))      ; *buffer*s
+   (string-match "^COM[0-9]*$" (buffer-name)) ; windows serial buffer
+   (string-match "^/dev/tty*" (buffer-name))  ; *nix serial buffer
+   (string-match "^TAGS$" (buffer-name))))    ; TAGS file
+
+(defun next-non-sys-buffer ()
+  ""
+  (interactive)
+  (let
+      ((start-buffer (buffer-name)))
+    (next-non-sys-buffer-with-basecase 'next-buffer start-buffer)))
+
+(defun previous-non-sys-buffer ()
+  ""
+  (interactive)
+  (let
+      ((start-buffer (buffer-name)))
+    (next-non-sys-buffer-with-basecase 'previous-buffer start-buffer)))
+
+(defun next-non-sys-buffer-with-basecase (advance-f base)
+  (funcall advance-f)
+  (if (and
+       (not (eq base (buffer-name)))
+       (hidden-buffer-p))
+      (next-non-sys-buffer-with-basecase advance-f base)))
+
+(defun next-sys-buffer ()
+  ""
+  (interactive)
+  (let
+      ((start-buffer (buffer-name)))
+    (next-sys-buffer-with-basecase 'next-buffer start-buffer)))
+
+(defun previous-sys-buffer ()
+  ""
+  (interactive)
+  (let
+      ((start-buffer (buffer-name)))
+    (next-sys-buffer-with-basecase 'previous-buffer start-buffer)))
+
+(defun next-sys-buffer-with-basecase (advance-f base)
+  (funcall advance-f)
+  (if (and
+       (not (eq base (buffer-name)))
+       (not( hidden-buffer-p)))
+      (next-sys-buffer-with-basecase advance-f base)))
+
+(defun next-appropriate-buffer ()
+  (interactive)
+  ; (message (apply 'concat (mapcar (lambda (x) (format "%s -- " x)) (buffer-list))))
+  (if (dumping-window-p)
+      (next-sys-buffer)
+    (next-non-sys-buffer)))
+
+(defun previous-appropriate-buffer ()
+  (interactive)
+  (if (dumping-window-p)
+      (previous-sys-buffer)
+    (previous-non-sys-buffer)))
 #+END_SRC
 
-Highlight and jump through instances of whatever is at point.
+Dormant ideas
+
+#+BEGIN_SRC
+(defun smart-tab-key (indent autocomplete indent-count)
+"Indent when at left margin or right of whitespace, autocomplete elsewhere."
+  (cond (( or (eq last-command 'yank) (eq last-command 'yank-pop)) (yank-pop))
+        (( or
+           (eq last-command 'find-tag)
+           (eq last-command 'find-tag-other-window)
+           (eq last-command 'find-tag-wrapped)
+           (eq last-command 'find-tag-wrapped-new-window))
+         (progn
+           (let ((current-prefix-arg '(4)))
+             (message "Finding next possible definition...")
+             (call-interactively 'find-tag))
+           (recenter-top-bottom)
+           (setq this-command 'find-tag)))
+        ((use-region-p) (indent-rigidly (region-beginning) (region-end) indent-count))
+        ((or (= 0 (current-column)) (= ?\s (char-before))) (funcall indent))
+        (t (funcall autocomplete))))
+
+(defun generic-smart-tab-key ()
+  "Indent when at left margin or right of whitespace, autocomplete elsewhere"
+  (interactive)
+  (smart-tab-key 'indent-for-tab-command 'ac-fuzzy-complete 1))
+#+END_SRC
+
+*** Other stuff
 
 #+BEGIN_SRC emacs-lisp
-(setq region-occurrence-highlight-mode t)
+(defun my:goto-previous-change ()
+  (interactive)
+  (diff-hl-previous-hunk)
+  (recenter))
+
+(defun my:goto-next-change ()
+  (interactive)
+  (diff-hl-next-hunk)
+  (recenter))
+
+(defun my:goto-line ()
+  (interactive)
+  (call-interactively 'goto-line)
+  (recenter))
+
+(defun my:annotated-bookmark ()
+  (interactive)
+  (let* ((bm-annotate-on-create t)) (bm-toggle)))
+
+(defun my:scroll-up-some-lines ()
+  (interactive)
+  (scroll-up 15))
+
+(defun my:scroll-down-some-lines ()
+  (interactive)
+  (scroll-down 15))
+
+(defun my:scroll-left-some-lines ()
+  (interactive)
+  ;; invert axis
+  (scroll-right 5))
+
+(defun my:scroll-right-some-lines ()
+  (interactive)
+  ;; invert axis
+  (scroll-left 5))
+
+(defun my:run-or-save-macro (name)
+  (if defining-kbd-macro
+      (progn
+        (kmacro-end-or-call-macro nil)
+        (fset
+         (intern (format "mcr-%s" name))
+         last-kbd-macro))
+    (execute-kbd-macro
+     (intern
+      (format "mcr-%s" name)))))
+
+(defun my:run-macro (name)
+  (execute-kbd-macro
+     (intern
+      (format "mcr-%s" name))))
+
+(defun execute-command-toggle (prefixes)
+  "If region active, clear it. Else, toggle the M-x menu."
+  (interactive "P")
+  (cond
+    ((window-minibuffer-p)                    (m-keyboard-escape-quit))
+    (mark-active                              (progn (setq mark-active nil) (run-hooks 'deactivate-mark-hook)))
+    (t                                        (counsel-M-x prefixes))))
+
+(defun execute-command-toggle-ignore-region (prefixes)
+  "Toggle M-x menu."
+  (interactive "P")
+  (if (window-minibuffer-p)
+      (m-keyboard-escape-quit)
+    (counsel-M-x prefixes)))
 #+END_SRC
 
-Ensure that org-mode start up using indentation.
+#+RESULTS:
+: execute-command-toggle-ignore-region
+
+** Aliases
+
+Alias some basic functionality to different that may have different backends during experimentation.
 
 #+BEGIN_SRC emacs-lisp
-(setq org-startup-indented t)
+(defalias 'my:google         'helm-google-suggest)
+(defalias 'my:find-text      'swiper)
+(defalias 'my:find-this-text 'swiper-thing-at-point)
+(defalias 'my:find-buffer    'helm-mini)
+(defalias 'my:run-program    'helm-run-external-command)
+(defalias 'my:find-file      'helm-find-files)
+(defalias 'my:occur          'helm-occur)
 #+END_SRC
 
-Use yasnippet everywhere.
+** Keys
 
 #+BEGIN_SRC emacs-lisp
-(yas-global-mode t)
+
+(general-auto-unbind-keys)
+
+(setq my:shortcut-leader "<f12>")
+(general-define-key :prefix my:shortcut-leader
+
+    ;; Double tap
+    my:shortcut-leader 'org-capture
+
+    ;; "o"-> Org global shortcuts
+    "od"               'my:org-journal-open-today
+    "oa"               'org-agenda
+    "ot"               'org-todo-list
+    "oc"               'my:org-concept-open
+
+    ;; "m"-> Magit global shortcuts
+    "ms"               'magit-status
+    "mb"               'magit-blame
+    "md"               'magit-diff
+
+    ;; language modes
+    "lm"               'markdown-mode
+    "lp"               'python-mode
+    "le"               'emacs-lisp-mode
+    "lc"               'c-mode
+    "lo"               'org-mode
+
+    ;; external tools
+    "g"                'my:google
+    "x"                'my:run-program)
+
+(general-define-key
+
+    ;; Controlling emacs
+    "M-x"        'counsel-M-x
+    "<escape>"   'execute-command-toggle
+    "S-<escape>" 'execute-command-toggle-ignore-region
+
+    ;; Window navigation
+    "H-<right>" 'windmove-right
+    "H-<left>"  'windmove-left
+    "H-<down>"  'windmove-down
+    "H-<up>"    'windmove-up
+    "<S-f8>"    'delete-window-ex
+    "<H-f8>"    'kill-current-buffer
+    "<f8>"      'delete-window-ex
+
+    ;; Workspaces (virtual desktops/saved window configs/etc)
+    "H-0"       'eyebrowse-switch-to-window-config-0
+    "H-1"       'eyebrowse-switch-to-window-config-1
+    "H-2"       'eyebrowse-switch-to-window-config-2
+    "H-3"       'eyebrowse-switch-to-window-config-3
+    "H-4"       'eyebrowse-switch-to-window-config-4
+    "H-5"       'eyebrowse-switch-to-window-config-5
+    "H-6"       'eyebrowse-switch-to-window-config-6
+    "H-7"       'eyebrowse-switch-to-window-config-7
+    "H-8"       'eyebrowse-switch-to-window-config-8
+    "H-9"       'eyebrowse-switch-to-window-config-9
+
+    ;; Window splitting
+    ; names seem wrong, but I imagine dpad right to mean "send focus right", etc.
+    "H-s <left>"  'split-window-right
+    "H-s <right>" 'split-window-left
+    "H-s <down>"  'split-window-above
+    "H-s <up>"    'split-window-below
+
+    ; Window resizing
+    "H-S-<up>"      'enlarge-window
+    "H-S-<right>"   'enlarge-window-horizontally
+    "H-S-<down>"    'shrink-window
+    "H-S-<left>"    'shrink-window-horizontally
+
+    ;; Frame manipulations
+    "<H-f11>"   'toggle-frame-fullscreen
+    "H-t"       'my:set-window-opacity
+
+    ;; Keyboard macros
+    "H-*"        'kmacro-start-macro
+    "<f1>"       (lambda () (interactive) (my:run-or-save-macro "f1"))
+    "<f2>"       (lambda () (interactive) (my:run-or-save-macro "f2"))
+    "<f3>"       (lambda () (interactive) (my:run-or-save-macro "f3"))
+    "<f4>"       (lambda () (interactive) (my:run-or-save-macro "f4"))
+    "C-<f1>"     (lambda () (interactive) (my:run-macro "f1"))
+    "C-<f2>"     (lambda () (interactive) (my:run-macro "f2"))
+    "C-<f3>"     (lambda () (interactive) (my:run-macro "f3"))
+    "C-<f4>"     (lambda () (interactive) (my:run-macro "f4"))
+
+    ;; File operations
+    "<f5>"   'my:find-file
+    "<f6>"   'custom-save-buffer
+    "<f7>"   'write-file
+
+    ;; OS Utilities
+    "H-f"  'rgrep
+    "<f9>" 'shell
+
+    ;; Text navigation
+    "<home>"   'smart-beginning-of-line
+    "M-<up>"   'backward-paragraph
+    "M-<down>" 'forward-paragraph
+    "H-o"      'my:occur
+    "H-a"      'my:find-text
+    "H-A"      'my:find-this-text
+    "H-["      'my:goto-previous-change
+    "H-]"      'my:goto-next-change
+    "H-g"      'my:goto-line
+    "H-p"      'isearch-forward-regexp
+    "H-k"      'next-line
+    "H-i"      'previous-line
+    "H-j"      'left-char
+    "H-l"      'right-char
+    "H-h"      'smart-beginning-of-line
+
+    ;; Text selection and editing
+    "C-<delete>"   'smart-batch-delete
+    "<insert>"     'smart-copy-paste
+    "<delete>"     'smart-cut-or-delete
+    "C-SPC"        'smart-set-mark
+    "H-r"          'anzu-query-replace-regexp
+    "H-y"          'yas-insert-snippet
+    "C-<return>"   'newline-after-current
+    "M-<return>"   'newline-before-current
+    "C-M-<return>" 'newline-before-and-after-current
+    "C-t"          'indent-according-to-mode
+    "C-z"          'undo-tree-undo
+    "C-S-z"        'undo-tree-redo
+    "H-z"          'undo-tree-visualize
+    "C-c a"        'mark-whole-buffer
+
+    ;; Bookmarks
+    "H-SPC"                   'bm-toggle
+    "H-S-SPC"                 'my:annotated-bookmark
+    "H-}"                     'bm-next
+    "H-{"                     'bm-previous
+    "<left-margin> <mouse-1>" 'bm-toggle-mouse
+
+    ;; Text display transformations
+    "H-h" 'origami-toggle-node
+
+    ;; Buffer navigation
+    "H-b"         'my:find-buffer
+    "<prior>"     'previous-appropriate-buffer
+    "<next>"      'next-appropriate-buffer
+    "C-H-<left>"  'buf-move-left
+    "C-H-<right>" 'buf-move-right
+    "C-H-<up>"    'buf-move-up
+    "C-H-<down>"  'buf-move-down
+    "C-<up>"      'my:scroll-down-some-lines
+    "C-<down>"    'my:scroll-up-some-lines
+    "C-<left>"    'my:scroll-left-some-lines
+    "C-<right>"   'my:scroll-right-some-lines
+    "H-u"         'line-to-top-of-window
+
+    ;; Other
+    "H-=" '(lambda () (interactive) (text-scale-increase 1))
+    "H--" '(lambda () (interactive) (text-scale-decrease 1)))
+
+(general-define-key :keymaps 'isearch-mode-map
+    "<backspace>" 'isearch-del-char
+    "<escape>"    'isearch-exit
+    "<C-escape>"  'isearch-abort
+    "<return>"    'isearch-repeat-forward
+    "S-<return>"  'isearch-repeat-backward
+    "<right>"     'isearch-yank-word-or-char
+    "<left>"      'isearch-del-char
+    "<down>"      'isearch-repeat-forward
+    "<up>"        'isearch-repeat-backward)
+
+(general-define-key :keymaps 'query-replace-map
+    "<up>"     'backup
+    "<down>"   'skip
+    "<escape>" 'exit
+    "<return>" 'act
+    "<insert>" 'edit)
+
+(general-define-key :keymaps 'c-mode-map
+    "<tab>" 'c-smart-tab-key
+    "TAB"   'c-smart-tab-key
+    "C-t"   'c-indent-line-or-region
+    "C-r"   'align-current)
+
+(general-define-key :keymaps 'c-mode-map :prefix "H-c"
+    "1" 'c-insert-region-heading
+    "2" 'c-insert-function-skeleton
+    "3" 'c-insert-forced-todo
+    "4" 'c-insert-debugging-printf
+    "5" 'c-insert-ternary-for-boolean-to-string
+    "6" 'c-insert-todo-comment
+    "f" 'c-insert-if-block
+    "o" 'c-insert-for-block
+    "w" 'c-insert-while-block
+    "d" 'c-insert-do-while-block
+    "F" 'c-insert-preproc-if-block
+    "D" 'c-insert-preproc-ifdef-block
+    "N" 'c-insert-preproc-ifndef-block
+    "I" 'c-insert-preproc-include-block)
+
+(general-define-key :keymaps 'prog-mode-map
+    "H-;" 'my:comment-region-or-line)
+
+(general-define-key :keymaps 'shell-mode-map
+    "C-p"   'comint-previous-input
+    "C-n"   'comint-next-input
+    "C-M-l" nil)
+
+(general-define-key :keymaps 'flyspell-mode-map
+    "H-c" 'flyspell-auto-correct-word)
+
+(customize-set-variable 'exwm-input-global-keys
+    `((,(kbd "H-<left>") .    windmove-left)
+      (,(kbd "H-s <up>") .    split-window-below)
+      (,(kbd "H-<right>") .   windmove-right)
+      (,(kbd "H-<down>") .    windmove-down)
+      (,(kbd "H-<up>") .      windmove-up)
+      (,(kbd "<H-f8>") .      kill-current-buffer)
+      (,(kbd "S-<F8>") .      delete-window-ex)
+      (,(kbd "S-<F8>") .      delete-window-ex)
+      (,(kbd "H-b") .         my:find-buffer)
+      (,(kbd "H-S-<up>") .    (lambda () (interactive) (enlarge-window 5)))
+      (,(kbd "H-S-<right>") . enlarge-window-horizontally)
+      (,(kbd "H-S-<down>") .  (lambda () (interactive) (shrink-window 5)))
+      (,(kbd "H-S-<left>") .  shrink-window-horizontally)
+      (,(kbd "H-s <down>") .  split-window-above)
+      (,(kbd "H-s <left>") .  split-window-right)
+      (,(kbd "H-s <right>") . split-window-left)
+      (,(kbd "H-c") .         exwm-input-release-keyboard)
+      (,(kbd "H-l") .         exwm-input-grab-keyboard)
+      (,(kbd "H-e") .         exwm-edit--compose)
+      (,(kbd "H-0") .         eyebrowse-switch-to-window-config-0)
+      (,(kbd "H-1") .         eyebrowse-switch-to-window-config-1)
+      (,(kbd "H-2") .         eyebrowse-switch-to-window-config-2)
+      (,(kbd "H-3") .         eyebrowse-switch-to-window-config-3)
+      (,(kbd "H-4") .         eyebrowse-switch-to-window-config-4)
+      (,(kbd "H-5") .         eyebrowse-switch-to-window-config-5)
+      (,(kbd "H-6") .         eyebrowse-switch-to-window-config-6)
+      (,(kbd "H-7") .         eyebrowse-switch-to-window-config-7)
+      (,(kbd "H-8") .         eyebrowse-switch-to-window-config-8)
+      (,(kbd "H-9") .         eyebrowse-switch-to-window-config-9)
+      (,(kbd "C-M-<left>") .  eyebrowse-prev-window-config)
+      (,(kbd "C-M-<right>") . eyebrowse-next-window-config)))
+
+(customize-set-variable 'exwm-input-simulation-keys
+    `((,(kbd "H-a") .        ,(kbd "C-f"))
+      (,(kbd "<insert>") .   ,(kbd "C-c"))
+      (,(kbd "S-<insert>") . ,(kbd "C-v"))))
 #+END_SRC
 
-Use ido by default.
+#+RESULTS:
+: (([16777313] . ) ([insert] . ) ([S-insert] . ))
 
-#+BEGIN_SRC emacs-lisp
-(ido-mode)
+Dead block -- can be used to generate keys for workspace switching.
+I'm just using window layouts instead.
+
+#+BEGIN_SRC
+,@(mapcar (lambda (i)
+        `(,(kbd (format "H-%d" i)) .
+          (lambda ()
+              (interactive)
+              (exwm-workspace-switch-create ,i))))
+              (number-sequence 0 9)))
 #+END_SRC
 
-** Mode Triggers
+* To Be Completed
 
-*** prog-mode
+** Switch to general
+https://github.com/noctuid/general.el
 
-The hook =prog-mode-hook= is triggered in all programming major-modes.
+** Better workspace management
+Workspaces..or company mode, or whatever that is?
+https://github.com/wasamasa/eyebrowse
 
-#+BEGIN_SRC emacs-lisp
-(add-hook 'prog-mode-hook
-  '(lambda ()
-    (flyspell-prog-mode) ;; Spelling corrections in comments
-    (linum-mode)))       ;; Needed to catch compiler errors when compiling outside of emacs
-#+END_SRC
+** Less RSI?
+Evil?
+https://github.com/chrisdone/god-mode
 
-*** text-mode
-
-#+BEGIN_SRC emacs-lisp
-(add-hook 'text-mode-hook
-  (lambda ()
-    (flyspell-mode)
-    (visual-line-mode)
-    (variable-pitch-mode t)
-    (text-scale-increase 1)))
-#+END_SRC
-
-*** org-mode
-
-Mode hooks
-
-#+BEGIN_SRC emacs-lisp
-(add-hook 'org-mode-hook
-  (lambda ()
-    (visual-line-mode)
-    (variable-pitch-mode nil)
-    (text-scale-increase 0)))
-#+END_SRC
-
-Adjust the keymap just a bit...
-
-#+BEGIN_SRC emacs-lisp
-(define-key org-mode-map (kbd "S-<right>")   'windmove-right)
-(define-key org-mode-map (kbd "S-<left>")    'windmove-left)
-(define-key org-mode-map (kbd "S-<down>")    'windmove-down)
-(define-key org-mode-map (kbd "S-<up>")      'windmove-up)
-(define-key org-mode-map (kbd "C-S-<up>")    (lambda () (interactive) (enlarge-window 5)))
-(define-key org-mode-map (kbd "C-S-<right>") 'enlarge-window-horizontally)
-(define-key org-mode-map (kbd "C-S-<down>")  (lambda () (interactive) (shrink-window 5)))
-(define-key org-mode-map (kbd "C-S-<left>")  'shrink-window-horizontally)
-(define-key org-mode-map (kbd "M-<up>")      'backward-paragraph)
-(define-key org-mode-map (kbd "M-<down>")    'forward-paragraph)
-#+END_SRC
-
-*** c-mode
-
-Use employer's preferred C format...
-
-#+BEGIN_SRC emacs-lisp
-(add-hook 'c-mode-common-hook
-  '(lambda ()
-     (set 'c-basic-offset  4)            ; 4 spaces for indentation
-     (set 'c-electric-flag nil)          ; don't fuck with my indentation as I type
-     (c-set-style "whitesmith")
-     (setq comment-start "// ")
-     (setq comment-end   "")))
-#+END_SRC
-
-*** octave-mode
-#+BEGIN_SRC emacs-lisp
-(add-hook 'octave-mode-hook
-  (lambda ()
-    (local-set-key (kbd "C-\\") 'octave-send-region-or-line)))
-#+END_SRC
+** Switch to require-package
+** Clean up some bindings with hydra
+** Get CEDET set up
+*** or at least tags (etags? rtags?)
 *** compilation-mode
-#+BEGIN_SRC emacs-lisp
-(add-hook 'compilation-mode-hook
-  (lambda ()
-    (visual-line-mode)
-    (local-set-key (kbd "H-]") 'next-error)
-    (local-set-key (kbd "H-[") 'previous-error)))
-#+END_SRC
-*** shell-mode
-#+BEGIN_SRC emacs-lisp
-(add-hook 'shell-mode-hook
-  (lambda ()
-    (local-set-key (kbd "C-M-l") nil)
-    (local-set-key (kbd "C-<up>") 'scroll-up-15-lines)
-    (local-set-key (kbd "C-<down>") 'scroll-down-15-lines)
-    (local-set-key (kbd "C-p") 'comint-previous-input)
-    (local-set-key (kbd "C-n") 'comint-next-input)
-    (setq show-trailing-whitespace nil)
-    (visual-line-mode t)))
-#+END_SRC
-*** python-mode
-#+BEGIN_SRC emacs-lisp
-(add-hook 'python-mode-hook
-  (lambda ()
-    (local-set-key (kbd "<tab>")         'generic-smart-tab-key)
-    (local-set-key (kbd "TAB")           'generic-smart-tab-key)
-    (local-set-key (kbd "C-t")           'indent-for-tab-command)
-    (local-set-key (kbd "<backspace>")   'backward-delete-char-untabify)
-    (local-set-key (kbd "C-\\")          'run-python-in-shell)
-    (local-set-key (kbd "C-r")           'align-current)
-    (local-set-key (kbd "C-|")           'python-shell-send-buffer)))
-#+END_SRC
-*** ruby-mode
-
-#+BEGIN_SRC emacs-lisp
-(add-hook 'ruby-mode-hook
-  (lambda ()
-    (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
-    (local-set-key (kbd "TAB")   'generic-smart-tab-key)
-    (local-set-key (kbd "C-t") 'indent-for-tab-command)))
-#+END_SRC
-
-*** scheme-mode
-
-#+BEGIN_SRC emacs-lisp
-(add-hook 'scheme-mode-hook
-  (lambda ()
-    (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
-    (local-set-key (kbd "TAB")   'generic-smart-tab-key)
-    (local-set-key (kbd "C-t")   'indent-for-tab-command)))
-#+END_SRC
-
-*** emacs-lisp-mode
-
-#+BEGIN_SRC emacs-lisp
-(add-hook 'emacs-lisp-mode-hook
-  (lambda ()
-    (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
-    (local-set-key (kbd "TAB")   'generic-smart-tab-key)
-    (local-set-key (kbd "C-t")   'indent-for-tab-command)))
-#+END_SRC
-
-*** term-mode
-
-#+BEGIN_SRC emacs-lisp
-(add-hook 'term-mode-hook
-  (lambda ()
-    (linum-mode -1)
-    (setq show-trailing-whitespace nil)
-    (term-pager-toggle)))
-#+END_SRC
-* Package Configurations
-** org-mode
-
-Use minted for code.
-
-#+BEGIN_SRC emacs-lisp
-(setq org-latex-listings 'minted
-      org-latex-packages-alist '(("" "minted")
-                                 ("margin=2cm" "geometry" nil))
-      org-latex-pdf-process
-      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
-#+END_SRC
-
-* Monkey Patching
-
-** isearch Advice
-
-This advice modifies isearch such that it will always auto-wrap whenever a match is not found between point and the end of the buffer.
-
-#+BEGIN_SRC emacs-lisp
-(defadvice isearch-search (after isearch-no-fail activate)
-  "Autowrap searches."
-  (unless isearch-success
-    (ad-disable-advice 'isearch-search 'after 'isearch-no-fail)
-    (ad-activate 'isearch-search)
-    (isearch-repeat (if isearch-forward 'forward))
-    (ad-enable-advice 'isearch-search 'after 'isearch-no-fail)
-    (ad-activate 'isearch-search)))
-#+END_SRC
-
-This advice causes isearch, the split-window-*, compilation mode, etc, functions to recenter the buffer. This means less time spent searching for the cursor, without having a distracting cursor design.
-
-#+BEGIN_SRC emacs-lisp
- (defadvice isearch-forward
-    (after isearch-forward-recenter activate)
-    (recenter))
-
-(defadvice isearch-repeat-forward
-  (after isearch-repeat-forward-recenter activate)
-  (recenter))
-
-(defadvice isearch-repeat-backward
-  (after isearch-repeat-backward-recenter activate)
-  (recenter))
-
-(defadvice isearch-printing-char
-  (after isearch-printing-char-then-recenter activate)
-  (recenter))
-
-(defadvice split-window-below
-  (after split-window-below-recenter activate)
-  (recenter))
-
-(defadvice split-window-left
-  (after split-window-left-recenter activate)
-  (recenter))
-
-(defadvice split-window-right
-  (after split-window-right-recenter activate)
-  (recenter))
-
-(defadvice split-window-above
-  (after split-window-above-recenter activate)
-  (recenter))
-
-(defadvice compile-goto-error
-  (after compile-goto-error-then-recenter activate)
-  (recenter))
-#+END_SRC
-** diff-hl Triggers
-
-Whenever a file in version control is opened, enable diff-hl mode.
-
-#+BEGIN_SRC emacs-lisp
-(add-hook 'find-file-hook
-  (lambda ()
-    (when (vc-backend (buffer-file-name))
-        (diff-hl-mode)
-        (diff-hl-update))))
-#+END_SRC
+*** magit
+** A code folding package
+** key cheatsheet printer
