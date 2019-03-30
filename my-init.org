@@ -1,43 +1,49 @@
 #+TITLE:  Brandon's Emacs Init
-#+AUTHOR: Brandon Guttersohn
-#+EMAIL:  bguttersohn@gmail.com
+#+PROPERTY: header-args :results output silent
 
-This is my emacs init file, written in org-babel.
+My emacs init file.
+
+Much of this has been pulled from other projects/init/EmacsWiki files
+in the emacs community, and to the best of my knowledge, the original
+source for each section has been attributed. Please let me know if you
+find missing or incorrect attributions!
 
 * Localization (pre-package)
 
-Set config variables on a per-system basis. TODO need a better approach.
+Set config variables on a per-system basis.
+- *use-frames*: Whether or not to tune use frame-oriented options in
+  emacs. Nil by default, set to t on systems with tiling window
+  managers.
 
 #+BEGIN_SRC emacs-lisp
-(cond
-  ((eq device-name 'brandon-babypad-archlinux) ;; x230
-     (progn
-        (setq load-org t)
-        ))
-   ((eq device-name 'brandon-thinkpad-archlinux) ;; p51
-     (progn
-       (setq load-org t)
-        ))
-   (t
-     (progn
-       (setq load-org t)
-       )))
+(pcase (system-name)
 
-(unless (boundp 'use-exwm)
-  (setq use-exwm nil))
+  ;; x230
+  ("brandon-babypad-linux"
+    (setq use-frames t))
+
+  ;; P51
+  ("brandon-thinkpad-archlinux"
+    (setq use-frames nil))
+
+  ;; Desktop VM on home server
+  ("remote-workstation"
+    (setq use-frames nil))
+
+  ;; Default Options
+  (sysname
+    (setq use-frames nil)))
 #+END_SRC
-
-#+RESULTS:
 
 * Required Packages
 This section ensures that all required packages are loaded.
 
-TODO: Replace all of this with =use-package=.
+Initialize the package system
 
 #+BEGIN_SRC emacs-lisp
 (require 'package)
 
-(add-to-list 'load-path "~/.emacs.d/lisp/")
+(add-to-list 'load-path "~/.emacs.d/emacs-config/lisp/")
 (add-to-list 'load-path "~/.emacs.d/elpa/")
 
 (add-to-list 'package-archives
@@ -45,11 +51,20 @@ TODO: Replace all of this with =use-package=.
 
 (package-initialize)
 (setq package-enable-at-startup nil)
+#+END_SRC
 
+Require a package, install it if it is not present. This is from
+[[https://www.draketo.de/light/english/emacs/babcore][babcore]].
+
+TODO: Consider =use-package=. It can predicate package loads on system
+binaries (and install them too), and this solution doesn't work if the
+package name in (M)ELPA is different than provide statement in the
+package.
+
+#+BEGIN_SRC emacs-lisp
 (defvar refreshed-packages nil)
 (defun package-require (package)
   "Require package, install if needed."
-   ; source: babcore
   (package-activate package '(0))
   (condition-case nil (require package)
     (progn
@@ -58,39 +73,55 @@ TODO: Replace all of this with =use-package=.
             (package-refresh-contents)
             (setq refreshed-packages t))))
       (error (package-install package))))
+#+END_SRC
 
-(package-require 'revive)           ; restore buffers and windows from previous session
-(package-require 'buffer-move)      ; swap buffers between adjacent windows
-(package-require 'diff-hl)          ; show changes from last commit with edge highlighting
-(package-require 'uniquify)         ; rename buffers of same name intelligently
-(package-require 'undo-tree)        ; incredible undo/redo support
-(package-require 'auto-complete)    ; neat autocompletion
-(package-require 'framemove)        ; jump between frames and windows
-(package-require 'fuzzy)            ; fuzzy completion
-(package-require 'hi-lock)          ; arbitrary text hilighting
-(package-require 'button-lock)      ; face attribute that makes links from text
-(package-require 'bm)               ; bookmark manager
-(package-require 'yasnippet)        ; snippet pasting framework
-(package-require 'anzu)             ; show total/current matches in isearch
-(package-require 'helm)             ; awesome completions
-(package-require 'shackle)          ; control window placement
-(package-require 'visual-regexp)    ; visualize regular expressions in real-time
-(package-require 'expand-region)    ; Expand region
-(package-require 'eyebrowse)        ; Workspace management
-(package-require 'origami)          ; awesome code folding
-(package-require 'general)          ; sane key mapping architecture
-(package-require 'which-key)        ; Display options after prefix keys are entered
-(package-require 'helm-swoop)       ; Quick content based line navigation
-(package-require 'ivy)              ; More friendly helm
-(package-require 'swiper)           ; ivy's swoop
-(package-require 'counsel)          ; ivy's (awesome) bloat
-(package-require 'hy-mode)          ; Lisp on Python
-(package-require 'org-autolist)     ; Automatically add bullets on return
+The actual package list.
+
+#+BEGIN_SRC emacs-lisp
+(package-require 'buffer-move)           ; swap buffers between adjacent windows
+(package-require 'diff-hl)               ; show changes from last commit with edge highlighting
+(package-require 'uniquify)              ; rename buffers of same name intelligently
+(package-require 'undo-tree)             ; incredible undo/redo support
+(package-require 'auto-complete)         ; neat autocompletion
+(package-require 'framemove)             ; jump between frames and windows
+(package-require 'fuzzy)                 ; fuzzy completion
+(package-require 'hi-lock)               ; arbitrary text hilighting
+(package-require 'button-lock)           ; face attribute that makes links from text
+(package-require 'bm)                    ; bookmark manager
+(package-require 'yasnippet)             ; snippet pasting framework
+(package-require 'anzu)                  ; show total/current matches in isearch
+(package-require 'helm)                  ; Only need a few things, have mostly moved to ivy
+(package-require 'shackle)               ; control window placement
+(package-require 'visual-regexp)         ; visualize regular expressions in real-time
+(package-require 'expand-region)         ; Expand region
+(package-require 'eyebrowse)             ; Workspace management
+(package-require 'origami)               ; awesome code folding
+(package-require 'general)               ; sane key mapping architecture
+(package-require 'which-key)             ; Display options after prefix keys are entered
+(package-require 'helm-swoop)            ; Quick content based line navigation
+(package-require 'ivy)                   ; Awesome completion framework
+(package-require 'swiper)                ; ivy's swoop
+(package-require 'counsel)               ; too many ivy-based utilities to list
+(package-require 'hy-mode)               ; Lisp on Python
+(package-require 'org-autolist)          ; Automatically add bullets on return
+(package-require 'pdf-tools)             ; excellent PDF viewer, replaces docview
+(package-require 'pyvenv)                ; make conda envs usable with ob-ipython (and, well, everything else)
+(package-require 'emojify)               ; emoji support
+(package-require 'unicode-fonts)         ; better unicode support
+(package-require 'persistent-soft)       ; caching for unicode mappings
+(package-require 'google-translate)      ; translations
+(package-require 'auto-highlight-symbol) ; highlight the thing under cursor, jump between occurrences
+(package-require 'org-bullets)           ; unicode, indented bullets for org-mode headings
+(package-require 'calfw)                 ; emacs calendar framework
+(package-require 'calfw-org)             ; org-mode calendar support for calfw
+(package-require 'org-caldav)            ; caldav support for emacs
+(package-require 'yequake)               ; quake-style dropdown emacs frame
 #+END_SRC
 
 * Localization (post-package)
 
-Specify paths to basic utilities on Windows
+Specify paths to basic utilities on Windows 7 systems (just use WSL on
+windows 10).
 
 #+BEGIN_SRC emacs-lisp
 (if (equal system-type 'windows-nt)
@@ -107,7 +138,9 @@ Specify paths to basic utilities on Windows
     (add-to-list 'exec-path "C:/cygwin64/bin")
     (add-to-list 'exec-path "C:/Program Files (x86)/Git/bin")
     (setenv "PATH" (concat "C:\\Program Files (x86)\\Git\\bin;" (getenv "PATH")))
-    (setenv "CYGWIN" "nodosfilewarning"))) ;; I don't remember but this did, but I remember it being very frustrating
+    (setenv "CYGWIN" "nodosfilewarning") ;; I don't remember but this did, but I remember it being very frustrating
+    (setenv "WORKON_HOME" "C:/Users/guttersohn/AppData/Local/conda/conda/envs/py36_64/") ;; don't use the weird preloaded Python 2.7
+    (pyvenv-mode 1)))
 #+END_SRC
 
 Special hacks for Windows
@@ -121,17 +154,13 @@ Special hacks for Windows
 
 * Utility
 
-This section defines general purpose code snippets, which are used throughout the rest of the file.
+This section defines general purpose code snippets, which are used
+throughout the rest of the file.
+
+Navigation and environment macros.
 
 #+BEGIN_SRC emacs-lisp
-(defun dumping-window-p ()
-  "Hack, need to clean up.."
-  nil)
-(defun projectile-project-p ()
-  "ditto"
-  nil)
-
-(defmacro recenter-on-jump (&rest body)
+(defmacro my:recenter-on-jump (&rest body)
   "If, during the evaulation of body, point moves past the window's limits,
    in either direction, recenter the buffer in the window."
   `(let*
@@ -141,7 +170,7 @@ This section defines general purpose code snippets, which are used throughout th
      (when (or (> (point) last-pt) (< (point) first-pt))
             (recenter))))
 
-(defmacro retain-position-from-symbol-start (&rest body)
+(defmacro my:retain-position-from-symbol-start (&rest body)
   "Any change of point in this macro body will be readjusted to retain
    the starting distance from the beginning of the current symbol. Most
    reasonable use is when jumping between occurrences of the same symbol."
@@ -156,66 +185,33 @@ This section defines general purpose code snippets, which are used throughout th
        (search-backward-regexp "\\_<"))
      (right-char offset)))
 
-(defun kill-current-buffer ()
-  "kill the current buffer."
-  (interactive)
-  (kill-buffer (current-buffer))
-  (previous-appropriate-buffer-if-hidden))
-
-(defun delete-window-ex (&optional window)
-  (interactive)
-  (let*
-      ((frame  (window-frame window)))
-    (if (eq (length (window-list frame)) 1)
-        (delete-frame frame)
-      (delete-window window))))
-
-(defun delete-window-and-buffer (&optional window-arg skip-window)
-"Intelligent buffer/window closing. If the buffer is not displayed anywhere else, then
-delete it along with the window. Defaults to current window. skip-window lets you skip
-the actual window-deletion step, so that this can be safely used in the frame-delete-functions
-hook."
-  (interactive)
-  (message "Closing window...")
-  (let*
-      ((window (or window-arg (get-buffer-window)))
-       (buffer (window-buffer window)))
-    (if (and (= 1 (length (get-buffer-window-list buffer nil t)))
-             (buffer-file-name buffer)
-             (not (buffer-modified-p buffer)));; if we're the only0 window showing the buffer, and it is an unmodified file, kill it
-        (progn
-          (message (concat "Killing buffer " (buffer-name buffer)))
-          (kill-buffer buffer)
-          ;;(previous-appropriate-buffer-if-hidden))
-          ))
-    (unless skip-window
-      (delete-window-ex window))))
-
-(defun strip-text-properties(txt)
-  (set-text-properties 0 (length txt) nil txt)
-      txt)
-
-(defmacro do-with-silent-bell (&rest body)
+(defmacro my:do-with-silent-bell (&rest body)
+  "Evaluate body with the system bell silenced. Note that any changes
+   to ring-bell-function during body will be lost."
   `(let
        ((ring-bell-function-backup ring-bell-function))
      (setq ring-bell-function nil)
      ,@body
      (setq ring-bell-function ring-bell-function-backup)))
+#+END_SRC
 
-(defun m-keyboard-escape-quit ()
+General functions.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:kill-current-buffer ()
+  "kill the current buffer."
   (interactive)
-  (do-with-silent-bell
+  (kill-buffer (current-buffer)))
+
+(defun my:keyboard-escape-quit ()
+  "Just silence the bell"
+  (interactive)
+  (my:do-with-silent-bell
    (keyboard-escape-quit)))
 
-(defun custom-save-buffer ()
-  "Save file, update diff-hl highlighting"
-  (interactive)
-  (when (or (and (boundp 'diff-hl-mode) diff-hl-mode) (and (boundp 'diff-hl-amend-mode) diff-hl-amend-mode))
-    (diff-hl-update))
-  (save-buffer))
-
-(defun line-word-char-count (&optional start end)
-   "Prints number of lines, words and characters in region or whole buffer."
+(defun my:line-word-char-count (&optional start end)
+   "Returns formatted string with number of lines, words
+    and characters in region or whole buffer."
    (interactive)
    (let ((n 0)
          (start (if mark-active (region-beginning) (point-min)))
@@ -225,28 +221,35 @@ hook."
        (while (< (point) end) (if (forward-word 1) (setq n (1+ n)))))
      (format "[ L%d W%d C%d ] " (count-lines start end) n (- end start))))
 
-(defun line-to-top-of-window ()
+(defun my:line-to-top-of-window ()
    "Shift current line to the top of the window-  i.e. zt in Vim"
    (interactive)
    (set-window-start (selected-window) (point)))
 
-(defun purge-buffers ()
+(defun my:purge-buffers ()
+  "Kill all buffers which aren't being shown."
   (interactive)
   (mapcar 'kill-buffer (remove-if '(lambda (x) (with-current-buffer x (get-buffer-window))) (buffer-list))))
 
-(defun save-config-die ()
-  (interactive)
-  (save-current-configuration)
-  (save-buffers-kill-terminal))
-
-(defun opacity (value)
-   "Sets the opacity of the frame window. 0=transparent/100=opaque"
-   (interactive "nOpacity Value 0 - 100 opaque:")
-   (set-frame-parameter (selected-frame) 'alpha value))
+(defun my:set-window-opacity (percent)
+  "Set window opacity. Prefix arg is opacity in percent.                                                                                         ."
+  (interactive "p")
+  (set-frame-parameter (selected-frame) 'alpha percent))
 #+END_SRC
 
-#+RESULTS:
-: opacity
+** Windows
+
+Set window size from elisp.
+
+#+BEGIN_SRC emacs-lisp
+(defun set-window-width (cols)
+  "Set the selected window's width."
+  (window-resize (selected-window) (- cols (window-width)) t))
+
+(defun set-window-height (rows)
+  "Set the selected window's height."
+  (window-resize (selected-window) (- rows (window-height))))
+#+END_SRC
 
 ** Minor Modes
 
@@ -263,7 +266,8 @@ Marries a buffer to a window.
 
 ** Buffer Monitoring
 
-This is a purely TODO item. Previous version had some code to monitor a buffer and alert upon new appearances of a particular regex.
+This is a purely TODO item. Previous version had some code to monitor
+a buffer and alert upon new appearances of a particular regex.
 
 ** Package Extensions
 
@@ -284,15 +288,19 @@ Preload swiper with thing at point.
 #+END_SRC
 
 * User Interface Settings
-This section defines code which modifies how emacs displays buffers and interacts with the user.
+
+This section defines code which modifies how emacs displays buffers
+and interacts with the user.
 
 ** Tweaks
 
-DISABLED: Use fuzzy matching in ivy
+Make sure emacsclient doesn't open in the background.
 
-#+BEGIN_SRC
-(setq ivy-re-builders-alist
-      '((t . ivy--regex-fuzzy)))
+#+BEGIN_SRC emacs-lisp
+(add-hook 'server-switch-hook
+  (lambda ()
+    (raise-frame)
+    (select-frame-set-input-focus (selected-frame))))
 #+END_SRC
 
 Allow file management in counsel's file-find
@@ -326,9 +334,6 @@ Allow file management in counsel's file-find
      ("b" counsel-find-file-cd-bookmark-action "cd bookmark")))
 #+END_SRC
 
-#+RESULTS:
-: .*\*helm.*\|.*\*Minibuf-.*
-
 Show current/total matches in isearch
 
 #+BEGIN_SRC emacs-lisp
@@ -342,7 +347,8 @@ Show whitespace
 (setq whitespace-style '(face trailing))
 #+END_SRC
 
-Use visual bell instead of audible.
+Use visual bell instead of audible, courtesy of Miles Bader. Code
+mirror on GitHub [[https://github.com/tobias/emacs.d/blob/master/lib/echo-area-bell.el][here]].
 
 #+BEGIN_SRC emacs-lisp
 ;; nice little alternative visual bell; Miles Bader <miles /at/ gnu.org>
@@ -462,7 +468,7 @@ Show prefix keys in the echo area much faster.
 (setq echo-keystrokes 0.001)
 #+END_SRC
 
-Tabs are not okay.
+Stop trying to make tabs happen. They're not going to happen.
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'font-lock-mode-hook
@@ -475,7 +481,7 @@ Tabs are not okay.
 Highlight some common tags.
 
 #+BEGIN_SRC emacs-lisp
-(font-lock-add-keywords nil
+(font-lock-add-keywords 'prog-mode
   '(("\\<\\(DEBUG\\)" 1 font-lock-warning-face prepend)
     ("\\<\\(FIXME\\)" 1 font-lock-warning-face prepend)
     ("\\<\\(TODO\\)"  1 font-lock-warning-face prepend)
@@ -488,23 +494,38 @@ Clear the minibuffer.
 (delete-minibuffer-contents)
 #+END_SRC
 
+Hide the cursor
+
+#+BEGIN_SRC emacs-lisp
+(mouse-avoidance-mode 'banish)
+#+END_SRC
+
+When deleting the last window in a frame, delete the frame (rather
+than failing to delete the window).
+
+#+BEGIN_SRC emacs-lisp
+(defadvice delete-window (around delete-frame-if-one-win activate)
+  "If WINDOW is the only one in its frame, then `delete-frame' too.
+   Source: https://www.emacswiki.org/emacs/download/frame-cmds.el"
+   (if (fboundp 'with-selected-window)   ; Emacs 22+
+       (with-selected-window
+         (or (ad-get-arg 0)  (selected-window))
+         (if (one-window-p t) (delete-frame) ad-do-it))
+       (save-current-buffer
+         (select-window (or (ad-get-arg 0)  (selected-window)))
+         (if (one-window-p t) (delete-frame) ad-do-it))))
+#+END_SRC
+
 ** Mode Line & Header Line
 
 This code adds a strongly customized header and mode line.
 
+TODO: Serious cleanup and reorg needed. Works well, but the code is
+nasty.
+
 #+BEGIN_SRC emacs-lisp
 (defmacro my-header-line ()
   `(list
-    '(:eval
-      (when (and (projectile-project-p) (buffer-file-name))
-        (let*
-            ((mface  (if (window-has-focus)
-                         'mode-line-buffer-name-face
-                       'mode-line-buffer-name-inactive-face)))
-          (propertize (if (and (projectile-project-p) (buffer-file-name))
-                          (concat " " (car (last (split-string (projectile-project-root) "/") 2)) ": ")
-                        " ") 'face mface))))
-
       '(:eval
         (let*
             ((mface (if (window-has-focus)
@@ -602,6 +623,14 @@ This code adds a strongly customized header and mode line.
               'display `((space :align-to (- (+ right right-fringe right-margin) ,reserve)))
               'face face))
 
+(defun my:current-workspace-name ()
+  (let*
+      ((slot (eyebrowse--get 'current-slot))
+       (name (nth 2 (assoc slot (eyebrowse--get 'window-configs)))))
+    (if (> (length name) 0)
+        name
+      (concat "W:" (number-to-string slot)))))
+
 (setq-default mode-line-format
   (list
 
@@ -635,11 +664,11 @@ This code adds a strongly customized header and mode line.
     '(:eval (when (eq major-mode 'text-mode)
              (mode-line-str-dflt
               (if transient-mark-mode
-               (line-word-char-count (point) (mark))
-               (line-word-char-count)))))
+               (my:line-word-char-count (point) (mark))
+               (my:line-word-char-count)))))
 
     ;;; STATUSES: less important stuff
-    (mode-line-status-entry (and (window-has-focus) (fboundp 'eyebrowse--get))     (format " W:%d " (eyebrowse--get 'current-slot)) "Current Workspace")
+    (mode-line-status-entry (and (window-has-focus) (fboundp 'eyebrowse--get))     (format "[%s]" (my:current-workspace-name)) "Current Workspace")
     (mode-line-status-entry (/= text-scale-mode-amount 0) (format " ±%d " text-scale-mode-amount) "Font scale")
     (mode-line-status-entry buffer-read-only              " RO "                                  "Buffer is read-only")
     (mode-line-status-entry vc-mode                       (concat " VC:" vc-mode " ")             vc-mode)
@@ -665,53 +694,17 @@ This code adds a strongly customized header and mode line.
 
 #+END_SRC
 
-** Phrase Highlight
+** Frames and Windows
 
-This highlights all occurrences of the thing at point, automatically.
+When use-frames is set, configure emacs to use popup frames. Also,
+assume that we're using StumpWM & load it.
 
 #+BEGIN_SRC emacs-lisp
-(add-hook 'pre-command-hook 'clear-phrase-highlight)
-(defvar-local hlight-region-face-var nil)
-(defvar-local hlight-regex nil)
-(defvar-local hlight-region-type nil)
-(defvar-local hlight-region-active nil)
-(defvar-local region-occurrence-highlight-mode nil)
-(defvar-local region-occurrence-highlight-at-point t)
-(setq-default region-occurrence-highlight-at-point t)
-
-(defun clear-phrase-highlight ()
-  "Remove region phrase highlight"
-  (if hlight-region-active
-      (progn
-        (unhighlight-regexp (hi-lock-process-phrase hlight-regex))
-        (setq hlight-region-active nil)
-        (font-lock-fontify-buffer))))
-
-(defun update-phrase-highlight ()
-  "Highlight region if active"
-  (clear-phrase-highlight)
-  (if (and region-occurrence-highlight-mode (not isearch-mode) (not (minibufferp)))
-      (progn
-        (setq hlight-regex nil)
-        (if mark-active
-            (setq
-             hlight-regex           (buffer-substring-no-properties (region-beginning) (region-end))
-             hlight-region-face-var 'region-occurrence-highlight-face
-             hlight-region-type     'region)
-          (let
-              ((sym (thing-at-point 'symbol)))
-            (if (and region-occurrence-highlight-at-point sym (> (length sym) 0))
-                (setq hlight-regex           (concat "\\_<" (hi-lock-process-phrase (strip-text-properties (thing-at-point 'symbol))) "\\_>")
-                      hlight-region-face-var 'region-occurrence-no-region-highlight-face
-                      hlight-region-type     'at-pt))))
-        (if hlight-regex
-            (progn
-              ;; (message (format "Occurrences of %s" hlight-regex))
-              (highlight-phrase (hi-lock-process-phrase hlight-regex) hlight-region-face-var)
-              (setq hlight-region-active t)
-              (font-lock-fontify-buffer))))))
-
-(run-with-idle-timer 0.25 t 'update-phrase-highlight)
+(when use-frames
+  (progn
+    (require 'stumpwm-mode)
+    (add-to-list 'default-frame-alist '(alpha . (90 . 90)))
+    (setq pop-up-frames t)))
 #+END_SRC
 
 * File Associations
@@ -727,16 +720,14 @@ This highlights all occurrences of the thing at point, automatically.
 B2C, T2C, and F2C files
 
 #+BEGIN_SRC emacs-lisp
-(define-generic-mode 
-  '2c-mode                       ; name of the mode to create
-  '("*")                         ; comments start with '!!'
-  '("c_dep")                     ; keywords
-  nil                            ; special words
-  ;; '(("=" . 'font-lock-operator)     ;; '=' is an operator
-  ;; (";" . 'font-lock-builtin))     ;; ';' is a built-in 
-  '("\\.t2c\\'"  "\\.b2c\\'" "\\.f2c\\'")    ; files for which to activate this mode 
-  '((lambda () (run-hooks 'prog-mode-hook)))                            ; other functions to call
-  "A mode for B2C, T2C, & F2C files")   ; doc string for this mode
+(define-generic-mode
+  '2c-mode                                   ; name of the mode to create
+  '("*")                                     ; comments start with '!!'
+  '("c_dep")                                 ; keywords
+  nil                                        ; special words
+  '("\\.t2c\\'"  "\\.b2c\\'" "\\.f2c\\'")    ; files for which to activate this mode
+  '((lambda () (run-hooks 'prog-mode-hook))) ; other functions to call
+  "A mode for B2C, T2C, & F2C files")        ; doc string for this mode
 #+END_SRC
 
 Monkey-C Mode
@@ -764,7 +755,7 @@ Truncate lines, don't wrap.
 (setq-default truncate-lines t)
 #+END_SRC
 
-Don't use lockfiles....SeaFile shits the bed.
+Don't use lockfiles....causes issues in SeaFile.
 
 #+BEGIN_SRC emacs-lisp
 (setq create-lockfiles nil)
@@ -776,20 +767,11 @@ Manage workspaces
 (eyebrowse-mode t)
 #+END_SRC
 
-Persist workspaces, etc.
-
-TODO: this actually causes me many problems
-
-#+BEGIN_SRC
-(desktop-save-mode 1)
-#+END_SRC
-
 Help me with my keys
 
 #+BEGIN_SRC emacs-lisp
 (which-key-mode)
 #+END_SRC
-
 
 Enable helm by default
 
@@ -811,20 +793,6 @@ Hide the toolbar, menu bar, and scroll bars.
 (scroll-bar-mode -1)
 #+END_SRC
 
-Open the speedbar
-
-TODO: Need to tweak this more before I want it enabled...
-
-#+BEGIN_SRC emacs-lisp
-;; (sr-speedbar-open)
-#+END_SRC
-
-Highlight and jump through instances of whatever is at point.
-
-#+BEGIN_SRC emacs-lisp
-(setq region-occurrence-highlight-mode t)
-#+END_SRC
-
 Use yasnippet everywhere.
 
 #+BEGIN_SRC emacs-lisp
@@ -837,6 +805,24 @@ Use ido by default.
 (ido-mode)
 #+END_SRC
 
+Use pdf-tools for viewing PDF documents, rather than docview
+
+#+BEGIN_SRC emacs-lisp
+(pdf-tools-install)
+#+END_SRC
+
+Emoji everywhere.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'after-init-hook #'global-emojify-mode)
+#+END_SRC
+
+Unicode setup
+
+#+BEGIN_SRC emacs-lisp
+(unicode-fonts-setup)
+#+END_SRC
+
 ** Mode Triggers
 *** prog-mode
 
@@ -846,8 +832,8 @@ The hook =prog-mode-hook= is triggered in all programming major-modes.
 (add-hook 'prog-mode-hook
   '(lambda ()
     (flyspell-prog-mode) ;; Spelling corrections in comments
-    (linum-mode))       ;; Needed to catch compiler errors when compiling outside of emacs
-    (setq region-occurrence-highlight-mode t))
+    (linum-mode)       ;; Needed to catch compiler errors when compiling outside of emacs
+    (auto-highlight-symbol-mode)))
 #+END_SRC
 
 *** text-mode
@@ -880,8 +866,8 @@ Use employer's preferred C format...
 #+BEGIN_SRC emacs-lisp
 (add-hook 'c-mode-common-hook
   '(lambda ()
-     (set 'c-basic-offset  4)            ; 4 spaces for indentation
-     (set 'c-electric-flag nil)          ; don't fuck with my indentation as I type
+     (set 'c-basic-offset  4)
+     (set 'c-electric-flag nil)
      (c-set-style "whitesmith")
      (setq comment-start "// ")
      (setq comment-end   "")))
@@ -893,6 +879,7 @@ Use employer's preferred C format...
   (lambda ()
     (local-set-key (kbd "C-\\") 'octave-send-region-or-line)))
 #+END_SRC
+
 *** compilation-mode
 #+BEGIN_SRC emacs-lisp
 (add-hook 'compilation-mode-hook
@@ -901,6 +888,7 @@ Use employer's preferred C format...
     (local-set-key (kbd "H-]") 'next-error)
     (local-set-key (kbd "H-[") 'previous-error)))
 #+END_SRC
+
 *** shell-mode
 #+BEGIN_SRC emacs-lisp
 (add-hook 'shell-mode-hook
@@ -908,8 +896,16 @@ Use employer's preferred C format...
     (setq show-trailing-whitespace nil)
     (visual-line-mode t)))
 #+END_SRC
+
 *** python-mode
 #+BEGIN_SRC emacs-lisp
+(defun my/python-interrupt()
+    (interactive)
+    (let ((proc (ignore-errors
+    (python-shell-get-process-or-error))))
+    (when proc
+    (interrupt-process proc))))
+
 (add-hook 'python-mode-hook
   (lambda ()
     (local-set-key (kbd "<tab>")         'generic-smart-tab-key)
@@ -918,8 +914,10 @@ Use employer's preferred C format...
     (local-set-key (kbd "<backspace>")   'backward-delete-char-untabify)
     (local-set-key (kbd "C-\\")          'run-python-in-shell)
     (local-set-key (kbd "C-r")           'align-current)
-    (local-set-key (kbd "C-|")           'python-shell-send-buffer)))
+    (local-set-key (kbd "C-|")           'python-shell-send-buffer)
+    (local-set-key (kbd "C-d")           'my/python-interrupt)))
 #+END_SRC
+
 *** ruby-mode
 
 #+BEGIN_SRC emacs-lisp
@@ -959,38 +957,515 @@ Use employer's preferred C format...
     (setq show-trailing-whitespace nil)
     (term-pager-toggle)))
 #+END_SRC
+
 * Package Configurations
 ** org-mode
+*** General Configs
 
-Set the base location for my org tree.
+Ensure that org-mode starts up using indentation.
 
 #+BEGIN_SRC emacs-lisp
-(setq my-org-file-tree-base-path "/encrypted_data/org")
+(setq org-startup-indented t)
 #+END_SRC
 
-Load the tree's initialization code.
+Mode hooks
 
 #+BEGIN_SRC emacs-lisp
-(if load-org
-  (org-babel-load-file (concat my-org-file-tree-base-path "/init.org")))
+(add-hook 'org-mode-hook
+  (lambda ()
+    (text-scale-increase 0)
+    (org-bullets-mode 1)))
 #+END_SRC
 
-** sr-speedbar
+*** Export
 
-Don't automatically change directory on me!
-
-TODO: See speedbar enable above
+Use minted code sections in PDF export, and fixup the margins a bit.
 
 #+BEGIN_SRC emacs-lisp
-;;(sr-speedbar-refresh-turn-off)
-;;(setq speedbar-use-images nil) ;; I'd actually like better looking images..
+(setq org-latex-listings 'minted
+      org-latex-packages-alist '(("" "minted")
+                                 ("margin=2cm" "geometry" nil))
+      org-latex-pdf-process
+      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+#+END_SRC
+
+Don't add a table of contents upon export.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-export-with-toc nil)
+#+END_SRC
+
+*** Agenda
+
+Define org todo keywords.
+
+#+BEGIN_SRC emacs-lisp
+(setq-default org-todo-keywords
+  '((sequence "TODO(t!)" "IN_PROGRESS(i!)" "NEXT(n!)" "HIATUS(h!)" "PENDING(p!)" "WAIT(w!)" "|" "DONE(d!)" "CANCELLED(c!)" "MIGRATED(m!)")))
+#+END_SRC
+
+And their faces.
+
+#+BEGIN_SRC emacs-lisp
+(setq-default org-todo-keyword-faces
+      '(( "TODO" .        (:foreground "white"      :background "darkorchid4"  :weight bold              ))
+        ( "IN_PROGRESS" . (                         :background "deeppink3"    :weight bold              ))
+        ( "NEXT" .        (                         :background "deeppink3"    :weight bold              ))
+        ( "HIATUS" .      (:foreground "white"                                              :slant italic))
+        ( "DONE" .        (:foreground "white"      :background "forest green" :weight bold              ))
+        ( "CANCELLED" .   (:foreground "light gray"                                         :slant italic))
+        ( "FAILED" .      (:foreground "white"      :background "red"          :weight bold              ))
+        ( "MIGRATED"      (:foreground "light gray"                                         :slant italic))
+        ( "PENDING"       (:foreground "light gray"                                         :slant italic))
+        ( "WAIT"          (                         :background "Red"          :weight bold              ))))
+#+END_SRC
+
+And their priorities:
+ - *A* This is critical and urgent
+ - *B* This is very important and/or time sensitive
+ - *C* Needs to happen in the near future.
+ - *D* Would be cool to do this.
+ - *E* Just an idea. Whatever.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-highest-priority ?A)
+(setq org-lowest-priority  ?E)
+(setq org-default-priority ?B)
+(setq org-priority-faces '((?A . (:foreground "white" :background "dark red" :weight bold))
+                           (?B . (:foreground "white" :background "dark green" :weight bold))
+                           (?C . (:foreground "green" :weight bold))
+                           (?D . (:foreground "yellow"))
+                           (?E . (:foreground "gray"))))
+#+END_SRC
+
+Uncomplicate agenda fonts.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-agenda-deadline-faces '((1.0 . org-upcoming-deadline)
+                                  (0.0 . (:foreground "light pink" :slant italic))))
+#+END_SRC
+
+Show state changes in org-agenda log mode.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-agenda-log-mode-items '(closed clock state))
+#+END_SRC
+
+Log into drawer (LOGBOOK)
+
+#+BEGIN_SRC emacs-lisp
+(setq org-log-into-drawer t)
+#+END_SRC
+
+Open agenda in current window.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-agenda-window-setup 'current-window)
+#+END_SRC
+
+Mark items closed, as many times as needed.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-log-done 'time)
+(setq org-closed-keep-when-no-todo t)
+#+END_SRC
+
+Hide items scheduled in future from org-todo list.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-agenda-todo-ignore-scheduled 'future)
+#+END_SRC
+
+Add custom agenda command, use some awesome code from [[https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html][this blog]] and [[https://stackoverflow.com/questions/10074016/org-mode-filter-on-tag-in-agenda-view/33444799#33444799][this StackOverflow user]].
+
+#+BEGIN_SRC emacs-lisp
+(defcustom my:work-tag               nil "Name of org-mode work tag")
+
+(defun air-org-skip-subtree-if-priority (priority)
+  "Skip an agenda subtree if it has a priority of PRIORITY.
+
+PRIORITY may be one of the characters ?A, ?B, or ?C."
+  (let ((subtree-end (save-excursion (org-end-of-subtree t)))
+        (pri-value (* 1000 (- org-lowest-priority priority)))
+        (pri-current (org-get-priority (thing-at-point 'line t))))
+    (if (= pri-value pri-current)
+        subtree-end
+      nil)))
+
+(defun air-org-skip-subtree-if-habit ()
+  "Skip an agenda entry if it has a STYLE property equal to \"habit\"."
+  (let ((subtree-end (save-excursion (org-end-of-subtree t))))
+    (if (string= (org-entry-get nil "STYLE") "habit")
+        subtree-end
+      nil)))
+
+(defun air-org-skip-subtree-unless-habit ()
+  "Skip an agenda entry if it has a STYLE property equal to \"habit\"."
+  (let ((subtree-end (save-excursion (org-end-of-subtree t))))
+    (if (string= (org-entry-get nil "STYLE") "habit")
+        nil
+      subtree-end)))
+
+(defun zin/org-agenda-skip-tag (tag &optional others)
+  "Skip all entries that correspond to TAG.
+
+If OTHERS is true, skip all entries that do not correspond to TAG."
+  (let ((next-headline (save-excursion (or (outline-next-heading) (point-max))))
+        (current-headline (or (and (org-at-heading-p)
+                                   (point))
+                              (save-excursion (org-back-to-heading)))))
+    (if others
+        (if (not (member tag (org-get-tags-at current-headline)))
+            next-headline
+          nil)
+      (if (member tag (org-get-tags-at current-headline))
+          next-headline
+        nil))))
+
+(let*
+    ((work-str      (symbol-name my:work-tag))
+     (omit-work-str (concat "-" work-str)))
+  (setq org-agenda-custom-commands
+      `(("d" "Daily agenda and all TODOs"
+         (
+          (agenda "" ((org-agenda-span 7)
+                      (org-agenda-skip-function 'air-org-skip-subtree-if-habit)
+                      (org-agenda-overriding-header "Weekly Agenda:")))
+          (agenda "" ((org-agenda-span 1)
+                      (org-agenda-skip-function 'air-org-skip-subtree-unless-habit)
+                      (org-agenda-overriding-header "Open Habits:")))
+          (alltodo ""
+                   ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+                                                   (org-agenda-skip-if nil '(scheduled deadline))))
+                    (org-agenda-overriding-header "Incomplete Unscheduled Tasks:"))))
+         ((org-agenda-compact-blocks nil)))
+
+        ("h" "Habits"
+         (
+          (agenda "" ((org-agenda-span 1)
+                      (org-agenda-skip-function 'air-org-skip-subtree-unless-habit)
+                      (org-agenda-overriding-header "Open Habits:"))))
+        ((org-agenda-compact-blocks nil)))
+
+        ("w" "Filtered Weekly Agenda"
+         (
+          (agenda "" ((org-agenda-span 7)
+                      (org-agenda-skip-function 'air-org-skip-subtree-if-habit)
+                      (org-agenda-overriding-header "Weekly Agenda:"))))
+         ((org-agenda-compact-blocks nil)))
+
+         ("u" "Incomplete, Unscheduled TODO List (non-work)"
+         (
+          (alltodo ""
+                   ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+                                                   (org-agenda-skip-if nil '(scheduled deadline))))
+                    (org-agenda-overriding-header "Incomplete Unscheduled Tasks:")
+                    (org-agenda-tag-filter-preset '(,omit-work-str)))))
+         ((org-agenda-compact-blocks nil)))
+
+         ("g" "Work related TODO items" tags-todo ,work-str
+            ((org-agenda-overriding-header "Work Tasks:")))
+
+         ("x" "Combined Task List"
+           (
+           (alltodo ""
+                   ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+                                                   (zin/org-agenda-skip-tag ,work-str)
+                                                   (zin/org-agenda-skip-tag "NOAGENDA")))
+                    (org-agenda-overriding-header "Personal Tasks:")))
+           (alltodo ""
+                   ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+                                                   (zin/org-agenda-skip-tag ,work-str 't)
+                                                   (zin/org-agenda-skip-tag "NOAGENDA")))
+                    (org-agenda-overriding-header "Work Tasks:"))))))))
+#+END_SRC
+
+*** Babel
+
+Enable IPython
+
+#+BEGIN_SRC emacs-lisp
+(with-eval-after-load 'org
+  (progn
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     '((ipython . t)
+       (shell . t)))))
+#+END_SRC
+
+Note: Add this to your IPython init file to render DataFrames and
+arrays as org tables. Courtesy of Greg Sexton via the [[https://github.com/gregsexton/ob-ipython][ob-ipython Github]].
+
+It also sets the theme to dark, which makes plot look great when
+inlined in my (dark themed) emacs. Side-effect is that it doesn't look
+great in PDF export.
+
+#+BEGIN_SRC ipython
+import IPython
+from tabulate import tabulate
+
+class OrgFormatter(IPython.core.formatters.BaseFormatter):
+    def __call__(self, obj):
+        try:
+            return tabulate(obj, headers='keys',
+                            tablefmt='orgtbl', showindex='always')
+        except:
+            return None
+
+ip = get_ipython()
+ip.display_formatter.formatters['text/org'] = OrgFormatter()
+
+import matplotlib.pyplot as plt
+plt.style.use( 'dark_background' )
+#+END_SRC
+
+Make code blocks stand out.
+
+#+BEGIN_SRC emacs-lisp
+(custom-set-faces
+  '(org-block-begin-line
+     ((t (:weight bold :foreground "#FFC0CB" :background "#222222"))))
+  '(org-block
+     ((t (:background "#222222"))))
+  '(org-block-end-line
+     ((t (:weight bold :foreground "#FFC0CB" :background "#222222")))))
+#+END_SRC
+
+Display images after each eval
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'org-babel-after-execute-hook 'org-display-inline-images 'append)
+#+END_SRC
+
+Track boldness for many lines.
+
+#+BEGIN_SRC emacs-lisp
+(setcar (nthcdr 4 org-emphasis-regexp-components) 10)
+(org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
+#+END_SRC
+
+Map file extensions to external programs which open them. org-mode
+uses this when following file links.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-file-apps
+  '((auto-mode . emacs)
+     ("\\.ods" . "libreoffice %s")))
+#+END_SRC
+
+Live fearlessly.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-confirm-babel-evaluate nil)
+#+END_SRC
+
+*** Habit Tracking
+
+Sort org-habits by priority. See [[https://emacs.stackexchange.com/questions/32430/how-to-sort-habits-by-priority-in-the-org-agenda-view][StackOverflow]].
+
+#+BEGIN_SRC emacs-lisp
+(defun hw-org-agenda-sort-habits (a b)
+  "Sort habits first by user priority, then by schedule+deadline+consistency."
+  (let ((ha (get-text-property 1 'org-habit-p a))
+        (hb (get-text-property 1 'org-habit-p b)))
+    (when (and ha hb)
+      (let ((pa (org-get-priority a))
+            (pb (org-get-priority b)))
+        (cond ((> pa pb) +1)
+              ((< pa pb) -1)
+              ((= pa pb) (org-cmp-values a b 'priority)))))))
+(setq org-agenda-cmp-user-defined 'hw-org-agenda-sort-habits
+      org-agenda-sorting-strategy '((agenda time-up user-defined-down habit-down)
+                                    (todo priority-down category-keep)
+                                    (tags priority-down category-keep)
+                                    (search category-keep)))
+#+END_SRC
+
+*** Personal Journal
+
+Defcustoms for various personal definitions.
+
+#+BEGIN_SRC emacs-lisp
+(defcustom my:org-scraps-path         nil "Writing prompts and scraps")
+(defcustom my:org-dream-journal-path  nil "Dream journal file path")
+(defcustom my:org-file-tree-base-path nil "Base directory of my org directory structure")
+#+END_SRC
+
+Add function to rebuild org file list. Call it once.
+
+#+BEGIN_SRC emacs-lisp
+(defun my-org-update-agenda-index()
+  (interactive)
+  (setq org-agenda-files (directory-files-recursively my:org-file-tree-base-path ".*\\.org$")))
+(my-org-update-agenda-index)
+#+END_SRC
+
+Add function to interactively select an existing concept file.
+
+#+BEGIN_SRC emacs-lisp
+  (defun my-org-list-concepts ()
+    (seq-filter (lambda (path)
+                  (and (file-directory-p path)
+                       (file-exists-p (concat path "/concept.org"))))
+                (directory-files-recursively (concat my:org-file-tree-base-path "/concepts/") ".*" t)))
+
+  (defun my-org-find-concept ()
+    (call-interactively
+      (lambda (choice)
+        (interactive
+          (list (ivy-read "Existing Concepts: "
+            (my-org-list-concepts))))
+          (concat choice "/concept.org"))))
+#+END_SRC
+
+Add function to search existing concepts, journals, etc.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:org-search-concept ()
+  (interactive)
+  (counsel-ag "" my:org-file-tree-base-path))
+#+END_SRC
+
+Functions for creating and opening daily journal pages.
+
+#+BEGIN_SRC emacs-lisp
+(defun my-org-journal-current-day-path()
+  "Get the path to today's journal file."
+  (let*
+  ((journal-root (concat my:org-file-tree-base-path "/journal/"))
+    (filename     "journal.org")
+    (path (concat journal-root (format-time-string "%Y/%m/%e/" (current-time)) filename)))
+    path))
+
+(defun my-org-journal-open-today ()
+  "Open today's journal file, creating it if missing."
+  (interactive)
+  (my-org-journal-make-if-missing)
+  (find-file (my-org-journal-current-day-path)))
+
+(defun my-org-journal-make-if-missing()
+  "Unless already present, create a journal ORG file for today from the existing template."
+  (interactive)
+  (let
+   '(path (my-org-journal-current-day-path))
+  (progn
+    (save-excursion
+      (unless (file-exists-p path)
+        (progn
+          (find-file path)
+          (yas-expand-snippet (yas-lookup-snippet "Journal Page Template" 'org-mode))
+          (save-buffer)
+          (kill-buffer)
+          (my-org-update-agenda-index))))
+     path)))
+#+END_SRC
+
+*** Capture
+
+Define org-capture templates.
+
+|------+--------------------------------------------------------------------------------------------------------|
+| Code | Purpose                                                                                                |
+|------+--------------------------------------------------------------------------------------------------------|
+| j    | Journal Entries. Writes a timestamped heading under the "Thoughts" section of today's journal.org      |
+| u    | Unscheduled/unplanned TODO items, written to today's journal.org. Prompts for priority.                |
+| c    | Concept-based TODO items, written to that concept's concept.org file. Prompts for concept and priority |
+| d    | Dream journal entries. Writes a timestamped heading to the dreams/journal concept file.                |
+| p    | Writing prompts and scraps. Writes timestamped section to the writing scraps file.                     |
+|------+--------------------------------------------------------------------------------------------------------|
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-capture-templates
+
+      `(("j"
+        "journal"
+        entry
+        (file+headline my-org-journal-make-if-missing "Thoughts")
+        "** %U %?"
+        :empty-lines 1)
+
+       ("u"
+        "unscheduled task"
+        entry
+        (file+headline my-org-journal-make-if-missing "Action Items")
+        "** TODO [#%^{Priority|C|A|B|D|E}] %?\n%U"
+        :empty-lines 1)
+
+       ("c"
+        "Concept Task"
+        entry
+        (file+headline my-org-find-concept "Action Items")
+        "** TODO [#%^{Priority|C|A|B|D|E}] %?\n%U"
+        :empty-lines 1)
+
+       ("d"
+        "Dream Journal"
+        entry
+        (file+headline ,my:org-dream-journal-path "Dream Log")
+        "** %U\n%?"
+        :prepend t
+        :empty-lines 1)
+
+       ("p"
+        "Writing Prompt"
+        plain
+        (file+headline ,my:org-scraps-path "Scraps")
+        "%U\n%?"
+        :prepend t
+        :empty-lines 1)))
+#+END_SRC
+
+** python-mode
+
+Use IPython
+
+#+BEGIN_SRC emacs-lisp
+(setq python-shell-interpreter "ipython"
+        python-shell-interpreter-args "--simple-prompt -i")
+#+END_SRC
+
+** yasnippet
+
+Set the snippet dir
+
+#+BEGIN_SRC emacs-lisp
+(setq yas-snippet-dirs '("~/.emacs.d/emacs-config/snippets"))
+(yas-reload-all)
+#+END_SRC
+
+** org-caldav
+
+Configure calDAV server. Defcustoms used so that I can occasionally
+share this file on GitHub without needing to sanitize as much.
+
+#+BEGIN_SRC emacs-lisp
+(defcustom my:org-ical-timezone      nil "Timezone used for org-caldav")
+(defcustom my:org-caldav-url         nil "URL used by org-caldav")
+(defcustom my:org-caldav-calendar-id nil "ID used by org-caldav")
+
+(if (and my:org-caldav-calendar-id my:org-ical-timezone my:org-caldav-url)
+  (setq org-caldav-url         my:org-caldav-url
+        org-caldav-calendar-id my:org-caldav-calendar-id
+        org-caldav-inbox       (concat my:org-file-tree-base-path "/calendar.org")
+        org-icalendar-timezone my:org-ical-timezone
+        org-caldav-files       '()))
+#+END_SRC
+
+** calfw
+
+Change the theme a bit -- for whatever reason this wasn't defcustom'd.
+
+#+BEGIN_SRC emacs-lisp
+(setq-default cfw:org-face-agenda-item-foreground-color "Pink")
 #+END_SRC
 
 * Monkey Patching
 
 ** isearch Advice
 
-This advice modifies isearch such that it will always auto-wrap whenever a match is not found between point and the end of the buffer.
+This advice modifies isearch such that it will always auto-wrap
+whenever a match is not found between point and the end of the buffer.
 
 #+BEGIN_SRC emacs-lisp
 (defadvice isearch-search (after isearch-no-fail activate)
@@ -1003,7 +1478,9 @@ This advice modifies isearch such that it will always auto-wrap whenever a match
     (ad-activate 'isearch-search)))
 #+END_SRC
 
-This advice causes isearch, the split-window-*, compilation mode, etc, functions to recenter the buffer. This means less time spent searching for the cursor, without having a distracting cursor design.
+This advice causes isearch, the split-window-*, compilation mode, etc,
+functions to recenter the buffer. This means less time spent searching
+for the cursor, without having a distracting cursor design.
 
 #+BEGIN_SRC emacs-lisp
  (defadvice isearch-forward
@@ -1042,6 +1519,7 @@ This advice causes isearch, the split-window-*, compilation mode, etc, functions
   (after compile-goto-error-then-recenter activate)
   (recenter))
 #+END_SRC
+
 ** diff-hl Triggers
 
 Whenever a file in version control is opened, enable diff-hl mode.
@@ -1053,6 +1531,19 @@ Whenever a file in version control is opened, enable diff-hl mode.
         (diff-hl-mode)
         (diff-hl-update))))
 #+END_SRC
+
+Whenever a file is saved, make sure diff-hl is force updated.
+TODO: This probably shouldn't be needed?
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'after-save-hook
+  (lambda ()
+    (when (or
+            (and (boundp 'diff-hl-mode) diff-hl-mode)
+            (and (boundp 'diff-hl-amend-mode) diff-hl-amend-mode))
+      (diff-hl-update))))
+#+END_SRC
+
 ** find-file
 
 Yes, I do want to create the directories....
@@ -1065,16 +1556,17 @@ Yes, I do want to create the directories....
       (unless (file-exists-p dir)
         (make-directory dir)))))
 #+END_SRC
-* OS Integration
 
-Sometimes, I want emacs to be my window manager.
+* OS Integration
 
 ** EXWM
 
-Use emacs as window manager. :)
+Support for using EXWM (Emacs X-Window Manager). :) Though, I've
+switched to StumpWM for the time being.
 
 #+BEGIN_SRC emacs-lisp
 (defun my:launch-de()
+    "Modified from code here: http://doc.rix.si/cce/cce-exwm.html"
     (package-require 'exwm)
     (package-require 'exwm-systemtray)
     (package-require 'exwm-edit)
@@ -1097,19 +1589,22 @@ Use emacs as window manager. :)
     ;(setq exwm-manage-configurations '((t char-mode t))))
 #+END_SRC
 
-#+RESULTS:
-: my:launch-de
-
 * Window Placement
 
-Place helm completions in a temp window at the bottom of the frame, period. Thankfully, ivy doesn't need this.
+Place helm completions in a temp window at the bottom of the frame,
+period. Thankfully, ivy doesn't need this. Source on [[https://github.com/wasamasa/shackle/issues/28][Github]].
 
 #+BEGIN_SRC emacs-lisp
 (setq shackle-rules '(("\\`\\*helm.*?\\*\\'" :regexp t :align t :ratio 0.4)))
 #+END_SRC
 
 * Key Mappings
-Most of my custom key-bindings use the hyper key. The goal here is to prevent any reasonable possibility of collision between personal keybindings and package keybindings. By convention, C-<key> is already reserved for the user, but we have another modifier available anyway, so why not use it? In my case, the hyper modifier is bound to caps lock.
+Most of my custom key-bindings use the hyper key. The goal here is to
+prevent any reasonable possibility of collision between personal
+keybindings and package keybindings. By convention, C-<key> is already
+reserved for the user, but we have another modifier available anyway,
+so why not use it? In my case, the hyper modifier is bound to caps
+lock.
 
 To map caps lock to hyper under Xorg, you may do the following:
 
@@ -1121,7 +1616,8 @@ clear lock
 add mod3 = Hyper_L
 #+END_SRC
 
-In windows, install AutoHotkey, and place the following in a startup script...
+In windows, install AutoHotkey, and place the following in a startup
+script...
 
 #+BEGIN_SRC autohotkey
 SetTitleMatchMode, 2
@@ -1144,13 +1640,21 @@ IfWinActive, emacs
         w32-apps-modifier 'hyper))
 #+END_SRC
 
-Do note that this leaves the apps key unusable in emacs, except as a secondary hyper modifier. I have not yet found another way to do this which works well for me.
+Do note that this leaves the apps key unusable in emacs, except as a
+secondary hyper modifier. I have not yet found another way to do this
+which works well for me.
 
 ** Functions
 
 Functions designed specifically to be used as key mappings.
 
 *** C stuff
+
+Most of these were written as a "learning elisp" exercise when I first
+started emacs, but then I ended up actually using them
+consistently. There are better approaches to this.
+
+TOOD: Replace with yasnippet or other libraries where appropriate
 
 #+BEGIN_SRC emacs-lisp
 (defun c-smart-tab-key ()
@@ -1288,19 +1792,6 @@ Functions designed specifically to be used as key mappings.
   (left-char 2))
 #+END_SRC
 
-*** Org stuff
-
-#+BEGIN_SRC emacs-lisp
-(defun my:org-journal-open-today()
-  "Open today's journal file."
-  (interactive)
-  (find-file (my-org-journal-current-day-path)))
-
-(defun my:org-concept-open ()
-  (interactive)
-  (find-file (my-org-find-concept)))
-#+END_SRC
-
 *** Window stuff.
 
 Defined to balance existing function names.
@@ -1317,16 +1808,7 @@ Defined to balance existing function names.
   (interactive)
   (split-window-right)
   (windmove-right))
-
-(defun my:set-window-opacity (percent)
-  "Set window opacity. Prefix arg is level. arg 1 is special and means
-   opaque because my elisp sucks."
-  (interactive "p")
-  (opacity (if (eq percent 1) 100 percent)))
 #+END_SRC
-
-#+RESULTS:
-: my:set-window-opacity
 
 *** Text stuff
 
@@ -1334,7 +1816,8 @@ Defined to balance existing function names.
 (defun smart-beginning-of-line ()
   "Move point to first non-whitespace character or beginning-of-line.
    Move point to the first non-whitespace character on this line.
-   If point was already at that position, move point to beginning of line."
+   If point was already at that position, move point to beginning of line.
+   https://www.emacswiki.org/emacs/BackToIndentationOrBeginning#toc2"
   (interactive) ; Use (interactive "^") in Emacs 23 to make shift-select work
   (let ((oldpos (point)))
     (back-to-indentation)
@@ -1364,6 +1847,21 @@ Defined to balance existing function names.
     (kill-region (region-beginning) (region-end))
     (delete-forward-char 1)))
 
+(defun execute-command-toggle (prefixes)
+  "If region active, clear it. Else, toggle the M-x menu."
+  (interactive "P")
+  (cond
+    ((window-minibuffer-p)                    (my:keyboard-escape-quit))
+    (mark-active                              (progn (setq mark-active nil) (run-hooks 'deactivate-mark-hook)))
+    (t                                        (counsel-M-x prefixes))))
+
+(defun execute-command-toggle-ignore-region (prefixes)
+  "Toggle M-x menu."
+  (interactive "P")
+  (if (window-minibuffer-p)
+      (my:keyboard-escape-quit)
+    (counsel-M-x prefixes)))
+
 (defun whack-whitespace-after-point (arg)
   ;; https://www.emacswiki.org/emacs/DeletingWhitespace
   "Delete all white space from point to the next word.  With prefix ARG
@@ -1386,7 +1884,7 @@ Defined to balance existing function names.
   "If region active, comment it. Else, comment current line."
   (interactive)
   (call-interactively (if (use-region-p)
-        'comment-region
+        'comment-or-uncomment-region
       'comment-line)))
 
 (defun newline-after-current ()
@@ -1417,10 +1915,7 @@ Defined to balance existing function names.
   (newline-before-current))
 
 (defun previous-appropriate-buffer-if-hidden ()
-  (when (or
-         (and (hidden-buffer-p) (not (dumping-window-p)))
-         (and (not (hidden-buffer-p)) (dumping-window-p)))
-    (previous-appropriate-buffer)))
+  (previous-appropriate-buffer))
 
 (defun hidden-buffer-p ()
   (or
@@ -1473,46 +1968,31 @@ Defined to balance existing function names.
 
 (defun next-appropriate-buffer ()
   (interactive)
-  ; (message (apply 'concat (mapcar (lambda (x) (format "%s -- " x)) (buffer-list))))
-  (if (dumping-window-p)
-      (next-sys-buffer)
-    (next-non-sys-buffer)))
+  (next-non-sys-buffer))
 
 (defun previous-appropriate-buffer ()
   (interactive)
-  (if (dumping-window-p)
-      (previous-sys-buffer)
-    (previous-non-sys-buffer)))
+  (previous-non-sys-buffer))
 #+END_SRC
 
-Dormant ideas
+*** Python Stuff
+Run python in shell.
 
-#+BEGIN_SRC
-(defun smart-tab-key (indent autocomplete indent-count)
-"Indent when at left margin or right of whitespace, autocomplete elsewhere."
-  (cond (( or (eq last-command 'yank) (eq last-command 'yank-pop)) (yank-pop))
-        (( or
-           (eq last-command 'find-tag)
-           (eq last-command 'find-tag-other-window)
-           (eq last-command 'find-tag-wrapped)
-           (eq last-command 'find-tag-wrapped-new-window))
-         (progn
-           (let ((current-prefix-arg '(4)))
-             (message "Finding next possible definition...")
-             (call-interactively 'find-tag))
-           (recenter-top-bottom)
-           (setq this-command 'find-tag)))
-        ((use-region-p) (indent-rigidly (region-beginning) (region-end) indent-count))
-        ((or (= 0 (current-column)) (= ?\s (char-before))) (funcall indent))
-        (t (funcall autocomplete))))
-
-(defun generic-smart-tab-key ()
-  "Indent when at left margin or right of whitespace, autocomplete elsewhere"
+#+BEGIN_SRC emacs-lisp
+(defun run-python-in-shell ()
   (interactive)
-  (smart-tab-key 'indent-for-tab-command 'ac-fuzzy-complete 1))
+  (if (use-region-p)
+      (call-interactively 'python-shell-send-region)
+    (save-excursion
+      (progn
+        (beginning-of-line)
+        (push-mark)
+        (end-of-line)
+        (call-interactively 'python-shell-send-region)
+        (pop-mark)))))
 #+END_SRC
 
-*** Other stuff
+*** Navigation Stuff
 
 #+BEGIN_SRC emacs-lisp
 (defun my:goto-previous-change ()
@@ -1551,7 +2031,11 @@ Dormant ideas
   (interactive)
   ;; invert axis
   (scroll-left 5))
+#+END_SRC
 
+*** Keyboard Macro Stuff
+
+#+BEGIN_SRC emacs-lisp
 (defun my:run-or-save-macro (name)
   (if defining-kbd-macro
       (progn
@@ -1567,295 +2051,393 @@ Dormant ideas
   (execute-kbd-macro
      (intern
       (format "mcr-%s" name))))
-
-(defun execute-command-toggle (prefixes)
-  "If region active, clear it. Else, toggle the M-x menu."
-  (interactive "P")
-  (cond
-    ((window-minibuffer-p)                    (m-keyboard-escape-quit))
-    (mark-active                              (progn (setq mark-active nil) (run-hooks 'deactivate-mark-hook)))
-    (t                                        (counsel-M-x prefixes))))
-
-(defun execute-command-toggle-ignore-region (prefixes)
-  "Toggle M-x menu."
-  (interactive "P")
-  (if (window-minibuffer-p)
-      (m-keyboard-escape-quit)
-    (counsel-M-x prefixes)))
 #+END_SRC
 
-#+RESULTS:
-: execute-command-toggle-ignore-region
+*** Other Stuff
+#+BEGIN_SRC emacs-lisp
+(defun my:revert-buffer-no-prompt ()
+  "Revert buffer without confirmation. From https://emacs.stackexchange.com/questions/10348/revert-buffer-discard-unsaved-changes-without-y-n-prompt"
+  (interactive) (revert-buffer t t))
+#+END_SRC
 
 ** Aliases
 
-Alias some basic functionality to different that may have different backends during experimentation.
+Alias some basic functionality to names that may have different
+backends during experimentation.
 
 #+BEGIN_SRC emacs-lisp
-(defalias 'my:google         'helm-google-suggest)
-(defalias 'my:find-text      'swiper)
-(defalias 'my:find-this-text 'swiper-thing-at-point)
-(defalias 'my:find-buffer    'helm-mini)
-(defalias 'my:run-program    'helm-run-external-command)
-(defalias 'my:find-file      'helm-find-files)
-(defalias 'my:occur          'helm-occur)
+(defalias 'my:google                  'helm-google-suggest)
+(defalias 'my:find-text               'swiper)
+(defalias 'my:find-this-text          'swiper-thing-at-point)
+(defalias 'my:find-buffer             'helm-mini)
+(defalias 'my:run-program             'helm-run-external-command)
+(defalias 'my:find-file               'counsel-find-file)
+(defalias 'my:occur                   'helm-occur)
 #+END_SRC
 
 ** Keys
 
 #+BEGIN_SRC emacs-lisp
+  (general-auto-unbind-keys)
 
-(general-auto-unbind-keys)
+  (setq my:shortcut-leader "<f12>")
+  (general-define-key :prefix my:shortcut-leader
 
-(setq my:shortcut-leader "<f12>")
-(general-define-key :prefix my:shortcut-leader
+      ;; Double tap
+      my:shortcut-leader 'org-capture
 
-    ;; Double tap
-    my:shortcut-leader 'org-capture
+      ;; "o"-> Org global shortcuts
+      "od"               'my-org-journal-open-today
+      "oa"               'org-agenda
+      "ot"               'org-todo-list
+      "oc"               'my:org-concept-open
+      "os"               'my:org-search-concept
+      "obii"             'ob-ipython-inspect
 
-    ;; "o"-> Org global shortcuts
-    "od"               'my:org-journal-open-today
-    "oa"               'org-agenda
-    "ot"               'org-todo-list
-    "oc"               'my:org-concept-open
+      ;; "m"-> Magit global shortcuts
+      "ms"               'magit-status
+      "mb"               'magit-blame
+      "md"               'magit-diff
 
-    ;; "m"-> Magit global shortcuts
-    "ms"               'magit-status
-    "mb"               'magit-blame
-    "md"               'magit-diff
+      ;; "l" -> language modes
+      "lm"               'markdown-mode
+      "lp"               'python-mode
+      "le"               'emacs-lisp-mode
+      "lc"               'c-mode
+      "lo"               'org-mode
 
-    ;; language modes
-    "lm"               'markdown-mode
-    "lp"               'python-mode
-    "le"               'emacs-lisp-mode
-    "lc"               'c-mode
-    "lo"               'org-mode
+      ;; "c" -> Calendar
+      "cs"               'org-caldav-sync
+      "cf"               'cfw:open-org-calendar
 
-    ;; external tools
-    "g"                'my:google
-    "x"                'my:run-program)
+      ;; "s" -> system
+      "sg"                'my:google
+      "sx"                'my:run-program
+      "sl"                'counsel-locate
 
-(general-define-key
+      ;; t -> translate
+      "t"                 'google-translate-at-point
+      ;; "i" -> input methods
+      "ie"                (lambda () (interactive) (set-input-method nil) (message "English"))
+      "ic"                (lambda () (interactive) (set-input-method 'chinese-tonepy) (message "Chinese (pinyin)")))
 
-    ;; Controlling emacs
-    "M-x"        'counsel-M-x
-    "<escape>"   'execute-command-toggle
-    "S-<escape>" 'execute-command-toggle-ignore-region
+  (general-define-key
 
-    ;; Window navigation
-    "H-<right>" 'windmove-right
-    "H-<left>"  'windmove-left
-    "H-<down>"  'windmove-down
-    "H-<up>"    'windmove-up
-    "<S-f8>"    'delete-window-ex
-    "<H-f8>"    'kill-current-buffer
-    "<f8>"      'delete-window-ex
+      ;; Controlling emacs
+      "M-x"        'counsel-M-x
+      "<escape>"   'execute-command-toggle
+      "S-<escape>" 'execute-command-toggle-ignore-region
 
-    ;; Workspaces (virtual desktops/saved window configs/etc)
-    "H-0"       'eyebrowse-switch-to-window-config-0
-    "H-1"       'eyebrowse-switch-to-window-config-1
-    "H-2"       'eyebrowse-switch-to-window-config-2
-    "H-3"       'eyebrowse-switch-to-window-config-3
-    "H-4"       'eyebrowse-switch-to-window-config-4
-    "H-5"       'eyebrowse-switch-to-window-config-5
-    "H-6"       'eyebrowse-switch-to-window-config-6
-    "H-7"       'eyebrowse-switch-to-window-config-7
-    "H-8"       'eyebrowse-switch-to-window-config-8
-    "H-9"       'eyebrowse-switch-to-window-config-9
+      ;; Window navigation
+      "H-<right>" 'windmove-right
+      "H-<left>"  'windmove-left
+      "H-<down>"  'windmove-down
+      "H-<up>"    'windmove-up
+      "<S-f8>"    'delete-window
+      "<H-f8>"    'my:kill-current-buffer
+      "<f8>"      'delete-window
 
-    ;; Window splitting
-    ; names seem wrong, but I imagine dpad right to mean "send focus right", etc.
-    "H-s <left>"  'split-window-right
-    "H-s <right>" 'split-window-left
-    "H-s <down>"  'split-window-above
-    "H-s <up>"    'split-window-below
+      ;; Workspaces (virtual desktops/saved window configs/etc)
+      "H-0"       'eyebrowse-switch-to-window-config-0
+      "H-1"       'eyebrowse-switch-to-window-config-1
+      "H-2"       'eyebrowse-switch-to-window-config-2
+      "H-3"       'eyebrowse-switch-to-window-config-3
+      "H-4"       'eyebrowse-switch-to-window-config-4
+      "H-5"       'eyebrowse-switch-to-window-config-5
+      "H-6"       'eyebrowse-switch-to-window-config-6
+      "H-7"       'eyebrowse-switch-to-window-config-7
+      "H-8"       'eyebrowse-switch-to-window-config-8
+      "H-9"       'eyebrowse-switch-to-window-config-9
 
-    ; Window resizing
-    "H-S-<up>"      'enlarge-window
-    "H-S-<right>"   'enlarge-window-horizontally
-    "H-S-<down>"    'shrink-window
-    "H-S-<left>"    'shrink-window-horizontally
+      ;; Window splitting
+      ; names seem wrong, but I imagine dpad right to mean "send focus right", etc.
+      "H-s <left>"  'split-window-right
+      "H-s <right>" 'split-window-left
+      "H-s <down>"  'split-window-above
+      "H-s <up>"    'split-window-below
 
-    ;; Frame manipulations
-    "<H-f11>"   'toggle-frame-fullscreen
-    "H-t"       'my:set-window-opacity
+      ; Window resizing
+      "H-S-<up>"      'enlarge-window
+      "H-S-<right>"   'enlarge-window-horizontally
+      "H-S-<down>"    'shrink-window
+      "H-S-<left>"    'shrink-window-horizontally
 
-    ;; Keyboard macros
-    "H-*"        'kmacro-start-macro
-    "<f1>"       (lambda () (interactive) (my:run-or-save-macro "f1"))
-    "<f2>"       (lambda () (interactive) (my:run-or-save-macro "f2"))
-    "<f3>"       (lambda () (interactive) (my:run-or-save-macro "f3"))
-    "<f4>"       (lambda () (interactive) (my:run-or-save-macro "f4"))
-    "C-<f1>"     (lambda () (interactive) (my:run-macro "f1"))
-    "C-<f2>"     (lambda () (interactive) (my:run-macro "f2"))
-    "C-<f3>"     (lambda () (interactive) (my:run-macro "f3"))
-    "C-<f4>"     (lambda () (interactive) (my:run-macro "f4"))
+      ;; Frame manipulations
+      "<H-f11>"   'toggle-frame-fullscreen
+      "H-t"       'my:set-window-opacity
 
-    ;; File operations
-    "<f5>"   'my:find-file
-    "<f6>"   'custom-save-buffer
-    "<f7>"   'write-file
+      ;; Keyboard macros
+      "H-*"        'kmacro-start-macro
+      "<f1>"       (lambda () (interactive) (my:run-or-save-macro "f1"))
+      "<f2>"       (lambda () (interactive) (my:run-or-save-macro "f2"))
+      "<f3>"       (lambda () (interactive) (my:run-or-save-macro "f3"))
+      "<f4>"       (lambda () (interactive) (my:run-or-save-macro "f4"))
+      "C-<f1>"     (lambda () (interactive) (my:run-macro "f1"))
+      "C-<f2>"     (lambda () (interactive) (my:run-macro "f2"))
+      "C-<f3>"     (lambda () (interactive) (my:run-macro "f3"))
+      "C-<f4>"     (lambda () (interactive) (my:run-macro "f4"))
 
-    ;; OS Utilities
-    "H-f"  'rgrep
-    "<f9>" 'shell
+      ;; File operations
+      "<f5>"   'my:find-file
+      "<f6>"   'save-buffer
+      "<f7>"   'write-file
+      "H-<f5>" 'my:revert-buffer-no-prompt
 
-    ;; Text navigation
-    "<home>"   'smart-beginning-of-line
-    "M-<up>"   'backward-paragraph
-    "M-<down>" 'forward-paragraph
-    "H-o"      'my:occur
-    "H-a"      'my:find-text
-    "H-A"      'my:find-this-text
-    "H-["      'my:goto-previous-change
-    "H-]"      'my:goto-next-change
-    "H-g"      'my:goto-line
-    "H-p"      'isearch-forward-regexp
-    "H-k"      'next-line
-    "H-i"      'previous-line
-    "H-j"      'left-char
-    "H-l"      'right-char
-    "H-h"      'smart-beginning-of-line
+      ;; OS Utilities
+      "H-f"  'rgrep
+      "<f9>" 'shell
 
-    ;; Text selection and editing
-    "C-<delete>"   'smart-batch-delete
-    "<insert>"     'smart-copy-paste
-    "<delete>"     'smart-cut-or-delete
-    "C-SPC"        'smart-set-mark
-    "H-r"          'anzu-query-replace-regexp
-    "H-y"          'yas-insert-snippet
-    "C-<return>"   'newline-after-current
-    "M-<return>"   'newline-before-current
-    "C-M-<return>" 'newline-before-and-after-current
-    "C-t"          'indent-according-to-mode
-    "C-z"          'undo-tree-undo
-    "C-S-z"        'undo-tree-redo
-    "H-z"          'undo-tree-visualize
-    "C-c a"        'mark-whole-buffer
+      ;; Text navigation
+      "<home>"   'smart-beginning-of-line
+      "M-<up>"   'backward-paragraph
+      "M-<down>" 'forward-paragraph
+      "H-o"      'my:occur
+      "H-a"      'my:find-text
+      "H-M-a"    'my:find-this-text
+      "H-["      'my:goto-previous-change
+      "H-]"      'my:goto-next-change
+      "H-g"      'my:goto-line
+      "H-p"      'isearch-forward-regexp
+      "H-h"      'smart-beginning-of-line
 
-    ;; Bookmarks
-    "H-SPC"                   'bm-toggle
-    "H-S-SPC"                 'my:annotated-bookmark
-    "H-}"                     'bm-next
-    "H-{"                     'bm-previous
-    "<left-margin> <mouse-1>" 'bm-toggle-mouse
+      ;; Text selection and editing
+      "C-<delete>"   'smart-batch-delete
+      "<insert>"     'smart-copy-paste
+      "<delete>"     'smart-cut-or-delete
+      "C-SPC"        'smart-set-mark
+      "H-r"          'anzu-query-replace-regexp
+      "H-y"          'yas-insert-snippet
+      "H-u"          'counsel-unicode-char
+      "H-i"          'emojify-insert-emoji
+      "C-<return>"   'newline-after-current
+      "M-<return>"   'newline-before-current
+      "C-M-<return>" 'newline-before-and-after-current
+      "C-t"          'indent-according-to-mode
+      "C-z"          'undo-tree-undo
+      "C-S-z"        'undo-tree-redo
+      "H-z"          'undo-tree-visualize
+      "C-c a"        'mark-whole-buffer
 
-    ;; Text display transformations
-    "H-h" 'origami-toggle-node
+      ;; Bookmarks
+      "H-SPC"                   'bm-toggle
+      "H-S-SPC"                 'my:annotated-bookmark
+      "H-}"                     'bm-next
+      "H-{"                     'bm-previous
+      "<left-margin> <mouse-1>" 'bm-toggle-mouse
 
-    ;; Buffer navigation
-    "H-b"         'my:find-buffer
-    "<prior>"     'previous-appropriate-buffer
-    "<next>"      'next-appropriate-buffer
-    "C-H-<left>"  'buf-move-left
-    "C-H-<right>" 'buf-move-right
-    "C-H-<up>"    'buf-move-up
-    "C-H-<down>"  'buf-move-down
-    "C-<up>"      'my:scroll-down-some-lines
-    "C-<down>"    'my:scroll-up-some-lines
-    "C-<left>"    'my:scroll-left-some-lines
-    "C-<right>"   'my:scroll-right-some-lines
-    "H-u"         'line-to-top-of-window
+      ;; Text display transformations
+      "H-h" 'origami-toggle-node
 
-    ;; Other
-    "H-=" '(lambda () (interactive) (text-scale-increase 1))
-    "H--" '(lambda () (interactive) (text-scale-decrease 1)))
+      ;; Buffer navigation
+      "H-b"         'my:find-buffer
+      "H-w"         'eyebrowse-switch-to-window-config
+      "H-W"         'eyebrowse-rename-window-config
+      "<prior>"     'previous-appropriate-buffer
+      "<next>"      'next-appropriate-buffer
+      "C-H-<left>"  'buf-move-left
+      "C-H-<right>" 'buf-move-right
+      "C-H-<up>"    'buf-move-up
+      "C-H-<down>"  'buf-move-down
+      "C-<up>"      'my:scroll-down-some-lines
+      "C-<down>"    'my:scroll-up-some-lines
+      "C-<left>"    'my:scroll-left-some-lines
+      "C-<right>"   'my:scroll-right-some-lines
 
-(general-define-key :keymaps 'isearch-mode-map
-    "<backspace>" 'isearch-del-char
-    "<escape>"    'isearch-exit
-    "<C-escape>"  'isearch-abort
-    "<return>"    'isearch-repeat-forward
-    "S-<return>"  'isearch-repeat-backward
-    "<right>"     'isearch-yank-word-or-char
-    "<left>"      'isearch-del-char
-    "<down>"      'isearch-repeat-forward
-    "<up>"        'isearch-repeat-backward)
+      ;; Other
+      "H-=" '(lambda () (interactive) (text-scale-increase 1))
+      "H--" '(lambda () (interactive) (text-scale-decrease 1)))
 
-(general-define-key :keymaps 'query-replace-map
-    "<up>"     'backup
-    "<down>"   'skip
-    "<escape>" 'exit
-    "<return>" 'act
-    "<insert>" 'edit)
+  (general-define-key :keymaps 'isearch-mode-map
+      "<backspace>" 'isearch-del-char
+      "<escape>"    'isearch-exit
+      "<C-escape>"  'isearch-abort
+      "<return>"    'isearch-repeat-forward
+      "S-<return>"  'isearch-repeat-backward
+      "<right>"     'isearch-yank-word-or-char
+      "<left>"      'isearch-del-char
+      "<down>"      'isearch-repeat-forward
+      "<up>"        'isearch-repeat-backward)
 
-(general-define-key :keymaps 'c-mode-map
-    "<tab>" 'c-smart-tab-key
-    "TAB"   'c-smart-tab-key
-    "C-t"   'c-indent-line-or-region
-    "C-r"   'align-current)
+  (general-define-key :keymaps 'query-replace-map
+      "<up>"     'backup
+      "<down>"   'skip
+      "<escape>" 'exit
+      "<return>" 'act
+      "<insert>" 'edit)
 
-(general-define-key :keymaps 'c-mode-map :prefix "H-c"
-    "1" 'c-insert-region-heading
-    "2" 'c-insert-function-skeleton
-    "3" 'c-insert-forced-todo
-    "4" 'c-insert-debugging-printf
-    "5" 'c-insert-ternary-for-boolean-to-string
-    "6" 'c-insert-todo-comment
-    "f" 'c-insert-if-block
-    "o" 'c-insert-for-block
-    "w" 'c-insert-while-block
-    "d" 'c-insert-do-while-block
-    "F" 'c-insert-preproc-if-block
-    "D" 'c-insert-preproc-ifdef-block
-    "N" 'c-insert-preproc-ifndef-block
-    "I" 'c-insert-preproc-include-block)
+  (general-define-key :keymaps 'c-mode-map
+      "<tab>" 'c-smart-tab-key
+      "TAB"   'c-smart-tab-key
+      "C-t"   'c-indent-line-or-region
+      "C-r"   'align-current)
 
-(general-define-key :keymaps 'prog-mode-map
-    "H-;" 'my:comment-region-or-line)
+  (general-define-key :keymaps 'c-mode-map :prefix "H-c"
+      "1" 'c-insert-region-heading
+      "2" 'c-insert-function-skeleton
+      "3" 'c-insert-forced-todo
+      "4" 'c-insert-debugging-printf
+      "5" 'c-insert-ternary-for-boolean-to-string
+      "6" 'c-insert-todo-comment
+      "f" 'c-insert-if-block
+      "o" 'c-insert-for-block
+      "w" 'c-insert-while-block
+      "d" 'c-insert-do-while-block
+      "F" 'c-insert-preproc-if-block
+      "D" 'c-insert-preproc-ifdef-block
+      "N" 'c-insert-preproc-ifndef-block
+      "I" 'c-insert-preproc-include-block)
 
-(general-define-key :keymaps 'shell-mode-map
-    "C-p"   'comint-previous-input
-    "C-n"   'comint-next-input
-    "C-M-l" nil)
+  (general-define-key :keymaps 'prog-mode-map
+      "H-;" 'my:comment-region-or-line)
 
-(general-define-key :keymaps 'flyspell-mode-map
-    "H-c" 'flyspell-auto-correct-word)
+  (general-define-key :keymaps 'auto-highlight-symbol-mode-map
+      "s-<up>"   'ahs-backward
+      "s-<down>" 'ahs-forward)
 
-(customize-set-variable 'exwm-input-global-keys
-    `((,(kbd "H-<left>") .    windmove-left)
-      (,(kbd "H-s <up>") .    split-window-below)
-      (,(kbd "H-<right>") .   windmove-right)
-      (,(kbd "H-<down>") .    windmove-down)
-      (,(kbd "H-<up>") .      windmove-up)
-      (,(kbd "<H-f8>") .      kill-current-buffer)
-      (,(kbd "S-<F8>") .      delete-window-ex)
-      (,(kbd "S-<F8>") .      delete-window-ex)
-      (,(kbd "H-b") .         my:find-buffer)
-      (,(kbd "H-S-<up>") .    (lambda () (interactive) (enlarge-window 5)))
-      (,(kbd "H-S-<right>") . enlarge-window-horizontally)
-      (,(kbd "H-S-<down>") .  (lambda () (interactive) (shrink-window 5)))
-      (,(kbd "H-S-<left>") .  shrink-window-horizontally)
-      (,(kbd "H-s <down>") .  split-window-above)
-      (,(kbd "H-s <left>") .  split-window-right)
-      (,(kbd "H-s <right>") . split-window-left)
-      (,(kbd "H-c") .         exwm-input-release-keyboard)
-      (,(kbd "H-l") .         exwm-input-grab-keyboard)
-      (,(kbd "H-e") .         exwm-edit--compose)
-      (,(kbd "H-0") .         eyebrowse-switch-to-window-config-0)
-      (,(kbd "H-1") .         eyebrowse-switch-to-window-config-1)
-      (,(kbd "H-2") .         eyebrowse-switch-to-window-config-2)
-      (,(kbd "H-3") .         eyebrowse-switch-to-window-config-3)
-      (,(kbd "H-4") .         eyebrowse-switch-to-window-config-4)
-      (,(kbd "H-5") .         eyebrowse-switch-to-window-config-5)
-      (,(kbd "H-6") .         eyebrowse-switch-to-window-config-6)
-      (,(kbd "H-7") .         eyebrowse-switch-to-window-config-7)
-      (,(kbd "H-8") .         eyebrowse-switch-to-window-config-8)
-      (,(kbd "H-9") .         eyebrowse-switch-to-window-config-9)
-      (,(kbd "C-M-<left>") .  eyebrowse-prev-window-config)
-      (,(kbd "C-M-<right>") . eyebrowse-next-window-config)))
+  (general-define-key :keymaps 'org-agenda-mode-map
+      "p"           'org-agenda-priority
+      "T"           'org-todo-yesterday
+      "S-<right>"   'windmove-right
+      "S-<left>"    'windmove-left
+      "S-<down>"    'windmove-down
+      "S-<up>"      'windmove-up
+      "C-S-<up>"    (lambda () (interactive) (enlarge-window 5))
+      "C-S-<right>" 'enlarge-window-horizontally
+      "C-S-<down>"  (lambda () (interactive) (shrink-window 5))
+      "C-S-<left>"  'shrink-window-horizontally
+      "M-<up>"      'backward-paragraph
+      "M-<down>"    'forward-paragraph
+      "C-c <down>"  'split-window-above
+      "C-c <up>"    'split-window-below
+      "C-c <left>"  'split-window-right
+      "C-c <right>" 'split-window-left)
 
-(customize-set-variable 'exwm-input-simulation-keys
-    `((,(kbd "H-a") .        ,(kbd "C-f"))
-      (,(kbd "<insert>") .   ,(kbd "C-c"))
-      (,(kbd "S-<insert>") . ,(kbd "C-v"))))
+  (general-define-key :keymaps 'shell-mode-map
+      "C-p"   'comint-previous-input
+      "C-n"   'comint-next-input
+      "C-M-l" nil)
+
+  (general-define-key :keymaps 'flyspell-mode-map
+      "H-c" 'flyspell-auto-correct-word)
+
+  (general-define-key :keymaps 'pdf-view-mode-map
+      "H-a" 'isearch-forward) ;; pdf-tools has specific support for this search method
+
+  (general-define-key :keymaps 'org-mode-map
+      "H-|" (lambda () (interactive) (save-buffer) (org-latex-export-to-pdf))
+      "H-x" 'org-babel-execute-buffer)
+
+  (customize-set-variable 'exwm-input-global-keys
+      `((,(kbd "H-<left>") .    windmove-left)
+        (,(kbd "H-s <up>") .    split-window-below)
+        (,(kbd "H-<right>") .   windmove-right)
+        (,(kbd "H-<down>") .    windmove-down)
+        (,(kbd "H-<up>") .      windmove-up)
+        (,(kbd "<H-f8>") .      my:kill-current-buffer)
+        (,(kbd "S-<F8>") .      delete-window)
+        (,(kbd "S-<F8>") .      delete-window)
+        (,(kbd "H-b") .         my:find-buffer)
+        (,(kbd "H-S-<up>") .    (lambda () (interactive) (enlarge-window 5)))
+        (,(kbd "H-S-<right>") . enlarge-window-horizontally)
+        (,(kbd "H-S-<down>") .  (lambda () (interactive) (shrink-window 5)))
+        (,(kbd "H-S-<left>") .  shrink-window-horizontally)
+        (,(kbd "H-s <down>") .  split-window-above)
+        (,(kbd "H-s <left>") .  split-window-right)
+        (,(kbd "H-s <right>") . split-window-left)
+        (,(kbd "H-c") .         exwm-input-release-keyboard)
+        (,(kbd "H-l") .         exwm-input-grab-keyboard)
+        (,(kbd "H-e") .         exwm-edit--compose)
+        (,(kbd "H-0") .         eyebrowse-switch-to-window-config-0)
+        (,(kbd "H-1") .         eyebrowse-switch-to-window-config-1)
+        (,(kbd "H-2") .         eyebrowse-switch-to-window-config-2)
+        (,(kbd "H-3") .         eyebrowse-switch-to-window-config-3)
+        (,(kbd "H-4") .         eyebrowse-switch-to-window-config-4)
+        (,(kbd "H-5") .         eyebrowse-switch-to-window-config-5)
+        (,(kbd "H-6") .         eyebrowse-switch-to-window-config-6)
+        (,(kbd "H-7") .         eyebrowse-switch-to-window-config-7)
+        (,(kbd "H-8") .         eyebrowse-switch-to-window-config-8)
+        (,(kbd "H-9") .         eyebrowse-switch-to-window-config-9)
+        (,(kbd "C-M-<left>") .  eyebrowse-prev-window-config)
+        (,(kbd "C-M-<right>") . eyebrowse-next-window-config)))
+
+  (customize-set-variable 'exwm-input-simulation-keys
+      `((,(kbd "H-a") .        ,(kbd "C-f"))
+        (,(kbd "<insert>") .   ,(kbd "C-c"))
+        (,(kbd "S-<insert>") . ,(kbd "C-v"))))
 #+END_SRC
 
-#+RESULTS:
-: (([16777313] . ) ([insert] . ) ([S-insert] . ))
+Org agenda keymap modifications. Changing the keymap itself doesn't
+seem to work.
 
-Dead block -- can be used to generate keys for workspace switching.
-I'm just using window layouts instead.
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'org-agenda-mode-hook
+    (lambda ()
+      (local-set-key (kbd "b")
+        (lambda ()
+          (interactive)
+          (if (eq org-agenda-dim-blocked-tasks 't)
+              (setq org-agenda-dim-blocked-tasks 'invisible)
+            (setq org-agenda-dim-blocked-tasks 't))
+          (org-agenda-redo 't)))))
+#+END_SRC
+
+* Final Startup Items
+
+Start the server
+
+#+BEGIN_SRC emacs-lisp
+(server-start)
+#+END_SRC
+
+#+BEGIN_SRC
+(setq pop-up-frames nil)
+(add-to-list 'default-frame-alist '(alpha . (90 . 90)))
+;;(require 'oneonone)
+;;(1on1-emacs)
+#+END_SRC
+
+* Journal Management
+
+*** Org stuff
+
+#+BEGIN_SRC emacs-lisp
+(defun my:org-concept-open ()
+  (interactive)
+  (find-file (my-org-find-concept)))
+#+END_SRC
+
+* Ideas
+
+** Smart tab key
+
+#+BEGIN_SRC
+(defun smart-tab-key (indent autocomplete indent-count)
+"Indent when at left margin or right of whitespace, autocomplete elsewhere."
+  (cond (( or (eq last-command 'yank) (eq last-command 'yank-pop)) (yank-pop))
+        (( or
+           (eq last-command 'find-tag)
+           (eq last-command 'find-tag-other-window)
+           (eq last-command 'find-tag-wrapped)
+           (eq last-command 'find-tag-wrapped-new-window))
+         (progn
+           (let ((current-prefix-arg '(4)))
+             (message "Finding next possible definition...")
+             (call-interactively 'find-tag))
+           (recenter-top-bottom)
+           (setq this-command 'find-tag)))
+        ((use-region-p) (indent-rigidly (region-beginning) (region-end) indent-count))
+        ((or (= 0 (current-column)) (= ?\s (char-before))) (funcall indent))
+        (t (funcall autocomplete))))
+
+(defun generic-smart-tab-key ()
+  "Indent when at left margin or right of whitespace, autocomplete elsewhere"
+  (interactive)
+  (smart-tab-key 'indent-for-tab-command 'ac-fuzzy-complete 1))
+#+END_SRC
+
+** EXWM Workspace Switching Keys
+
+I just use eyebrowse instead.
 
 #+BEGIN_SRC
 ,@(mapcar (lambda (i)
@@ -1866,24 +2448,3 @@ I'm just using window layouts instead.
               (number-sequence 0 9)))
 #+END_SRC
 
-* To Be Completed
-
-** Switch to general
-https://github.com/noctuid/general.el
-
-** Better workspace management
-Workspaces..or company mode, or whatever that is?
-https://github.com/wasamasa/eyebrowse
-
-** Less RSI?
-Evil?
-https://github.com/chrisdone/god-mode
-
-** Switch to require-package
-** Clean up some bindings with hydra
-** Get CEDET set up
-*** or at least tags (etags? rtags?)
-*** compilation-mode
-*** magit
-** A code folding package
-** key cheatsheet printer
