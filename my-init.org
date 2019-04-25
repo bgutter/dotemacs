@@ -11,32 +11,36 @@ find missing or incorrect attributions!
 * Localization (pre-package)
 
 Set config variables on a per-system basis.
-- *use-frames*: Whether or not to tune use frame-oriented options in
-  emacs. Nil by default, set to t on systems with tiling window
-  managers.
+
+|--------------+--------------------------------------------------------------------------------|
+| *use-frames* | Whether or not to tune use frame-oriented options in emacs. StumpWM is assumed |
+| *commit-org* | Whether we should git-commit after saving all org buffers.                     |
+|--------------+--------------------------------------------------------------------------------|
 
 #+BEGIN_SRC emacs-lisp
+(defvar my:use-frames nil)
+(defvar my:commit-org nil)
+
 (pcase (system-name)
 
   ;; x230
   ("brandon-babypad-linux"
-    (setq use-frames t))
+    (setq my:use-frames t
+          my:commit-org t))
 
   ;; P51
   ("brandon-thinkpad-archlinux"
-    (setq use-frames nil))
+    )
 
   ;; Desktop VM on home server
   ("remote-workstation"
-    (setq use-frames nil))
-
-  ;; Default Options
-  (sysname
-    (setq use-frames nil)))
+    ))
 #+END_SRC
 
 * Required Packages
 This section ensures that all required packages are loaded.
+
+** Package System Config
 
 Initialize the package system
 
@@ -75,6 +79,8 @@ package.
       (error (package-install package))))
 #+END_SRC
 
+** Package List
+
 The actual package list.
 
 #+BEGIN_SRC emacs-lisp
@@ -90,15 +96,12 @@ The actual package list.
 (package-require 'bm)                    ; bookmark manager
 (package-require 'yasnippet)             ; snippet pasting framework
 (package-require 'anzu)                  ; show total/current matches in isearch
-(package-require 'helm)                  ; Only need a few things, have mostly moved to ivy
-(package-require 'shackle)               ; control window placement
 (package-require 'visual-regexp)         ; visualize regular expressions in real-time
 (package-require 'expand-region)         ; Expand region
 (package-require 'eyebrowse)             ; Workspace management
 (package-require 'origami)               ; awesome code folding
 (package-require 'general)               ; sane key mapping architecture
 (package-require 'which-key)             ; Display options after prefix keys are entered
-(package-require 'helm-swoop)            ; Quick content based line navigation
 (package-require 'ivy)                   ; Awesome completion framework
 (package-require 'swiper)                ; ivy's swoop
 (package-require 'counsel)               ; too many ivy-based utilities to list
@@ -116,6 +119,11 @@ The actual package list.
 (package-require 'calfw-org)             ; org-mode calendar support for calfw
 (package-require 'org-caldav)            ; caldav support for emacs
 (package-require 'yequake)               ; quake-style dropdown emacs frame
+(package-require 'flymd)                 ; markdown to html rendering in elisp
+(package-require 'hy-mode)               ; lisp via python
+(package-require 'all-the-icons)         ; icon set for emacs
+(package-require 'all-the-icons-ivy)     ; use icons in buffer switching
+(package-require 'jedi)                  ; python completions
 #+END_SRC
 
 * Localization (post-package)
@@ -198,6 +206,14 @@ Navigation and environment macros.
 General functions.
 
 #+BEGIN_SRC emacs-lisp
+  (defun match-strings-all (&optional string)
+    "Return the list of all expressions matched in last search.
+  STRING is optionally what was given to `string-match'.
+  From https://www.emacswiki.org/emacs/ElispCookbook#toc36"
+    (let ((n-matches (1- (/ (length (match-data)) 2))))
+      (mapcar (lambda (i) (match-string i string))
+              (number-sequence 0 n-matches))))
+
 (defun my:kill-current-buffer ()
   "kill the current buffer."
   (interactive)
@@ -285,6 +301,74 @@ Preload swiper with thing at point.
 (defun swiper-thing-at-point ()
   (interactive)
   (ivy-with-thing-at-point 'swiper))
+#+END_SRC
+
+** Seafile
+
+Working with Seafile conflicts.
+
+#+BEGIN_SRC emacs-lisp
+  (defvar my:seafile-conflict-fname-regex "\\(.*\\) (SFConflict \\([^[:space:]]+\\) \\([^[:space:]]+\\))\\(.*\\)")
+
+  (defun my:delete-current-file-kill-buffer ()
+    "Delete file associated with current buffer, then kill the buffer"
+    (interactive)
+    (let
+        ((file (buffer-file-name)))
+      (if (not file)
+          (error "No file associated with buffer!")
+        (if (yes-or-no-p (concat "Delete file? "))
+           (progn
+             (delete-file file)
+             (kill-buffer))))))
+
+  (defun my:fname-seafile-conflict-p (filename)
+    "Is this filename a Seafile conflict file?
+     Return fnamepart, user, date, and extension if so.
+     'somefilename (SFConflict me@somewhere.com 1900-02-12).org' -> '(somefilename me@somewhere.com 1900-02-12 .org"
+    (if (string-match my:seafile-conflict-fname-regex filename)
+      (rest (match-strings-all filename))))
+
+  (defun my:seafile-conflict-source-fname (filename)
+    "Return the path to the original file from which this conflict was created."
+    (let*
+        ((parts (my:fname-seafile-conflict-p filename))
+         (fname (and parts (nth 0 parts)))
+         (ext   (and parts (nth 3 parts))))
+      (concat fname ext)))
+
+  (defun my:seafile-list-conflicting-files (path)
+    "Search a path recursively for Seafile conflict files, and return any hits."
+    (directory-files-recursively path my:seafile-conflict-fname-regex))
+
+  (defun my:delete-conflict-file (conflict-file &optional prompt)
+    "Delete a conflict file -- optionally prompt the user."
+    (if (or (not prompt) (yes-or-no-p (concat "Source file deleted for \"" conflict-file "\", delete conflict file? ")))
+        (delete-file conflict-file)))
+
+  (defun my:merge-seafile-conflict (source conflict &optional prompt)
+    "For now, just opens both."
+    (if (or (not prompt) (y-or-n-p (concat "Merge conflict for \"" source "\"? ")))
+        (progn
+          (find-file source)
+          (split-window-left)
+          (find-file conflict))))
+
+  (defun my:seafile-merge-conflicts (path)
+    "Interactively merge conflicting files in a given path."
+    (interactive "DDirectory:")
+    (let*
+        ((conflict-file (completing-read "Choose conflict to merge: " (my:seafile-list-conflicting-files path)))
+         (source-file (my:seafile-conflict-source-fname conflict-file)))
+      (if (and (file-exists-p conflict-file)
+               (file-exists-p source-file))
+          (my:merge-seafile-conflict source-file conflict-file)
+        (my:delete-conflict-file conflict-file t))))
+
+  (defun my:org-merge-conflict ()
+    "Interactively merge "
+    (interactive)
+    (my:seafile-merge-conflicts my:org-file-tree-base-path))
 #+END_SRC
 
 * User Interface Settings
@@ -494,7 +578,7 @@ Clear the minibuffer.
 (delete-minibuffer-contents)
 #+END_SRC
 
-Hide the cursor
+Move the cursor to corner of display.
 
 #+BEGIN_SRC emacs-lisp
 (mouse-avoidance-mode 'banish)
@@ -516,6 +600,12 @@ than failing to delete the window).
          (if (one-window-p t) (delete-frame) ad-do-it))))
 #+END_SRC
 
+Use icons in Ovy (switch buffer, etc)
+
+#+BEGIN_SRC emacs-lisp
+(all-the-icons-ivy-setup)
+#+END_SRC
+
 ** Mode Line & Header Line
 
 This code adds a strongly customized header and mode line.
@@ -524,6 +614,13 @@ TODO: Serious cleanup and reorg needed. Works well, but the code is
 nasty.
 
 #+BEGIN_SRC emacs-lisp
+(defface my-header-line-face                   nil "Face of header line.")
+(defface my-header-line-inactive-face          nil "Face of header line (inactive).")
+(defface mode-line-buffer-name-face            nil "Face of buffer name in mode line.")
+(defface mode-line-buffer-name-inactive-face   nil "Face of buffer name in mode line (inactive).")
+(defface mode-line-notification-face           nil "Face of mode line notifications.")
+(defface mode-line-notification-inactive-face  nil "Face of mode line notifications (inactive).")
+
 (defmacro my-header-line ()
   `(list
       '(:eval
@@ -696,15 +793,32 @@ nasty.
 
 ** Frames and Windows
 
-When use-frames is set, configure emacs to use popup frames. Also,
+When my:use-frames is set, configure emacs to use popup frames. Also,
 assume that we're using StumpWM & load it.
 
 #+BEGIN_SRC emacs-lisp
-(when use-frames
+(defun my:toggle-use-frames ()
+  (interactive)
+  (setq my:use-frames (not my:use-frames)
+        pop-up-frames my:use-frames)
+  (if my:use-frames
+      (message "Using frames.")
+    (message "Using windows.")))
+
+(when my:use-frames
   (progn
     (require 'stumpwm-mode)
     (add-to-list 'default-frame-alist '(alpha . (90 . 90)))
     (setq pop-up-frames t)))
+#+END_SRC
+
+* Theme
+
+Load my theme.
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'custom-theme-load-path "~/.emacs.d/emacs-config/themes/")
+(load-theme 'bgutter t)
 #+END_SRC
 
 * File Associations
@@ -761,6 +875,14 @@ Don't use lockfiles....causes issues in SeaFile.
 (setq create-lockfiles nil)
 #+END_SRC
 
+Track recent files -- quite a lot of them.
+
+#+BEGIN_SRC emacs-lisp
+(recentf-mode 1)
+(setq recentf-max-menu-items  2000)
+(setq recentf-max-saved-items 2000)
+#+END_SRC
+
 Manage workspaces
 
 #+BEGIN_SRC emacs-lisp
@@ -773,16 +895,11 @@ Help me with my keys
 (which-key-mode)
 #+END_SRC
 
-Enable helm by default
+Enable counsel and ivy modes.
 
 #+BEGIN_SRC emacs-lisp
-(helm-mode)
-#+END_SRC
-
-Enable shackle window rules
-
-#+BEGIN_SRC emacs-lisp
-(shackle-mode)
+(counsel-mode)
+(ivy-mode)
 #+END_SRC
 
 Hide the toolbar, menu bar, and scroll bars.
@@ -856,6 +973,7 @@ The hook =prog-mode-hook= is triggered in all programming major-modes.
     (setq truncate-lines t)
     (variable-pitch-mode nil)
     (org-autolist-mode)
+    (auto-fill-mode)
     (text-scale-increase 0)))
 #+END_SRC
 
@@ -904,10 +1022,11 @@ Use employer's preferred C format...
     (let ((proc (ignore-errors
     (python-shell-get-process-or-error))))
     (when proc
-    (interrupt-process proc))))
+      (interrupt-process proc))))
 
 (add-hook 'python-mode-hook
   (lambda ()
+    (jedi:setup)
     (local-set-key (kbd "<tab>")         'generic-smart-tab-key)
     (local-set-key (kbd "TAB")           'generic-smart-tab-key)
     (local-set-key (kbd "C-t")           'indent-for-tab-command)
@@ -1000,9 +1119,30 @@ Don't add a table of contents upon export.
 
 Define org todo keywords.
 
+Current Tags:
+|-----------+--------------------------------------------------------------------------------------------------|
+| tag       | Use                                                                                              |
+|-----------+--------------------------------------------------------------------------------------------------|
+| TODO      | Items which are queued to be completed.                                                          |
+| NEXT      | Items which are considered to be in-progress. Max 3-5 items at any point in time.                |
+| WAIT      | Items which are blocked by an external party.                                                    |
+| DONE      | Items which have been completed as described.                                                    |
+| CANCELLED | Items which will not be completed.                                                               |
+| HIATUS    | "Soft-cancelled". Items which were originally TODO'd, but for some reason, may not ever be done. |
+| MIGRATED  | Items which have been made redundant by newer entries.                                           |
+|-----------+--------------------------------------------------------------------------------------------------|
+
+Deprecated Tags:
+|-------------+------------------------|
+| tag         | Use                    |
+|-------------+------------------------|
+| IN_PROGRESS | Previous name for NEXT |
+| PENDING     | Previous name for WAIT |
+|-------------+------------------------|
+
 #+BEGIN_SRC emacs-lisp
 (setq-default org-todo-keywords
-  '((sequence "TODO(t!)" "IN_PROGRESS(i!)" "NEXT(n!)" "HIATUS(h!)" "PENDING(p!)" "WAIT(w!)" "|" "DONE(d!)" "CANCELLED(c!)" "MIGRATED(m!)")))
+  '((sequence "TODO(t!)" "IN_PROGRESS(i!)" "NEXT(n!)" "PENDING(p!)" "WAIT(w!)" "|" "DONE(d!)" "CANCELLED(c!)" "HIATUS(h!)" "MIGRATED(m!)")))
 #+END_SRC
 
 And their faces.
@@ -1022,11 +1162,15 @@ And their faces.
 #+END_SRC
 
 And their priorities:
- - *A* This is critical and urgent
- - *B* This is very important and/or time sensitive
- - *C* Needs to happen in the near future.
- - *D* Would be cool to do this.
- - *E* Just an idea. Whatever.
+|----------+----------------------------------------------|
+| priority | Meaning                                      |
+|----------+----------------------------------------------|
+| *A*      | This is critical and urgent                  |
+| *B*      | This is very important and/or time sensitive |
+| *C*      | Needs to happen in the near future.          |
+| *D*      | Would be cool to do this.                    |
+| *E*      | Just an idea. Whatever.                      |
+|----------+----------------------------------------------|
 
 #+BEGIN_SRC emacs-lisp
 (setq org-highest-priority ?A)
@@ -1107,10 +1251,30 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
         nil
       subtree-end)))
 
+(defun cmp-date-property (prop)
+  "Compare two `org-mode' agenda entries, `A' and `B', by some date property.
+
+If a is before b, return -1. If a is after b, return 1. If they
+are equal return t."
+  (lexical-let ((prop prop))
+  #'(lambda (a b)
+
+    (let* ((a-pos (get-text-property 0 'org-marker a))
+           (b-pos (get-text-property 0 'org-marker b))
+           (a-date (or (org-entry-get a-pos prop)
+                       (format "<%s>" (org-read-date t nil "now"))))
+           (b-date (or (org-entry-get b-pos prop)
+                       (format "<%s>" (org-read-date t nil "now"))))
+           (cmp (compare-strings a-date nil nil b-date nil nil))
+           )
+      (if (eq cmp t) nil (signum cmp))
+      ))))
+
 (defun zin/org-agenda-skip-tag (tag &optional others)
   "Skip all entries that correspond to TAG.
 
-If OTHERS is true, skip all entries that do not correspond to TAG."
+If OTHERS is true, skip all entries that do not correspond to TAG.
+https://emacs.stackexchange.com/questions/26351/custom-sorting-for-agenda"
   (let ((next-headline (save-excursion (or (outline-next-heading) (point-max))))
         (current-headline (or (and (org-at-heading-p)
                                    (point))
@@ -1167,13 +1331,42 @@ If OTHERS is true, skip all entries that do not correspond to TAG."
          ("g" "Work related TODO items" tags-todo ,work-str
             ((org-agenda-overriding-header "Work Tasks:")))
 
+         ("m" "Closed in Past Week:"
+          tags (concat "+TODO={DONE\\|CANCELLED\\|HIATUS}"
+                        "+CLOSED>=\""
+                                    (format-time-string "[%Y-%m-%d]" (time-subtract (current-time) (days-to-time 7)))
+                                     "\"")
+                ((org-agenda-overriding-header "Recently Closed:")
+                 (org-agenda-cmp-user-defined (cmp-date-property "CLOSED")) ;; https://emacs.stackexchange.com/questions/26351/custom-sorting-for-agenda
+                 (org-agenda-sorting-strategy '(user-defined-down))))
+
          ("x" "Combined Task List"
            (
+
            (alltodo ""
                    ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
                                                    (zin/org-agenda-skip-tag ,work-str)
                                                    (zin/org-agenda-skip-tag "NOAGENDA")))
                     (org-agenda-overriding-header "Personal Tasks:")))
+
+           (tags (concat "+TODO={DONE}"
+                        "+CLOSED>=\""
+                                    (format-time-string "[%Y-%m-%d]" (time-subtract (current-time) (days-to-time 7)))
+                                     "\"")
+                ((org-agenda-overriding-header "Recently Completed:")
+                 (org-agenda-cmp-user-defined (cmp-date-property "CLOSED")) ;; https://emacs.stackexchange.com/questions/26351/custom-sorting-for-agenda
+                 (org-agenda-sorting-strategy '(user-defined-down))
+                 (org-agenda-max-entries 10)))
+
+           (tags (concat "+TODO={CANCELLED}"
+                        "+CLOSED>=\""
+                                    (format-time-string "[%Y-%m-%d]" (time-subtract (current-time) (days-to-time 7)))
+                                     "\"")
+                ((org-agenda-overriding-header "Recently Cancelled:")
+                 (org-agenda-cmp-user-defined (cmp-date-property "CLOSED")) ;; https://emacs.stackexchange.com/questions/26351/custom-sorting-for-agenda
+                 (org-agenda-sorting-strategy '(user-defined-down))
+                 (org-agenda-max-entries 5)))
+
            (alltodo ""
                    ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
                                                    (zin/org-agenda-skip-tag ,work-str 't)
@@ -1220,25 +1413,13 @@ import matplotlib.pyplot as plt
 plt.style.use( 'dark_background' )
 #+END_SRC
 
-Make code blocks stand out.
-
-#+BEGIN_SRC emacs-lisp
-(custom-set-faces
-  '(org-block-begin-line
-     ((t (:weight bold :foreground "#FFC0CB" :background "#222222"))))
-  '(org-block
-     ((t (:background "#222222"))))
-  '(org-block-end-line
-     ((t (:weight bold :foreground "#FFC0CB" :background "#222222")))))
-#+END_SRC
-
 Display images after each eval
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'org-babel-after-execute-hook 'org-display-inline-images 'append)
 #+END_SRC
 
-Track boldness for many lines.
+Track boldness, italics for many lines.
 
 #+BEGIN_SRC emacs-lisp
 (setcar (nthcdr 4 org-emphasis-regexp-components) 10)
@@ -1297,7 +1478,10 @@ Add function to rebuild org file list. Call it once.
 #+BEGIN_SRC emacs-lisp
 (defun my-org-update-agenda-index()
   (interactive)
-  (setq org-agenda-files (directory-files-recursively my:org-file-tree-base-path ".*\\.org$")))
+  (setq org-agenda-files
+    (seq-filter
+      (lambda (x) (not (my:fname-seafile-conflict-p x)))
+      (directory-files-recursively my:org-file-tree-base-path ".*\\.org$"))))
 (my-org-update-agenda-index)
 #+END_SRC
 
@@ -1317,6 +1501,20 @@ Add function to interactively select an existing concept file.
           (list (ivy-read "Existing Concepts: "
             (my-org-list-concepts))))
           (concat choice "/concept.org"))))
+
+(defun my:org-concept-open ()
+  (interactive)
+  (find-file (my-org-find-concept)))
+#+END_SRC
+
+Add function to insert link to existing concept.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:org-insert-concept-link ()
+  (interactive)
+  (let
+    ((file (my-org-find-concept)))
+   (org-insert-link nil file)))
 #+END_SRC
 
 Add function to search existing concepts, journals, etc.
@@ -1359,6 +1557,31 @@ Functions for creating and opening daily journal pages.
           (kill-buffer)
           (my-org-update-agenda-index))))
      path)))
+#+END_SRC
+
+Advise org-save-all-org-buffers to autocommit any changes in my org folder
+
+#+BEGIN_SRC emacs-lisp
+(defun my:org-autocommit-get-message ()
+  "Return a string for an org autocommit commit message.
+   I use YYYY-MM-DD HH:MM:SS:ms"
+  (prin1-to-string
+    (string-join
+      (list
+        (format-time-string "%Y-%m-%d %I:%M:%S:%3N")
+        ""
+        (shell-command-to-string (concat "cd " my:org-file-tree-base-path " && git status --porcelain")))
+      "\n")))
+
+(defun my:org-autocommit ()
+  "Automatically add/update files in the org dir."
+  (interactive)
+  (when my:commit-org
+    (shell-command (concat "cd " my:org-file-tree-base-path " && git add -A && git commit -m " (my:org-autocommit-get-message)))))
+
+(defadvice org-save-all-org-buffers
+    (after my:org-save-all-org-buffers-autocommit activate)
+    (my:org-autocommit))
 #+END_SRC
 
 *** Capture
@@ -1425,6 +1648,12 @@ Use IPython
         python-shell-interpreter-args "--simple-prompt -i")
 #+END_SRC
 
+Use Jedi
+
+#+BEGIN_SRC emacs-lisp
+(setq jedi:complete-on-dot t)
+#+END_SRC
+
 ** yasnippet
 
 Set the snippet dir
@@ -1450,6 +1679,14 @@ share this file on GitHub without needing to sanitize as much.
         org-caldav-inbox       (concat my:org-file-tree-base-path "/calendar.org")
         org-icalendar-timezone my:org-ical-timezone
         org-caldav-files       '()))
+#+END_SRC
+
+** ivy
+
+Include recentf in =ivy-switch-buffer=
+
+#+BEGIN_SRC emacs-lisp
+(setq ivy-use-virtual-buffers t)
 #+END_SRC
 
 ** calfw
@@ -1483,41 +1720,47 @@ functions to recenter the buffer. This means less time spent searching
 for the cursor, without having a distracting cursor design.
 
 #+BEGIN_SRC emacs-lisp
+(defun my:maybe-recenter ()
+  "Recenter, unless it will cause an error in C-code. See recenter definition in window.c"
+  (interactive)
+  (when (equal (window-buffer) (current-buffer))
+    (recenter)))
+
  (defadvice isearch-forward
     (after isearch-forward-recenter activate)
-    (recenter))
+    (my:maybe-recenter))
 
 (defadvice isearch-repeat-forward
   (after isearch-repeat-forward-recenter activate)
-  (recenter))
+  (my:maybe-recenter))
 
 (defadvice isearch-repeat-backward
   (after isearch-repeat-backward-recenter activate)
-  (recenter))
+  (my:maybe-recenter))
 
 (defadvice isearch-printing-char
   (after isearch-printing-char-then-recenter activate)
-  (recenter))
+  (my:maybe-recenter))
 
 (defadvice split-window-below
   (after split-window-below-recenter activate)
-  (recenter))
+  (my:maybe-recenter))
 
 (defadvice split-window-left
   (after split-window-left-recenter activate)
-  (recenter))
+  (my:maybe-recenter))
 
 (defadvice split-window-right
   (after split-window-right-recenter activate)
-  (recenter))
+  (my:maybe-recenter))
 
 (defadvice split-window-above
   (after split-window-above-recenter activate)
-  (recenter))
+  (my:maybe-recenter))
 
 (defadvice compile-goto-error
   (after compile-goto-error-then-recenter activate)
-  (recenter))
+  (my:maybe-recenter))
 #+END_SRC
 
 ** diff-hl Triggers
@@ -1589,16 +1832,8 @@ switched to StumpWM for the time being.
     ;(setq exwm-manage-configurations '((t char-mode t))))
 #+END_SRC
 
-* Window Placement
-
-Place helm completions in a temp window at the bottom of the frame,
-period. Thankfully, ivy doesn't need this. Source on [[https://github.com/wasamasa/shackle/issues/28][Github]].
-
-#+BEGIN_SRC emacs-lisp
-(setq shackle-rules '(("\\`\\*helm.*?\\*\\'" :regexp t :align t :ratio 0.4)))
-#+END_SRC
-
 * Key Mappings
+** Background
 Most of my custom key-bindings use the hyper key. The goal here is to
 prevent any reasonable possibility of collision between personal
 keybindings and package keybindings. By convention, C-<key> is already
@@ -1813,6 +2048,14 @@ Defined to balance existing function names.
 *** Text stuff
 
 #+BEGIN_SRC emacs-lisp
+(defun unfill-paragraph (&optional region)
+  "Takes a multi-line paragraph and makes it into a single line of text."
+  (interactive (progn (barf-if-buffer-read-only) '(t)))
+  (let ((fill-column (point-max))
+      ;; This would override `fill-column' if it's an integer.
+      (emacs-lisp-docstring-fill-column t))
+    (fill-paragraph nil region)))
+
 (defun smart-beginning-of-line ()
   "Move point to first non-whitespace character or beginning-of-line.
    Move point to the first non-whitespace character on this line.
@@ -2060,19 +2303,69 @@ Run python in shell.
   (interactive) (revert-buffer t t))
 #+END_SRC
 
+*** org-mode
+
+Refresh agenda after TODO change. This let's queued entries to be
+shown quickly when the ORDERED property is set to t for a heading.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:org-agenda-todo-and-redo ()
+  "Call org-agenda-todo interactively, then org-agenda-redo"
+  (interactive)
+  (call-interactively 'org-agenda-todo)
+  (org-agenda-redo))
+#+END_SRC
+
+Modify org-agenda-switch-to to respect the 'pop-up-buffers custom
+variable. It will open a new frame or window when opening TODO items
+in agenda views.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:org-agenda-switch-to (&optional delete-other-windows)
+  "Like normal org-agenda-switch-to, but respect pop-up-buffer by
+using display-buffer in place of pop-to-buffer."
+  (interactive)
+  (if (and org-return-follows-link
+	   (not (org-get-at-bol 'org-marker))
+	   (org-in-regexp org-bracket-link-regexp))
+      (org-open-link-from-string (match-string 0))
+    (let* ((marker (or (org-get-at-bol 'org-marker)
+		       (org-agenda-error)))
+	   (buffer (marker-buffer marker))
+	   (pos (marker-position marker)))
+      (unless buffer (user-error "Trying to switch to non-existent buffer"))
+      (display-buffer buffer) ;; <----------------------- MODIFIED LINE BJG
+      (when delete-other-windows (delete-other-windows))
+      (widen)
+      (goto-char pos)
+      (when (derived-mode-p 'org-mode)
+	(org-show-context 'agenda)
+	(run-hooks 'org-agenda-after-show-hook)))))
+#+END_SRC
+
+*** counsel, ivy & swiper
+
+Make sure Swiper query replace tries to replace all occurrences.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:swiper-query-replace-all ()
+  (interactive)
+  (save-excursion
+    (execute-kbd-macro (kbd "M-<")) ;; <- (call-interactively 'ivy-beginning-of-buffer doesn't work?
+    (swiper-query-replace)))
+#+END_SRC
+
 ** Aliases
 
 Alias some basic functionality to names that may have different
 backends during experimentation.
 
 #+BEGIN_SRC emacs-lisp
-(defalias 'my:google                  'helm-google-suggest)
-(defalias 'my:find-text               'swiper)
+(defalias 'my:find-text               'swiper-isearch)
 (defalias 'my:find-this-text          'swiper-thing-at-point)
-(defalias 'my:find-buffer             'helm-mini)
-(defalias 'my:run-program             'helm-run-external-command)
+(defalias 'my:find-buffer             'ivy-switch-buffer)
+(defalias 'my:run-program             'counsel-linux-app)
 (defalias 'my:find-file               'counsel-find-file)
-(defalias 'my:occur                   'helm-occur)
 #+END_SRC
 
 ** Keys
@@ -2111,7 +2404,6 @@ backends during experimentation.
       "cf"               'cfw:open-org-calendar
 
       ;; "s" -> system
-      "sg"                'my:google
       "sx"                'my:run-program
       "sl"                'counsel-locate
 
@@ -2127,6 +2419,8 @@ backends during experimentation.
       "M-x"        'counsel-M-x
       "<escape>"   'execute-command-toggle
       "S-<escape>" 'execute-command-toggle-ignore-region
+      "H-<print>"  'describe-bindings
+      "H-<menu>"   'my:toggle-use-frames
 
       ;; Window navigation
       "H-<right>" 'windmove-right
@@ -2191,7 +2485,6 @@ backends during experimentation.
       "<home>"   'smart-beginning-of-line
       "M-<up>"   'backward-paragraph
       "M-<down>" 'forward-paragraph
-      "H-o"      'my:occur
       "H-a"      'my:find-text
       "H-M-a"    'my:find-this-text
       "H-["      'my:goto-previous-change
@@ -2217,6 +2510,7 @@ backends during experimentation.
       "C-S-z"        'undo-tree-redo
       "H-z"          'undo-tree-visualize
       "C-c a"        'mark-whole-buffer
+      "M-Q"          'unfill-paragraph
 
       ;; Bookmarks
       "H-SPC"                   'bm-toggle
@@ -2258,12 +2552,15 @@ backends during experimentation.
       "<down>"      'isearch-repeat-forward
       "<up>"        'isearch-repeat-backward)
 
-  (general-define-key :keymaps 'query-replace-map
+  (general-define-key :keymaps '(query-replace-map multi-query-replace-map)
       "<up>"     'backup
       "<down>"   'skip
       "<escape>" 'exit
       "<return>" 'act
       "<insert>" 'edit)
+
+  (general-define-key :keymaps 'swiper-map
+      "H-r"    'my:swiper-query-replace-all)
 
   (general-define-key :keymaps 'c-mode-map
       "<tab>" 'c-smart-tab-key
@@ -2296,6 +2593,7 @@ backends during experimentation.
 
   (general-define-key :keymaps 'org-agenda-mode-map
       "p"           'org-agenda-priority
+      "t"           'my:org-agenda-todo-and-redo
       "T"           'org-todo-yesterday
       "S-<right>"   'windmove-right
       "S-<left>"    'windmove-left
@@ -2310,7 +2608,8 @@ backends during experimentation.
       "C-c <down>"  'split-window-above
       "C-c <up>"    'split-window-below
       "C-c <left>"  'split-window-right
-      "C-c <right>" 'split-window-left)
+      "C-c <right>" 'split-window-left
+      "<RET>"       'my:org-agenda-switch-to)
 
   (general-define-key :keymaps 'shell-mode-map
       "C-p"   'comint-previous-input
@@ -2324,8 +2623,11 @@ backends during experimentation.
       "H-a" 'isearch-forward) ;; pdf-tools has specific support for this search method
 
   (general-define-key :keymaps 'org-mode-map
-      "H-|" (lambda () (interactive) (save-buffer) (org-latex-export-to-pdf))
-      "H-x" 'org-babel-execute-buffer)
+      "H-|"  (lambda () (interactive) (save-buffer) (org-latex-export-to-pdf))
+      "H-x"  'org-babel-execute-buffer
+       "H-." (lambda () (interactive) (progn
+                                        (org-insert-time-stamp nil t t)
+                                        (newline))))
 
   (customize-set-variable 'exwm-input-global-keys
       `((,(kbd "H-<left>") .    windmove-left)
@@ -2394,16 +2696,6 @@ Start the server
 (add-to-list 'default-frame-alist '(alpha . (90 . 90)))
 ;;(require 'oneonone)
 ;;(1on1-emacs)
-#+END_SRC
-
-* Journal Management
-
-*** Org stuff
-
-#+BEGIN_SRC emacs-lisp
-(defun my:org-concept-open ()
-  (interactive)
-  (find-file (my-org-find-concept)))
 #+END_SRC
 
 * Ideas
