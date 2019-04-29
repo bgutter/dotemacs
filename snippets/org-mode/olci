@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: Org-latex Captioned Image
+# key: =olci
+# --
+
+#+CAPTION: $1
+#+NAME: fig:$2
+#+ATTR_LATEX: :float nil
+$3
