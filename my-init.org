@@ -108,6 +108,7 @@ The actual package list.
 (package-require 'hy-mode)               ; Lisp on Python
 (package-require 'org-autolist)          ; Automatically add bullets on return
 (package-require 'pdf-tools)             ; excellent PDF viewer, replaces docview
+(package-require 'ob-ipython)            ; powerful jupyter notebooks alternative
 (package-require 'pyvenv)                ; make conda envs usable with ob-ipython (and, well, everything else)
 (package-require 'emojify)               ; emoji support
 (package-require 'unicode-fonts)         ; better unicode support
@@ -124,6 +125,10 @@ The actual package list.
 (package-require 'all-the-icons)         ; icon set for emacs
 (package-require 'all-the-icons-ivy)     ; use icons in buffer switching
 (package-require 'jedi)                  ; python completions
+(package-require 'poporg)                ; inside-out org-babel -- edit comments in source code as org-mode content
+(package-require 'camcorder)             ; record framesto ogv or gif
+(package-require 'slime)                 ; common lisp debugging and interaction
+(package-require 'es-mode)               ; Elasticsearch support in emacs
 #+END_SRC
 
 * Localization (post-package)
@@ -165,7 +170,7 @@ Special hacks for Windows
 This section defines general purpose code snippets, which are used
 throughout the rest of the file.
 
-Navigation and environment macros.
+** Navigation and environment macros.
 
 #+BEGIN_SRC emacs-lisp
 (defmacro my:recenter-on-jump (&rest body)
@@ -370,6 +375,26 @@ Working with Seafile conflicts.
     (interactive)
     (my:seafile-merge-conflicts my:org-file-tree-base-path))
 #+END_SRC
+
+** Screenshots
+
+[[https://github.com/LionyxML/ros/blob/master/ros.el][ros]] from LionxyML.
+
+#+BEGIN_SRC emacs-lisp
+(defun ros ()
+  (interactive)
+  (let ((filename
+    (concat "./"
+      (file-name-nondirectory buffer-file-name)
+      "_"
+      (format-time-string "%Y%m%d_%H%M%S")
+      ".png")))
+  (call-process "scrot" nil nil nil "-s" filename)
+  (when (file-exists-p filename)
+    (insert (concat "#+ATTR_ORG: :width 400\n[[" filename "]]")))
+  (org-display-inline-images t t)))
+#+END_SRC
+
 
 * User Interface Settings
 
@@ -1027,8 +1052,8 @@ Use employer's preferred C format...
 (add-hook 'python-mode-hook
   (lambda ()
     (jedi:setup)
-    (local-set-key (kbd "<tab>")         'generic-smart-tab-key)
-    (local-set-key (kbd "TAB")           'generic-smart-tab-key)
+    (local-set-key (kbd "<tab>")         'python-smart-tab-key)
+    (local-set-key (kbd "TAB")           'python-smart-tab-key)
     (local-set-key (kbd "C-t")           'indent-for-tab-command)
     (local-set-key (kbd "<backspace>")   'backward-delete-char-untabify)
     (local-set-key (kbd "C-\\")          'run-python-in-shell)
@@ -1376,7 +1401,8 @@ https://emacs.stackexchange.com/questions/26351/custom-sorting-for-agenda"
 
 *** Babel
 
-Enable IPython
+Enable IPython, shell commands, Common Lisp, and Elasticsearch queries
+from code blocks.
 
 #+BEGIN_SRC emacs-lisp
 (with-eval-after-load 'org
@@ -1384,7 +1410,9 @@ Enable IPython
     (org-babel-do-load-languages
      'org-babel-load-languages
      '((ipython . t)
-       (shell . t)))))
+       (shell . t)
+       (lisp . t)
+       (elasticsearch . t)))))
 #+END_SRC
 
 Note: Add this to your IPython init file to render DataFrames and
@@ -1619,7 +1647,10 @@ Define org-capture templates.
         "Concept Task"
         entry
         (file+headline my-org-find-concept "Action Items")
-        "** TODO [#%^{Priority|C|A|B|D|E}] %?\n%U"
+        "** TODO [#%^{Priority|C|A|B|D|E}] %?
+:LOGBOOK:
+- State \"TODO\"       from              %U
+:END:"
         :empty-lines 1)
 
        ("d"
@@ -1651,7 +1682,7 @@ Use IPython
 Use Jedi
 
 #+BEGIN_SRC emacs-lisp
-(setq jedi:complete-on-dot t)
+(setq jedi:complete-on-dot nil)
 #+END_SRC
 
 ** yasnippet
@@ -1695,6 +1726,15 @@ Change the theme a bit -- for whatever reason this wasn't defcustom'd.
 
 #+BEGIN_SRC emacs-lisp
 (setq-default cfw:org-face-agenda-item-foreground-color "Pink")
+#+END_SRC
+
+** slime
+
+Fix the inferior lisp program. Slime looks for 'lisp' by default,
+which is not ever in my path.
+
+#+BEGIN_SRC emacs-lisp
+(setq inferior-lisp-program "sbcl")
 #+END_SRC
 
 * Monkey Patching
@@ -1798,6 +1838,34 @@ Yes, I do want to create the directories....
     (let ((dir (file-name-directory filename)))
       (unless (file-exists-p dir)
         (make-directory dir)))))
+#+END_SRC
+
+** ob-ipython
+
+Add an interactive function to clean up unused files from the resource
+directory.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:org-buffer-links ()
+  "https://emacs.stackexchange.com/questions/16909/how-can-i-get-all-file-links-in-one-org-mode-file"
+  (org-element-map (org-element-parse-buffer) 'link
+    (lambda (link)
+      (when (string= (org-element-property :type link) "file")
+        (org-element-property :path link)))))
+
+(defun my:ob-ipython-clean-resource-dir ()
+  "Delete files in `ob-ipython-resources-dir' which are not linked to in the current buffer.
+This assmes that the directory is dedicated to the current buffer, which will NOT be the case
+if your path is an absolute path, or if you have multiple org files in the same directory."
+  (interactive)
+  (let*
+      ((links        (my:org-buffer-links))
+       (files        (mapcar
+                       (lambda (x) (concat ob-ipython-resources-dir x))
+                       (seq-filter (lambda (x) (not (file-directory-p x))) (directory-files ob-ipython-resources-dir))))
+       (unused-files (seq-filter (lambda (x) (not (cl-member x links :test #'string-match-p))) files)))
+    (dolist (unwanted-file unused-files)
+      (delete-file unwanted-file))))
 #+END_SRC
 
 * OS Integration
@@ -2235,6 +2303,44 @@ Run python in shell.
         (pop-mark)))))
 #+END_SRC
 
+Use counsel for jedi autocompletions, thanks to [[https://oremacs.com/2015/08/26/counsel-jedi/][abo-abo]].
+
+#+BEGIN_SRC emacs-lisp
+(defun counsel-jedi ()
+  "Python completion at point."
+  (interactive)
+  (let ((bnd (bounds-of-thing-at-point 'symbol)))
+    (if bnd
+        (progn
+          (setq counsel-completion-beg (car bnd))
+          (setq counsel-completion-end (cdr bnd)))
+      (setq counsel-completion-beg nil)
+      (setq counsel-completion-end nil)))
+  (deferred:sync!
+   (jedi:complete-request))
+  (ivy-read "Symbol name: " (jedi:ac-direct-matches)
+            :action #'counsel--py-action))
+
+(defun counsel--py-action (symbol)
+  "Insert SYMBOL, erasing the previous one."
+  (when (stringp symbol)
+    (with-ivy-window
+      (when counsel-completion-beg
+        (delete-region
+         counsel-completion-beg
+         counsel-completion-end))
+      (setq counsel-completion-beg
+            (move-marker (make-marker) (point)))
+      (insert symbol)
+      (setq counsel-completion-end
+            (move-marker (make-marker) (point)))
+      (when (equal (get-text-property 0 'symbol symbol) "f")
+        (insert "()")
+        (setq counsel-completion-end
+              (move-marker (make-marker) (point)))
+        (backward-char 1)))))
+#+END_SRC
+
 *** Navigation Stuff
 
 #+BEGIN_SRC emacs-lisp
@@ -2297,10 +2403,45 @@ Run python in shell.
 #+END_SRC
 
 *** Other Stuff
+
+Revert buffer unconditionally;
+
 #+BEGIN_SRC emacs-lisp
 (defun my:revert-buffer-no-prompt ()
   "Revert buffer without confirmation. From https://emacs.stackexchange.com/questions/10348/revert-buffer-discard-unsaved-changes-without-y-n-prompt"
   (interactive) (revert-buffer t t))
+#+END_SRC
+
+Smart tab key framework
+
+#+BEGIN_SRC emacs-lisp
+(defun smart-tab-key (indent autocomplete indent-count)
+"Indent when at left margin or right of whitespace, autocomplete elsewhere."
+  (cond ((or (eq last-command 'yank) (eq last-command 'yank-pop)) (yank-pop))
+        (( or
+           (eq last-command 'find-tag)
+           (eq last-command 'find-tag-other-window)
+           (eq last-command 'find-tag-wrapped)
+           (eq last-command 'find-tag-wrapped-new-window))
+         (progn
+           (let ((current-prefix-arg '(4)))
+             (message "Finding next possible definition...")
+             (call-interactively 'find-tag))
+           (recenter-top-bottom)
+           (setq this-command 'find-tag)))
+        ((use-region-p) (indent-rigidly (region-beginning) (region-end) indent-count))
+        ((or (= 0 (current-column)) (= ?\s (char-before))) (funcall indent))
+        (t (call-interactively autocomplete))))
+
+(defun generic-smart-tab-key ()
+  "Indent when at left margin or right of whitespace, autocomplete elsewhere"
+  (interactive)
+  (smart-tab-key 'indent-for-tab-command 'dabbrev-expand 1))
+
+(defun python-smart-tab-key ()
+  "Indent when at left margin or right of whitespace, autocomplete elsewhere"
+  (interactive)
+  (smart-tab-key 'indent-for-tab-command 'dabbrev-expand 1))
 #+END_SRC
 
 *** org-mode
@@ -2478,7 +2619,8 @@ backends during experimentation.
       "H-<f5>" 'my:revert-buffer-no-prompt
 
       ;; OS Utilities
-      "H-f"  'rgrep
+      "H-f"  'counsel-ag
+      "H-F"  (lambda () (interactive) (setq current-prefix-arg '(4))(call-interactively 'counsel-ag))
       "<f9>" 'shell
 
       ;; Text navigation
@@ -2486,6 +2628,7 @@ backends during experimentation.
       "M-<up>"   'backward-paragraph
       "M-<down>" 'forward-paragraph
       "H-a"      'my:find-text
+      "H-A"      'my:find-this-text
       "H-M-a"    'my:find-this-text
       "H-["      'my:goto-previous-change
       "H-]"      'my:goto-next-change
@@ -2524,6 +2667,7 @@ backends during experimentation.
 
       ;; Buffer navigation
       "H-b"         'my:find-buffer
+      "H-B"         'counsel-locate
       "H-w"         'eyebrowse-switch-to-window-config
       "H-W"         'eyebrowse-rename-window-config
       "<prior>"     'previous-appropriate-buffer
@@ -2536,6 +2680,9 @@ backends during experimentation.
       "C-<down>"    'my:scroll-up-some-lines
       "C-<left>"    'my:scroll-left-some-lines
       "C-<right>"   'my:scroll-right-some-lines
+
+      ;; screen recording and screenshots
+      "M-<print>"   'camcorder-mode
 
       ;; Other
       "H-=" '(lambda () (interactive) (text-scale-increase 1))
@@ -2552,12 +2699,19 @@ backends during experimentation.
       "<down>"      'isearch-repeat-forward
       "<up>"        'isearch-repeat-backward)
 
+  (general-define-key :keymaps 'camcorder-moode-map
+      "M-<print>" 'camcorder-stop)
+
   (general-define-key :keymaps '(query-replace-map multi-query-replace-map)
       "<up>"     'backup
       "<down>"   'skip
       "<escape>" 'exit
       "<return>" 'act
       "<insert>" 'edit)
+
+  (general-define-key :keymaps 'nov-mode-map
+      "<home>" nil
+      "<end>"  nil)
 
   (general-define-key :keymaps 'swiper-map
       "H-r"    'my:swiper-query-replace-all)
@@ -2567,6 +2721,9 @@ backends during experimentation.
       "TAB"   'c-smart-tab-key
       "C-t"   'c-indent-line-or-region
       "C-r"   'align-current)
+
+  (general-define-key :keymaps 'emacs-lisp-mode-map
+      "C-\\" 'eval-region)
 
   (general-define-key :keymaps 'c-mode-map :prefix "H-c"
       "1" 'c-insert-region-heading
@@ -2584,8 +2741,12 @@ backends during experimentation.
       "N" 'c-insert-preproc-ifndef-block
       "I" 'c-insert-preproc-include-block)
 
+  (general-define-key :keymaps 'python-mode-map
+      "H-/" 'counsel-jedi)
+
   (general-define-key :keymaps 'prog-mode-map
-      "H-;" 'my:comment-region-or-line)
+      "H-;" 'my:comment-region-or-line
+      "H-e" 'poporg-dwim)
 
   (general-define-key :keymaps 'auto-highlight-symbol-mode-map
       "s-<up>"   'ahs-backward
@@ -2625,9 +2786,11 @@ backends during experimentation.
   (general-define-key :keymaps 'org-mode-map
       "H-|"  (lambda () (interactive) (save-buffer) (org-latex-export-to-pdf))
       "H-x"  'org-babel-execute-buffer
-       "H-." (lambda () (interactive) (progn
-                                        (org-insert-time-stamp nil t t)
-                                        (newline))))
+      "H-." (lambda () (interactive) (progn
+                                       (org-insert-time-stamp nil t t)
+                                       (newline)))
+      "<H-M-return>" 'org-babel-demarcate-block
+      "<print>"      'ros)
 
   (customize-set-variable 'exwm-input-global-keys
       `((,(kbd "H-<left>") .    windmove-left)
@@ -2699,33 +2862,6 @@ Start the server
 #+END_SRC
 
 * Ideas
-
-** Smart tab key
-
-#+BEGIN_SRC
-(defun smart-tab-key (indent autocomplete indent-count)
-"Indent when at left margin or right of whitespace, autocomplete elsewhere."
-  (cond (( or (eq last-command 'yank) (eq last-command 'yank-pop)) (yank-pop))
-        (( or
-           (eq last-command 'find-tag)
-           (eq last-command 'find-tag-other-window)
-           (eq last-command 'find-tag-wrapped)
-           (eq last-command 'find-tag-wrapped-new-window))
-         (progn
-           (let ((current-prefix-arg '(4)))
-             (message "Finding next possible definition...")
-             (call-interactively 'find-tag))
-           (recenter-top-bottom)
-           (setq this-command 'find-tag)))
-        ((use-region-p) (indent-rigidly (region-beginning) (region-end) indent-count))
-        ((or (= 0 (current-column)) (= ?\s (char-before))) (funcall indent))
-        (t (funcall autocomplete))))
-
-(defun generic-smart-tab-key ()
-  "Indent when at left margin or right of whitespace, autocomplete elsewhere"
-  (interactive)
-  (smart-tab-key 'indent-for-tab-command 'ac-fuzzy-complete 1))
-#+END_SRC
 
 ** EXWM Workspace Switching Keys
 
