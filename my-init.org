@@ -141,6 +141,8 @@ The actual package list.
 (package-require 'smtpmail)              ; sending emails
 (package-require 'lsp-mode)              ; language server protocol support
 (package-require 'ccls)                  ; C/C++/OBJC LSP backend
+(package-require 'olivetti)              ; Center text with fill-columns, critical for large displays.
+(package-require 'rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
 #+END_SRC
 
 * Localization (post-package)
@@ -761,6 +763,24 @@ using display-buffer in place of pop-to-buffer."
 	(run-hooks 'org-agenda-after-show-hook)))))
 #+END_SRC
 
+Toggle center-alignment & word-wrap (good for reading) in unison. Sometimes it's needed to keep tables formatted, which are too wide to fit in the normal fill-column but are fine in export.
+
+#+BEGIN_SRC emacs-lisp
+(defvar my:org-wrapped t)
+(make-variable-buffer-local 'my:org-wrapped)
+
+(defun my:org-toggle-wrap ()
+  (interactive)
+  (if my:org-wrapped
+      (progn
+        (olivetti-mode -1)
+        (visual-line-mode -1))
+    (progn
+        (olivetti-mode 1)
+        (visual-line-mode 1)))
+  (setq my:org-wrapped (not my:org-wrapped)))
+#+END_SRC
+
 *** counsel, ivy & swiper
 
 Make sure Swiper query replace tries to replace all occurrences.
@@ -855,6 +875,7 @@ backends during experimentation.
       "os"               'my:org-search-concept
       "ov"               'my:voice-notes
       "obii"             'ob-ipython-inspect
+      "o SPC"            'my:org-toggle-wrap
 
       ;; "v"-> VC (Magit) global shortcuts
       "vs"               'magit-status
@@ -1290,7 +1311,7 @@ General functions.
   (mapcar 'kill-buffer (remove-if '(lambda (x) (with-current-buffer x (get-buffer-window))) (buffer-list))))
 
 (defun my:set-window-opacity (percent)
-  "Set window opacity. Prefix arg is opacity in percent.                                                                                         ."
+  "Set window opacity. Prefix arg is opacity in percent."
   (interactive "p")
   (set-frame-parameter (selected-frame) 'alpha percent))
 #+END_SRC
@@ -1804,6 +1825,13 @@ Use icons in Ovy (switch buffer, etc)
 (all-the-icons-ivy-setup)
 #+END_SRC
 
+Tell Olivetti to use a sane default width.
+
+#+BEGIN_SRC emacs-lisp
+(custom-set-variables '(olivetti-body-width 130))
+(custom-set-variables '(olivetti-minimum-body-width 130))
+#+END_SRC
+
 ** Mode Line & Header Line
 
 This code adds a strongly customized header and mode line.
@@ -2149,7 +2177,8 @@ The hook =prog-mode-hook= is triggered in all programming major-modes.
   '(lambda ()
     (flyspell-prog-mode) ;; Spelling corrections in comments
     (linum-mode)       ;; Needed to catch compiler errors when compiling outside of emacs
-    (auto-highlight-symbol-mode)))
+    (auto-highlight-symbol-mode)
+    (rainbow-delimiters-mode)))
 #+END_SRC
 
 *** text-mode
@@ -2168,11 +2197,12 @@ The hook =prog-mode-hook= is triggered in all programming major-modes.
 #+BEGIN_SRC emacs-lisp
 (add-hook 'org-mode-hook
   (lambda ()
-    (visual-line-mode nil)
-    (setq truncate-lines t)
-    (variable-pitch-mode nil)
+    (variable-pitch-mode -1)
     (org-autolist-mode)
-    (auto-fill-mode)
+    ;(auto-fill-mode)
+    ;(visual-line-mode nil)
+    ;(setq truncate-lines t)
+    (olivetti-mode)
     (text-scale-increase 0)))
 #+END_SRC
 
@@ -2299,6 +2329,12 @@ Unhide areas when they're edited.
 
 #+BEGIN_SRC emacs-lisp
 (setq org-catch-invisible-edits 'show-and-error)
+#+END_SRC
+
+Colorize quote blocks like we do source blocks.
+
+#+BEGIN_SRC emacs-lisp
+(custom-set-variables '(org-fontify-quote-and-verse-blocks t))
 #+END_SRC
 
 *** Export
