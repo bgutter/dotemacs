@@ -1,0 +1,41 @@
+#+TITLE: Brandon's Emacs Configuration
+
+* Quick Start
+
+Clone this repo (or, better, your fork of it) to =~/.emacs.d/emacs-config=.
+
+#+BEGIN_SRC sh
+cd ~/.emacs.d
+git clone https://github.com/bgutter/dotemacs.git emacs-config
+#+END_SRC
+
+Copy =example-init.el= up into =~/.emacs.d/init.el=.
+
+#+BEGIN_SRC sh
+cd emacs-config
+cp ./example-init.el ../init.el
+#+END_SRC
+
+If you want to keep your existing customizations, copy them out of your existing =init.el= (or =.emacs=) and into =~/.emacs.d/emacs-config/custom.el=.
+
+Run Emacs. Enjoy.
+
+See [[./my-init.org][the init file itself]] for more complete documentation!
+
+* Troubleshooting and Other Advice
+
+** I still have vanilla emacs
+
+If things aren't working, make sure that =emacs= found the correct initialization directory. Arch and Windows seem to work out of the box. Ubuntu requires =~/.config/emacs= to be deleted.
+
+The variable =user-init-file= can be used to determine which initialization directory is in use. Type =C-h v=, then enter =user-init-file=, and hit enter. You want it to say =/home/you/.emacs.d/init.el=.
+
+** Don't track custom.el
+
+Run this to keep changes in =custom.el= from being tracked by git.
+
+#+BEGIN_SRC sh
+cd ~/.emacs.d/emacs-config
+git update-index --assume-unchanged custom.el
+#+END_SRC
+
