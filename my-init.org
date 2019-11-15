@@ -188,7 +188,7 @@ reserved for the user, but we have another modifier available anyway,
 so why not use it? In my case, the hyper modifier is bound to caps
 lock.
 
-To map caps lock to hyper under Xorg, you may do the following:
+To map caps lock to hyper under Xorg, you may do the following in ~/.Xmodmap:
 
 #+BEGIN_SRC bash
 clear mod4
@@ -3252,7 +3252,41 @@ Start the server
 ;;(1on1-emacs)
 #+END_SRC
 
-* Ideas
+* Notes & Vestigial Code
+
+Notes are addressed to myself & my own use-cases.
+
+** Using Emacs in WSL
+
+Emacs for Windows works extremely well, but still have constant hangs and crashes. Using Emacs for Linux in WSL (on Windows >=10) solves most of these issues (while creating a few others..).
+
+1. Install the Microsoft Ubuntu image. There's a third-party Arch image which works for the most part, but it's been less stable. The Ubuntu image is secure, verified, and maintained by Microsoft.
+2. Make paths more MSYS/MINGW/GitForWindows compatible with =ln -s /mnt/c /c=.
+3. Install =fish=, =build-essential=, and whatever other system apps I use.
+4. Build emacs from the git mirror, unless you want a very old build. Not needed if using the Arch image. Make sure to use the GTK and ImageMagick switches. At time of writing, enabling XWidgets causes a compilation error due to missing typenames (something related to Lisp/JS interop?). Enabling cairo seems to be fine.
+5. Install and configure Anaconda. Create the py36_64 environment. Install the jedi module.
+6. Configure =xmodmap= like in Linux, as discussed in the Key Mappings section.
+7. Make sure the AutoHotkey script for Windows is *not* running. This is very important, if bouncing back and forth between emacs/WSL and EmacsForWindows.
+8. Install =fonts-noto= and =fonts-liberation=, =silversearcher-ag=, and whatever else is needed.
+9. Install =vcxsrv= on Windows and run it.
+10. Mount network shares like =sudo mount -t drvfs '\\blah.com\SHARE' /mnt/blah=. Save any recurring mounts in ~/mount-drives.sh. TODO: fstab?
+11. Save the script below as =runemacs.sh=. It will run GUI emacs in the py36_64 conda env.
+13. Kindly ask IT, just one more time, to let you install native Linux. :)
+
+#+BEGIN_SRC sh
+#!/bin/bash
+export DISPLAY=localhost:0
+export GDK_SCALE=0.5
+export GDK_DPI_SCALE=2
+xmodmap ~/.Xmodmap
+xset r rate 200 60
+bash ~/mount-drives.sh # drvfs commands, though tbh fstab would probably be better.
+source activate py36_64 # Use the python interpreter that I control, not the system's.
+#sudo service dbus start # DON'T do this, it doesn't set environment variables right in WSL
+export $(dbus-launch) # For whatever reason, systemd doesn't work like this does
+export $(gnome-keyring-daemon) # run secret-tool store --label="Test" test test once to trigger wallet creation
+emacs --debug-init
+#+END_SRC
 
 ** EXWM Workspace Switching Keys
 
