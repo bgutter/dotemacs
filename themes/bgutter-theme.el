@@ -48,7 +48,7 @@
                   :underline nil
                   :slant normal
                   :weight normal
-                  :height 70
+                  :height 75
                   :width normal
                   :family ,bgutter-theme:mono-font))))
    `(region ((t (:background ,bgutter-theme:dark-gray))))
@@ -70,10 +70,11 @@
 
    ;; Set font-lock faces
    `(font-lock-comment-face       ((t (:foreground ,bgutter-theme:gray :slant oblique))))
+   `(font-lock-doc-face           ((t (:foreground ,bgutter-theme:cyan :slant oblique))))
    `(font-lock-function-name-face ((t (:foreground ,bgutter-theme:purple))))
    `(font-lock-keyword-face       ((t (:foreground ,bgutter-theme:pink))))
    `(font-lock-preprocessor-face  ((t (:foreground ,bgutter-theme:jade))))
-   `(font-lock-variable-name-face ((t (:foreground ,bgutter-theme:cyan))))
+   `(font-lock-variable-name-face ((t (:foreground ,bgutter-theme:white))))
    `(font-lock-type-face          ((t (:foreground ,bgutter-theme:blue))))
    `(font-lock-string-face        ((t (:foreground ,bgutter-theme:gold))))
 
@@ -175,6 +176,7 @@
    `(show-paren-match ((t (:background ,bgutter-theme:dark-violet))))
    `(ecb-default-highlight-face ((t (:background ,bgutter-theme:dark-violet))))
    `(magit-item-highlight ((t (:background ,bgutter-theme:dark-violet))))
+   `(notmuch-search-unread-face ((t (:background ,bgutter-theme:dark-violet :weight bold))))
 
    ;; Deprecated? -- delete eventually
    ;; `(stripe-highlight ((t (:background "gray10"))))

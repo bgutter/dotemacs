@@ -3,12 +3,12 @@
 # key: =obiini
 # --
 
-#+BEGIN_SRC ipython :session :exports none :results raw drawer :async t :cache yes
+#+BEGIN_SRC ipython :session `(file-name-base (buffer-file-name))` :exports none :results raw drawer
 import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use( "dark_background" )
 #+END_SRC
 
-#+BEGIN_SRC ipython :session :exports both :results raw drawer :async t :cache yes
+#+BEGIN_SRC ipython :session `(file-name-base (buffer-file-name))` :exports both :results raw drawer
 $0
 #+END_SRC

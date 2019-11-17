@@ -644,11 +644,15 @@ Use counsel for jedi autocompletions, thanks to [[https://oremacs.com/2015/08/26
 
 (defun my:scroll-up-some-lines ()
   (interactive)
-  (scroll-up 15))
+  (if pixel-scroll-mode
+      (pixel-scroll-up)
+    (scroll-up 15)))
 
 (defun my:scroll-down-some-lines ()
   (interactive)
-  (scroll-down 15))
+  (if pixel-scroll-mode
+      (pixel-scroll-down)
+    (scroll-down 15)))
 
 (defun my:scroll-left-some-lines ()
   (interactive)
@@ -914,7 +918,14 @@ backends during experimentation.
 
       ;; "i" -> input methods
       "ie"                (lambda () (interactive) (set-input-method nil) (message "English"))
-      "ic"                (lambda () (interactive) (set-input-method 'chinese-tonepy) (message "Chinese (pinyin)")))
+      "ic"                (lambda () (interactive) (set-input-method 'chinese-tonepy) (message "Chinese (pinyin)"))
+
+      ;; "d" -> debug
+      "dbf"                'debug-on-entry
+      "dbv"                'debug-on-variable-change
+      "dbnf"               'cancel-debug-on-entry
+      "dbnv"               'cancel-debug-on-variable-change
+      )
 
   (general-define-key
 
@@ -2031,6 +2042,18 @@ assume that we're using StumpWM & load it.
     (require 'stumpwm-mode)
     (add-to-list 'default-frame-alist '(alpha . (90 . 90)))
     (setq pop-up-frames t)))
+#+END_SRC
+
+** Scrolling
+
+Scroll on a per-pixel basis, like it's 1999 (rather than 1989). Based on advice on [[https://emacs.stackexchange.com/questions/10354/smooth-mouse-scroll-for-inline-images][StackOverflow]].
+
+#+BEGIN_SRC emacs-lisp
+(pixel-scroll-mode)
+(setq pixel-dead-time 0) ; Never go back to the old scrolling behaviour.
+(setq pixel-resolution-fine-flag t) ; Scroll by number of pixels instead of lines (t = frame-char-height pixels).
+(setq mouse-wheel-scroll-amount '(1)) ; Distance in pixel-resolution to scroll each mouse wheel event.
+(setq mouse-wheel-progressive-speed nil) ; Progressive speed is too fast for me.
 #+END_SRC
 
 * Theme
