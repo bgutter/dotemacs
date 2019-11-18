@@ -143,6 +143,7 @@ The actual package list.
 (package-require 'ccls)                  ; C/C++/OBJC LSP backend
 (package-require 'olivetti)              ; Center text with fill-columns, critical for large displays.
 (package-require 'rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
+(package-require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
 #+END_SRC
 
 * Localization (post-package)
@@ -1173,6 +1174,7 @@ backends during experimentation.
       "<print>"      'ros)
 
   (general-define-key :keymaps 'dired-mode-map
+      "o" 'dired-omit-mode
       "p" (lambda () (interactive) (emms-play-dired) (my:voice-note-make-timestamp)))
 
   (general-define-key :keymaps 'notmuch-show-mode-map
