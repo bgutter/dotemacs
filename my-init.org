@@ -205,7 +205,7 @@ script...
 
 #+BEGIN_SRC autohotkey
 SetTitleMatchMode, 2
-IfWinActive, emacs
+#IfWinActive emacs-nt
 {
     CapsLock::AppsKey
     return
@@ -1737,7 +1737,7 @@ Highlight body of parens
 Use a consistent window name. This helps with AutoHotkey recognition on Windows, in addition to being a little more usable in Linux.
 
 #+BEGIN_SRC emacs-lisp
-(setq frame-title-format "emacs")
+(setq frame-title-format (if (equal system-type 'windows-nt) "emacs-nt" "emacs"))
 #+END_SRC
 
 Make sure we push any kill-ring data into OS clipboard.
@@ -3311,12 +3311,11 @@ Emacs for Windows works extremely well, but still have constant hangs and crashe
 4. Build emacs from the git mirror, unless you want a very old build. Not needed if using the Arch image. Make sure to use the GTK and ImageMagick switches. At time of writing, enabling XWidgets causes a compilation error due to missing typenames (something related to Lisp/JS interop?). Enabling cairo seems to be fine.
 5. Install and configure Anaconda. Create the py36_64 environment. Install the jedi module.
 6. Configure =xmodmap= like in Linux, as discussed in the Key Mappings section.
-7. Make sure the AutoHotkey script for Windows is *not* running. This is very important, if bouncing back and forth between emacs/WSL and EmacsForWindows.
-8. Install =fonts-noto= and =fonts-liberation=, =silversearcher-ag=, and whatever else is needed.
-9. Install =vcxsrv= on Windows and run it.
-10. Mount network shares like =sudo mount -t drvfs '\\blah.com\SHARE' /mnt/blah=. Save any recurring mounts in ~/mount-drives.sh. TODO: fstab?
-11. Save the script below as =runemacs.sh=. It will run GUI emacs in the py36_64 conda env.
-13. Kindly ask IT, just one more time, to let you install native Linux. :)
+7. Install =fonts-noto= and =fonts-liberation=, =silversearcher-ag=, and whatever else is needed.
+8. Install =vcxsrv= on Windows and run it.
+9. Mount network shares like =sudo mount -t drvfs '\\blah.com\SHARE' /mnt/blah=. Save any recurring mounts in ~/mount-drives.sh. TODO: fstab?
+10. Save the script below as =runemacs.sh=. It will run GUI emacs in the py36_64 conda env.
+11. Kindly ask IT, just one more time, to let you install native Linux. :)
 
 #+BEGIN_SRC sh
 #!/bin/bash
