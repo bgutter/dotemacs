@@ -144,6 +144,7 @@ The actual package list.
 (package-require 'olivetti)              ; Center text with fill-columns, critical for large displays.
 (package-require 'rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
 (package-require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
+(package-require 'helm-descbinds)        ; Extremely useful for learning new major modes.
 #+END_SRC
 
 * Localization (post-package)
@@ -871,6 +872,9 @@ backends during experimentation.
 
       ;; Double tap
       my:shortcut-leader 'org-capture
+
+      ;; ? means help
+      "?"                'helm-descbinds
 
       ;; "o"-> Org global shortcuts
       "od"               'my-org-journal-open-today
@@ -3228,6 +3232,22 @@ Work around obi [[https://github.com/gregsexton/ob-ipython/issues/135][issue 135
                 (end-of-buffer)
                 (kill-region (region-beginning) (region-end))
                 (goto-char start))))
+#+END_SRC
+
+** magit
+
+Magit doesn't play nicely with Gerrit by default. Workaround from [[https://emacs.stackexchange.com/questions/19672/magit-gerrit-push-to-other-branch][StackOverflow]]. Modified to specify remote branch as well (master, features/xyz, etc).
+
+#+BEGIN_SRC emacs-lisp
+(defun magit-push-to-gerrit (source dest)
+  "Push an arbitrary branch or commit to refs/for/someting on gerrit. The source and dest are read in the minibuffer."
+  (interactive
+   (let ((source (magit-read-local-branch-or-commit "Push"))
+         (dest   (magit-read-remote-branch "To")))
+     (list source dest)))
+  (magit-git-command-topdir (concat "git push origin " source ":refs/for/" (string-join (remove "origin" (split-string dest "/")) "/"))))
+
+(transient-append-suffix 'magit-push "m" '("g" "Push to gerrit" magit-push-to-gerrit))
 #+END_SRC
 
 * OS Integration
