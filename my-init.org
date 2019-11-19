@@ -145,6 +145,7 @@ The actual package list.
 (package-require 'rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
 (package-require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
 (package-require 'helm-descbinds)        ; Extremely useful for learning new major modes.
+(package-require 'magit)                 ; Incredible Git client interface in emacs
 #+END_SRC
 
 * Localization (post-package)
@@ -2052,14 +2053,20 @@ assume that we're using StumpWM & load it.
 
 ** Scrolling
 
-Scroll on a per-pixel basis, like it's 1999 (rather than 1989). Based on advice on [[https://emacs.stackexchange.com/questions/10354/smooth-mouse-scroll-for-inline-images][StackOverflow]].
+*DEACTIVATED*: Optionally, scroll on a per-pixel basis, like it's 1999 (rather than 1989). Based on advice on [[https://emacs.stackexchange.com/questions/10354/smooth-mouse-scroll-for-inline-images][StackOverflow]].
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC
 (pixel-scroll-mode)
 (setq pixel-dead-time 0) ; Never go back to the old scrolling behaviour.
 (setq pixel-resolution-fine-flag t) ; Scroll by number of pixels instead of lines (t = frame-char-height pixels).
 (setq mouse-wheel-scroll-amount '(1)) ; Distance in pixel-resolution to scroll each mouse wheel event.
 (setq mouse-wheel-progressive-speed nil) ; Progressive speed is too fast for me.
+#+END_SRC
+
+Don't do special processing for tall lines by default. Way too much cursor lag.
+
+#+BEGIN_SRC emacs-lisp
+(setq-default auto-window-vscroll nil)
 #+END_SRC
 
 * Theme
@@ -3248,6 +3255,14 @@ Magit doesn't play nicely with Gerrit by default. Workaround from [[https://emac
   (magit-git-command-topdir (concat "git push origin " source ":refs/for/" (string-join (remove "origin" (split-string dest "/")) "/"))))
 
 (transient-append-suffix 'magit-push "m" '("g" "Push to gerrit" magit-push-to-gerrit))
+#+END_SRC
+
+** Emacs
+
+When killing emacs, ask to save the desktop. I don't want this done by default, and I want to load the saved desktop only manually (so, no =desktop-save-mode=).
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'kill-emacs-hook (lambda () (interactive) (when (y-or-n-p "Save Desktop?") (desktop-save-in-desktop-dir))))
 #+END_SRC
 
 * OS Integration
