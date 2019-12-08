@@ -2783,7 +2783,8 @@ Add function to rebuild org file list. Call it once.
     (seq-filter
       (lambda (x) (not (my:fname-seafile-conflict-p x)))
       (directory-files-recursively my:org-file-tree-base-path ".*\\.org$"))))
-(my-org-update-agenda-index)
+(when my:org-file-tree-base-path
+  (my-org-update-agenda-index))
 #+END_SRC
 
 Add function to interactively select an existing concept file.
