@@ -44,7 +44,7 @@ This section ensures that all required packages are loaded.
 
 ** Package System Config
 
-Initialize the package system
+Initialize the package system. Tell emacs to load the newest version of anything it looks for (IE, if there's a foo.el and foo.elc, take the newest one).
 
 #+BEGIN_SRC emacs-lisp
 (require 'package)
@@ -55,6 +55,7 @@ Initialize the package system
 (add-to-list 'package-archives
     '("melpa" . "http://melpa.milkbox.net/packages/") t)
 
+(customize-set-variable 'load-prefer-newer t)
 (package-initialize)
 (setq package-enable-at-startup nil)
 #+END_SRC
@@ -788,6 +789,16 @@ Toggle center-alignment & word-wrap (good for reading) in unison. Sometimes it's
   (setq my:org-wrapped (not my:org-wrapped)))
 #+END_SRC
 
+Ignore dependencies when I explicitly want to set status. I have dependency checking enabled only so that irrelevant goals are not cluttering my todo list. See =org-agenda-dim-blocked-tasks=.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:org-todo ()
+  "Like org-todo, but with `org-enforce-todo-dependencies' temporarily bound to nil"
+  (interactive)
+  (let ((org-enforce-todo-dependencies nil))
+    (call-interactively #'org-todo)))
+#+END_SRC
+
 *** counsel, ivy & swiper
 
 Make sure Swiper query replace tries to replace all occurrences.
@@ -798,16 +809,6 @@ Make sure Swiper query replace tries to replace all occurrences.
   (save-excursion
     (execute-kbd-macro (kbd "M-<")) ;; <- (call-interactively 'ivy-beginning-of-buffer doesn't work?
     (swiper-query-replace)))
-#+END_SRC
-
-Ignore dependencies when I explicitly want to set status.
-
-#+BEGIN_SRC emacs-lisp
-(defun my:org-todo ()
-  "Like org-todo, but with `org-enforce-todo-dependencies' temporarily bound to nil"
-  (interactive)
-  (let ((org-enforce-todo-dependencies nil))
-    (call-interactively #'org-todo)))
 #+END_SRC
 
 *** Slime stuff
@@ -1753,10 +1754,11 @@ Highlight the current line
 (global-hl-line-mode)
 #+END_SRC
 
-When buffer is not modified in emacs, automatically reload it when its file changes on disk.
+When buffer is not modified in emacs, automatically reload it when its file changes on disk. Also allow dired, etc, to autorevert.
 
 #+BEGIN_SRC emacs-lisp
 (global-auto-revert-mode)
+(customize-set-variable 'global-auto-revert-non-file-buffers t)
 #+END_SRC
 
 Tweak the text shown when hiding regions of a buffer.
@@ -1797,6 +1799,12 @@ Indicate tabs.
 
 #+BEGIN_SRC emacs-lisp
 (standard-display-ascii ?\t "→   ")
+#+END_SRC
+
+And never insert tabs.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'indent-tabs-mode nil)
 #+END_SRC
 
 Highlight some common tags.
@@ -1846,8 +1854,9 @@ Use icons in Ovy (switch buffer, etc)
 Tell Olivetti to use a sane default width.
 
 #+BEGIN_SRC emacs-lisp
-(custom-set-variables '(olivetti-body-width 130))
-(custom-set-variables '(olivetti-minimum-body-width 130))
+(custom-set-variables
+  '(olivetti-body-width 130)
+  '(olivetti-minimum-body-width 130))
 #+END_SRC
 
 ** Mode Line & Header Line
@@ -1864,6 +1873,8 @@ nasty.
 (defface mode-line-buffer-name-inactive-face   nil "Face of buffer name in mode line (inactive).")
 (defface mode-line-notification-face           nil "Face of mode line notifications.")
 (defface mode-line-notification-inactive-face  nil "Face of mode line notifications (inactive).")
+
+(customize-set-variable 'mode-line-in-non-selected-windows nil)
 
 (defmacro my-header-line ()
   `(list
@@ -2051,6 +2062,30 @@ assume that we're using StumpWM & load it.
     (setq pop-up-frames t)))
 #+END_SRC
 
+** Buffers
+
+Tell the =uniquify= package how to rename buffers.
+
+#+BEGIN_SRC emacs-lisp
+(custom-set-variables
+  '(uniquify-buffer-name-style 'post-forward nil (uniquify)))
+#+END_SRC
+
+Initialize the scratch buffer to =org-mode=.
+
+#+BEGIN_SRC emacs-lisp
+  (custom-set-variables
+    '(initial-major-mode (quote org-mode))
+    '(initial-scratch-message
+     "This buffer is for text that is not saved, and for Lisp evaluation.
+  To create a file, visit it with \\[find-file] and enter text in its buffer.
+
+  ,#+BEGIN_SRC emacs-lisp
+
+  ,#+END_SRC
+  "))
+#+END_SRC
+
 ** Scrolling
 
 *DEACTIVATED*: Optionally, scroll on a per-pixel basis, like it's 1999 (rather than 1989). Based on advice on [[https://emacs.stackexchange.com/questions/10354/smooth-mouse-scroll-for-inline-images][StackOverflow]].
@@ -2113,6 +2148,7 @@ Monkey-C Mode
   '((lambda () (run-hooks 'prog-mode-hook)))
   "A mode for Monkey-C")
 #+END_SRC
+
 * Mode Management
 
 Handle which modes/settings are triggered where.
@@ -2178,16 +2214,32 @@ Use ido by default.
 (ido-mode)
 #+END_SRC
 
+Let ido match strings flexibly.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'ido-enable-flex-matching t)
+#+END_SRC
+
+Always open files in the current window.
+
+#+BEGIN_SRC emacs-lisp
+(custom-set-variables
+ '(ido-default-buffer-method (quote selected-window))
+ '(ido-default-file-method (quote selected-window)))
+#+END_SRC
+
 Use pdf-tools for viewing PDF documents, rather than docview
 
 #+BEGIN_SRC emacs-lisp
 (pdf-tools-install)
 #+END_SRC
 
-Emoji everywhere.
+Emojis everywhere (except for some places).
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'after-init-hook #'global-emojify-mode)
+(customize-set-variable 'emojify-inhibit-major-modes
+    '(dired-mode doc-view-mode debugger-mode pdf-view-mode image-mode help-mode ibuffer-mode magit-popup-mode magit-diff-mode ert-results-mode compilation-mode proced-mode mu4e-headers-mode org-agenda-mode))
 #+END_SRC
 
 Unicode setup
@@ -2370,7 +2422,53 @@ Unhide areas when they're edited.
 Colorize quote blocks like we do source blocks.
 
 #+BEGIN_SRC emacs-lisp
-(custom-set-variables '(org-fontify-quote-and-verse-blocks t))
+(customize-set-variable 'org-fontify-quote-and-verse-blocks t)
+#+END_SRC
+
+Allow images to be visually resized with #+ATTR keywords.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'org-image-actual-width nil)
+#+END_SRC
+
+Adjust emphasis elements a bit.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'org-emphasis-alist
+  '(("*" bold)
+    ("/" italic)
+    ("_" underline)
+    ("=" org-verbatim verbatim)
+    ("~" org-code verbatim)
+    ("+"
+     (:strike-through t))
+    ("%" highlight verbatim)))
+#+END_SRC
+
+Adjust how columns are shown when enabled.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'org-columns-default-format "%25ITEM %TODO %3PRIORITY %TAGS")
+#+END_SRC
+
+Use a simple unicode bullet.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'org-bullets-bullet-list '("○"))
+#+END_SRC
+
+Any TODO which is tagged :noagenda: shouldn't be in the agenda.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'org-agenda-hide-tags-regexp "noagenda")
+#+END_SRC
+
+*** Modules
+
+Set our org-modules.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'org-modules '(org-bbdb org-bibtex org-docview org-gnus org-habit org-info org-irc org-mhe org-rmail org-w3m org-collector))
 #+END_SRC
 
 *** Export
@@ -2384,6 +2482,14 @@ Use minted code sections in PDF export, and fixup the margins a bit.
       org-latex-pdf-process
       '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
         "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+
+(customize-set-variable 'org-latex-minted-langs
+   '((emacs-lisp "common-lisp")
+     (cc "c++")
+     (cperl "perl")
+     (shell-script "bash")
+     (caml "ocaml")
+     (ipython "python")))
 #+END_SRC
 
 Don't add a table of contents upon export.
@@ -2496,6 +2602,22 @@ Hide items scheduled in future from org-todo list.
 
 #+BEGIN_SRC emacs-lisp
 (setq org-agenda-todo-ignore-scheduled 'future)
+#+END_SRC
+
+Unclutter the agenda display.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'org-agenda-prefix-format
+    '((agenda . " %i %?-12t% s")
+      (todo . " ")
+      (tags . " ")
+      (search . " %i %-12:c")))
+#+END_SRC
+
+I want to be able to have multiple agenda windows.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'org-agenda-sticky t)
 #+END_SRC
 
 Add custom agenda command, use some awesome code from [[https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html][this blog]] and [[https://stackoverflow.com/questions/10074016/org-mode-filter-on-tag-in-agenda-view/33444799#33444799][this StackOverflow user]].
@@ -2678,14 +2800,15 @@ from code blocks.
 (with-eval-after-load 'org
   (progn
     (org-babel-do-load-languages
-     'org-babel-load-languages
-     '(
-       (ipython . t)
-       (shell . t)
-       (lisp . t)
-       (elasticsearch . t)
-       (R . t)
-       (ruby . t)))))
+      'org-babel-load-languages
+      '((python . t)
+        (emacs-lisp . t)
+        (ipython . t)
+        (shell . t)
+        (lisp . t)
+        (elasticsearch . t)
+        (R . t)
+        (ruby . t)))))
 #+END_SRC
 
 Note: Add this to your IPython init file to render DataFrames and
@@ -2762,6 +2885,17 @@ Sort org-habits by priority. See [[https://emacs.stackexchange.com/questions/324
                                     (todo priority-down category-keep)
                                     (tags priority-down category-keep)
                                     (search category-keep)))
+#+END_SRC
+
+Customize the habit display a bit.
+
+#+BEGIN_SRC emacs-lisp
+(custom-set-variables
+  '(org-habit-completed-glyph 88)
+  '(org-habit-following-days 0)
+  '(org-habit-graph-column 90)
+  '(org-habit-preceding-days 0)
+  '(org-habit-today-glyph 124))
 #+END_SRC
 
 *** Personal Journal
@@ -3082,6 +3216,12 @@ Only search code.
                                 font-lock-string-face))
 #+END_SRC
 
+Set delay for AHS highlighting.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'ahs-idle-interval 0.25)
+#+END_SRC
+
 ** notmuch
 
 Newest emails first.
@@ -3092,6 +3232,30 @@ Newest emails first.
 
 #+BEGIN_SRC emacs-lisp
 (setq send-mail-function 'smtpmail-send-it)
+#+END_SRC
+
+** proced
+
+Auto-update =proced= buffers.
+
+#+BEGIN_SRC emacs-lisp
+(custom-set-variables
+  '(proced-auto-update-flag t)
+  '(proced-auto-update-interval 1))
+#+END_SRC
+
+** bookmarks
+
+Always recenter when jumping between bookmarks.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'bm-recenter t)
+#+END_SRC
+
+Highlighting is done by line.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'bm-highlight-style 'bm-highlight-only-line)
 #+END_SRC
 
 * Monkey Patching
@@ -3157,6 +3321,12 @@ for the cursor, without having a distracting cursor design.
 (defadvice compile-goto-error
   (after compile-goto-error-then-recenter activate)
   (my:maybe-recenter))
+#+END_SRC
+
+If I want to quit a search, let me. What a weird default.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'search-nonincremental-instead nil)
 #+END_SRC
 
 ** diff-hl Triggers
