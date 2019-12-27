@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: Concept Page Template
+# key: =cc
+# --
+
+#+TITLE: $1
+#+DATE:  `(format-time-string "%Y-%m-%d")`
+
+* $0
+
+* Action Items :$2:

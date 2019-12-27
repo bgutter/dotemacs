@@ -1,0 +1,23 @@
+# -*- mode: snippet -*-
+# name: Journal Page Template
+# key: =jo
+# --
+
+# -*- eval: (add-hook 'before-save-hook (lambda () (save-excursion (setq current-prefix-arg '(4)) (org-clock-report t))) nil t) -*-
+#+TITLE: Daily Journal
+#+DATE:  `(format-time-string "%Y-%m-%d")`
+#+STARTUP: showeverything
+#+PROPERTY: DATE `(format-time-string "%Y-%m-%d")`
+
+#+BEGIN: clocktable :scope file :maxlevel 2 :compact t
+#+END:
+
+* Work Log
+
+* Scratch
+
+* Thoughts
+
+* Checklist
+
+* Action Items :dailyjournal:
