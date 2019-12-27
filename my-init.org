@@ -2263,8 +2263,8 @@ The hook =prog-mode-hook= is triggered in all programming major-modes.
 #+BEGIN_SRC emacs-lisp
 (add-hook 'prog-mode-hook
   '(lambda ()
-    (flyspell-prog-mode) ;; Spelling corrections in comments
-    (linum-mode)       ;; Needed to catch compiler errors when compiling outside of emacs
+    (flyspell-prog-mode)
+    (display-line-numbers-mode 1)
     (auto-highlight-symbol-mode)
     (rainbow-delimiters-mode)))
 #+END_SRC
@@ -2389,7 +2389,7 @@ Use employer's preferred C format...
 #+BEGIN_SRC emacs-lisp
 (add-hook 'term-mode-hook
   (lambda ()
-    (linum-mode -1)
+    (display-line-numbers-mode -1)
     (setq show-trailing-whitespace nil)
     (term-pager-toggle)))
 #+END_SRC
