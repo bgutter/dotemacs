@@ -92,7 +92,7 @@ The actual package list.
 (package-require 'uniquify)              ; rename buffers of same name intelligently
 (package-require 'undo-tree)             ; incredible undo/redo support
 (package-require 'auto-complete)         ; neat autocompletion
-;(package-require 'framemove)             ; jump between frames and windows
+(package-require 'framemove)             ; jump between frames and windows
 (package-require 'fuzzy)                 ; fuzzy completion
 (package-require 'hi-lock)               ; arbitrary text hilighting
 (package-require 'button-lock)           ; face attribute that makes links from text
