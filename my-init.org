@@ -147,6 +147,7 @@ The actual package list.
 (package-require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
 (package-require 'helm-descbinds)        ; Extremely useful for learning new major modes.
 (package-require 'magit)                 ; Incredible Git client interface in emacs
+(package-require 'emmet-mode)            ; HTML editing mode which generates HTML from CSS-like expressions
 #+END_SRC
 
 * Localization (post-package)
@@ -1110,6 +1111,9 @@ backends during experimentation.
 
   (general-define-key :keymaps 'emacs-lisp-mode-map
       "C-\\" 'eval-region)
+
+  (general-define-key :keymaps 'emmet-mode-keymap
+      "TAB" 'emmet-expand-yas) ;; my tab key management is getting out of hand & I need to do something about it.
 
   (general-define-key :keymaps 'c-mode-map :prefix "H-c"
       "1" 'c-insert-region-heading
@@ -2392,6 +2396,15 @@ Use employer's preferred C format...
     (display-line-numbers-mode -1)
     (setq show-trailing-whitespace nil)
     (term-pager-toggle)))
+#+END_SRC
+
+*** web development
+
+Use emmet in any web-dev modes.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'html-mode-hook 'emmet-mode)
+(add-hook 'css-mode-hook 'emmet-mode)
 #+END_SRC
 
 * Package Configurations
