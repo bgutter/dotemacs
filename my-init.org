@@ -148,6 +148,7 @@ The actual package list.
 (package-require 'helm-descbinds)        ; Extremely useful for learning new major modes.
 (package-require 'magit)                 ; Incredible Git client interface in emacs
 (package-require 'emmet-mode)            ; HTML editing mode which generates HTML from CSS-like expressions
+(package-require 'smex)                  ; Maintain M-x history -- automatically used by counsel-M-x
 #+END_SRC
 
 * Localization (post-package)
