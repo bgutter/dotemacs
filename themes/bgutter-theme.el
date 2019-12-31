@@ -103,11 +103,13 @@
    `(org-upcoming-deadline ((t (:foreground ,bgutter-theme:pink :weight bold))))
 
    ;; org-blocks
-   `(org-block ((t (:background ,bgutter-theme:very-dark-gray))))
+   `(org-block ((t (:background ,bgutter-theme:very-dark-gray
+                    :extend t))))
    `(org-block-end-line ((t (:background ,bgutter-theme:darker-gray
                              :foreground ,bgutter-theme:pale-pink
                              :box (:line-width 1 :color ,bgutter-theme:black :style pressed-button)
-                             :weight bold))))
+                             :weight bold
+                             :extend t))))
    `(org-block-begin-line ((t (:inherit org-block-end-line))))
 
    ;; org-habit (colorized to simplify -- don't personally need all of these
