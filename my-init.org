@@ -1618,6 +1618,26 @@ Copy current buffer's path to clipboard. Taken from [[https://stackoverflow.com/
       (message filename))))
 #+END_SRC
 
+Gather number at point, interpret it as seconds since Unix epoch, and echo the formatted datetime.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:echo-datetime-at-point ()
+  "Message integer at point as a Unix timestamp."
+  (interactive)
+  (message (concat
+      (format-time-string "%D %T Local" (seconds-to-time (thing-at-point 'number)) nil)
+      (format-time-string " (%D %T UTC)" (seconds-to-time (thing-at-point 'number)) t))))
+#+END_SRC
+
+Insert current time as unix epoch.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:insert-epoch-time ()
+  "Insert current seconds since epoch at point."
+  (interactive)
+  (insert (number-to-string (time-to-seconds))))
+#+END_SRC
+
 * User Interface Settings
 
 This section defines code which modifies how emacs displays buffers
