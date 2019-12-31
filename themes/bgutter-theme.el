@@ -112,6 +112,11 @@
                              :extend t))))
    `(org-block-begin-line ((t (:inherit org-block-end-line))))
 
+   ;; the emacs 27 tab-bar
+   '(tab-bar ((t (:inherit default))))
+   '(tab-bar-tab ((t (:inherit my-header-line-face :box (:line-width 1 :style released-button)))))
+   '(tab-bar-tab-inactive ((t (:inherit my-header-line-inactive-face))))
+
    ;; org-habit (colorized to simplify -- don't personally need all of these
    ;; distinguished from one another)
    `(org-habit-alert-face          ((t (:background ,bgutter-theme:obnoxious-green))))

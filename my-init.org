@@ -101,7 +101,6 @@ The actual package list.
 (package-require 'anzu)                  ; show total/current matches in isearch
 (package-require 'visual-regexp)         ; visualize regular expressions in real-time
 (package-require 'expand-region)         ; Expand region
-(package-require 'eyebrowse)             ; Workspace management
 (package-require 'origami)               ; awesome code folding
 (package-require 'general)               ; sane key mapping architecture
 (package-require 'which-key)             ; Display options after prefix keys are entered
@@ -956,16 +955,13 @@ backends during experimentation.
       "<f8>"      'delete-window
 
       ;; Workspaces (virtual desktops/saved window configs/etc)
-      "H-0"       'eyebrowse-switch-to-window-config-0
-      "H-1"       'eyebrowse-switch-to-window-config-1
-      "H-2"       'eyebrowse-switch-to-window-config-2
-      "H-3"       'eyebrowse-switch-to-window-config-3
-      "H-4"       'eyebrowse-switch-to-window-config-4
-      "H-5"       'eyebrowse-switch-to-window-config-5
-      "H-6"       'eyebrowse-switch-to-window-config-6
-      "H-7"       'eyebrowse-switch-to-window-config-7
-      "H-8"       'eyebrowse-switch-to-window-config-8
-      "H-9"       'eyebrowse-switch-to-window-config-9
+      "S-<left>"    'tab-bar-switch-to-prev-tab
+      "S-<right>"   'tab-bar-switch-to-next-tab
+      "S-<up>"      'tab-bar-new-tab
+      "S-<down>"    'tab-bar-close-tab
+      "C-S-<left>"  (lambda () (interactive) (tab-bar-move-tab -1))
+      "C-S-<right>" (lambda () (interactive) (tab-bar-move-tab 1))
+      "S-SPC"       'tab-bar-rename-tab
 
       ;; Window splitting
       ; names seem wrong, but I imagine dpad right to mean "send focus right", etc.
@@ -1047,8 +1043,6 @@ backends during experimentation.
       ;; Buffer navigation
       "H-b"         'my:find-buffer
       "H-B"         'counsel-locate
-      "H-w"         'eyebrowse-switch-to-window-config
-      "H-W"         'eyebrowse-rename-window-config
       "<prior>"     'previous-appropriate-buffer
       "<next>"      'next-appropriate-buffer
       "C-H-<left>"  'buf-move-left
@@ -1176,10 +1170,17 @@ backends during experimentation.
       "H-a" 'isearch-forward) ;; pdf-tools has specific support for this search method
 
   (general-define-key :keymaps 'org-mode-map
-      "C-c C-t" 'my:org-todo
-      "H-|"  (lambda () (interactive) (save-buffer) (org-latex-export-to-pdf))
-      "H-x"  'org-babel-execute-buffer
-      "H-." (lambda () (interactive) (progn
+      "S-<left>"    'tab-bar-switch-to-prev-tab ;; take this back
+      "S-<right>"   'tab-bar-switch-to-next-tab
+      "S-<up>"      'tab-bar-new-tab
+      "S-<down>"    'tab-bar-close-tab
+      "C-S-<left>"  (lambda () (interactive) (tab-bar-move-tab -1))
+      "C-S-<right>" (lambda () (interactive) (tab-bar-move-tab 1))
+      "S-SPC"       'tab-bar-rename-tab
+      "C-c C-t"     'my:org-todo
+      "H-|"         (lambda () (interactive) (save-buffer) (org-latex-export-to-pdf))
+      "H-x"         'org-babel-execute-buffer
+      "H-."         (lambda () (interactive) (progn
                                        (org-insert-time-stamp nil t t)
                                        (newline)))
       "<H-M-return>" 'org-babel-demarcate-block
@@ -1213,19 +1214,7 @@ backends during experimentation.
         (,(kbd "H-s <right>") . split-window-left)
         (,(kbd "H-c") .         exwm-input-release-keyboard)
         (,(kbd "H-l") .         exwm-input-grab-keyboard)
-        (,(kbd "H-e") .         exwm-edit--compose)
-        (,(kbd "H-0") .         eyebrowse-switch-to-window-config-0)
-        (,(kbd "H-1") .         eyebrowse-switch-to-window-config-1)
-        (,(kbd "H-2") .         eyebrowse-switch-to-window-config-2)
-        (,(kbd "H-3") .         eyebrowse-switch-to-window-config-3)
-        (,(kbd "H-4") .         eyebrowse-switch-to-window-config-4)
-        (,(kbd "H-5") .         eyebrowse-switch-to-window-config-5)
-        (,(kbd "H-6") .         eyebrowse-switch-to-window-config-6)
-        (,(kbd "H-7") .         eyebrowse-switch-to-window-config-7)
-        (,(kbd "H-8") .         eyebrowse-switch-to-window-config-8)
-        (,(kbd "H-9") .         eyebrowse-switch-to-window-config-9)
-        (,(kbd "C-M-<left>") .  eyebrowse-prev-window-config)
-        (,(kbd "C-M-<right>") . eyebrowse-next-window-config)))
+        (,(kbd "H-e") .         exwm-edit--compose)))
 
   (customize-set-variable 'exwm-input-simulation-keys
       `((,(kbd "H-a") .        ,(kbd "C-f"))
@@ -2001,14 +1990,6 @@ nasty.
               'display `((space :align-to (- (+ right right-fringe right-margin) ,reserve)))
               'face face))
 
-(defun my:current-workspace-name ()
-  (let*
-      ((slot (eyebrowse--get 'current-slot))
-       (name (nth 2 (assoc slot (eyebrowse--get 'window-configs)))))
-    (if (> (length name) 0)
-        name
-      (concat "W:" (number-to-string slot)))))
-
 (setq-default mode-line-format
   (list
     ; buffer name field
@@ -2037,7 +2018,6 @@ nasty.
                (my:line-word-char-count)))))
 
     ;;; STATUSES: less important stuff
-    (mode-line-status-entry (and (window-has-focus) (fboundp 'eyebrowse--get))     (format "[%s]" (my:current-workspace-name)) "Current Workspace")
     (mode-line-status-entry (/= text-scale-mode-amount 0) (format " ±%d " text-scale-mode-amount) "Font scale")
     (mode-line-status-entry buffer-read-only              " RO "                                  "Buffer is read-only")
     (mode-line-status-entry vc-mode                       (concat " VC:" vc-mode " ")             vc-mode)
@@ -2201,10 +2181,21 @@ Track recent files -- quite a lot of them.
 (setq recentf-max-saved-items 2000)
 #+END_SRC
 
-Manage workspaces
+Manage workspaces.
+
+- Shift + left/right switches between tabs.
+- Shift + up clones current tab to the right
+- Shift + down deletes current tab and moves focus left
 
 #+BEGIN_SRC emacs-lisp
-(eyebrowse-mode t)
+(tab-bar-mode)
+(custom-set-variables
+   '(tab-bar-close-button-show nil)
+   '(tab-bar-close-tab-select 'left)
+   '(tab-bar-new-tab-choice nil)
+   '(tab-bar-new-tab-to 'right)
+   '(tab-bar-show 1)
+   '(tab-bar-tab-hints t))
 #+END_SRC
 
 Help me with my keys
@@ -3560,18 +3551,5 @@ source activate py36_64 # Use the python interpreter that I control, not the sys
 export $(dbus-launch) # For whatever reason, systemd doesn't work like this does
 export $(gnome-keyring-daemon) # run secret-tool store --label="Test" test test once to trigger wallet creation
 emacs --debug-init
-#+END_SRC
-
-** EXWM Workspace Switching Keys
-
-I just use eyebrowse instead.
-
-#+BEGIN_SRC
-,@(mapcar (lambda (i)
-        `(,(kbd (format "H-%d" i)) .
-          (lambda ()
-              (interactive)
-              (exwm-workspace-switch-create ,i))))
-              (number-sequence 0 9)))
 #+END_SRC
 
