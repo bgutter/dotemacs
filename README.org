@@ -1,6 +1,12 @@
 #+TITLE: Brandon's Emacs Configuration
 
-* Quick Start
+* Who Should Use This?
+
+No one should use this. It's not a starter-kit. [[https://www.emacswiki.org/emacs/StarterKits][Here are some starter kits,]] but I'd strongly recommend just using plain emacs and customizing it incrementally.
+
+This repo is for reference & personal use only, and because I'm sure at least some parts of it will end up being useful to someone somewhere.
+
+* How do I use it anyway?
 
 Clone this repo (or, better, your fork of it) to =~/.emacs.d/emacs-config=.
 
@@ -26,7 +32,7 @@ See [[./my-init.org][the init file itself]] for more complete documentation!
 
 ** I still have vanilla emacs
 
-If things aren't working, make sure that =emacs= found the correct initialization directory. Arch and Windows seem to work out of the box. Ubuntu requires =~/.config/emacs= to be deleted.
+If things aren't working, make sure that =emacs= found the correct initialization directory. Arch and Windows seem to work out of the box. Ubuntu requires =~/.config/emacs= to be deleted (yeah, I know, XDG etc 🤷).
 
 The variable =user-init-file= can be used to determine which initialization directory is in use. Type =C-h v=, then enter =user-init-file=, and hit enter. You want it to say =/home/you/.emacs.d/init.el=.
 
