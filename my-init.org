@@ -149,6 +149,7 @@ The actual package list.
 (package-require 'magit)                 ; Incredible Git client interface in emacs
 (package-require 'emmet-mode)            ; HTML editing mode which generates HTML from CSS-like expressions
 (package-require 'smex)                  ; Maintain M-x history -- automatically used by counsel-M-x
+(package-require 'csv-mode)              ; Display CSV files in proper columns
 #+END_SRC
 
 * Localization (post-package)
@@ -2426,6 +2427,15 @@ Use emmet in any web-dev modes.
 #+BEGIN_SRC emacs-lisp
 (add-hook 'html-mode-hook 'emmet-mode)
 (add-hook 'css-mode-hook 'emmet-mode)
+#+END_SRC
+
+*** csv-mode
+
+Add a margin between columns
+
+#+BEGIN_SRC emacs-lisp
+(custom-set-variables '(csv-align-padding 4)
+                      '(csv-align-style 'centre))
 #+END_SRC
 
 * Package Configurations
