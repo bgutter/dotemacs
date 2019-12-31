@@ -149,6 +149,7 @@ The actual package list.
 (package-require 'emmet-mode)            ; HTML editing mode which generates HTML from CSS-like expressions
 (package-require 'smex)                  ; Maintain M-x history -- automatically used by counsel-M-x
 (package-require 'csv-mode)              ; Display CSV files in proper columns
+(package-require 'narrow-indirect)       ; Make indirect buffer in new window, then narrow to region
 #+END_SRC
 
 * Localization (post-package)
@@ -961,7 +962,7 @@ backends during experimentation.
       "S-<down>"    'tab-bar-close-tab
       "C-S-<left>"  (lambda () (interactive) (tab-bar-move-tab -1))
       "C-S-<right>" (lambda () (interactive) (tab-bar-move-tab 1))
-      "S-SPC"       'tab-bar-rename-tab
+      "C-S-SPC"     'tab-bar-rename-tab
 
       ;; Window splitting
       ; names seem wrong, but I imagine dpad right to mean "send focus right", etc.
@@ -1176,7 +1177,7 @@ backends during experimentation.
       "S-<down>"    'tab-bar-close-tab
       "C-S-<left>"  (lambda () (interactive) (tab-bar-move-tab -1))
       "C-S-<right>" (lambda () (interactive) (tab-bar-move-tab 1))
-      "S-SPC"       'tab-bar-rename-tab
+      "C-S-SPC"     'tab-bar-rename-tab
       "C-c C-t"     'my:org-todo
       "H-|"         (lambda () (interactive) (save-buffer) (org-latex-export-to-pdf))
       "H-x"         'org-babel-execute-buffer
@@ -2422,11 +2423,18 @@ Use emmet in any web-dev modes.
 
 *** csv-mode
 
-Add a margin between columns
+Add a margin between columns, and center content.
 
 #+BEGIN_SRC emacs-lisp
-(custom-set-variables '(csv-align-padding 4)
+(custom-set-variables '(csv-align-padding 7)
                       '(csv-align-style 'centre))
+#+END_SRC
+
+Whenever we start =csv-mode=, freeze the first row & auto-align fields.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'csv-mode-hook 'csv-align-mode)
+(add-hook 'csv-mode-hook 'csv-header-line)
 #+END_SRC
 
 * Package Configurations
