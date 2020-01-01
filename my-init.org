@@ -888,6 +888,8 @@ backends during experimentation.
       "oc"               'my:org-concept-open
       "os"               'my:org-search-concept
       "ov"               'my:voice-notes
+      "ord"              'my:org-refile-as-dream
+      "orr"              'org-refile
       "obii"             'ob-ipython-inspect
       "o SPC"            'my:org-toggle-wrap
 
@@ -1481,6 +1483,20 @@ then refreshes images after exiting.
 #+END_SRC
 
 ** Voice Notes
+
+*** Automated Transcription
+
+Run =voicenotes2org=, and open my unfiled voice notes file.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:file-voice-notes ()
+  "Kick off transcription of any new voice-notes, and open the unfiled notes file."
+  (interactive)
+  (async-shell-command "voicenotes2org")
+  (find-file "/sync/documents/org/voice-notes/unfiled-notes.org"))
+#+END_SRC
+
+*** Manual Transcription
 
 Small function that creates and shows a new EMMS buffer with tracks
 from my voice notes directory (synced from my phone).
@@ -3132,6 +3148,49 @@ Define org-capture templates.
         "%U\n%?"
         :prepend t
         :empty-lines 1)))
+#+END_SRC
+
+*** Refile
+
+Set the refile targets to be all org files in my tree, and show the full path.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-refile-targets '((nil :maxlevel . 9)
+                           (org-agenda-files :maxlevel . 9)))
+(setq org-outline-path-complete-in-steps nil)
+(setq org-refile-use-outline-path 'full-file-path)
+#+END_SRC
+
+I want new items placed at the top of headings.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-reverse-note-order t)
+#+END_SRC
+
+Quick refile wrapper for dream journaling (used with =voicenotes2org=). A bit awkward, but based on [[https://emacs.stackexchange.com/questions/8045/org-refile-to-a-known-fixed-location][this StackOverflow question]].
+
+#+BEGIN_SRC emacs-lisp
+(defun jay/refile-to (file headline)
+    "Move current headline to specified location"
+    (let ((pos (save-excursion
+                 (find-file file)
+                 (org-find-exact-headline-in-buffer headline))))
+      (org-refile nil nil (list headline file nil pos))))
+
+(defun my:org-refile-as-dream ()
+  "Refile current heading to dream journal."
+  (interactive)
+  (org-mark-ring-push)
+  (jay/refile-to my:org-dream-journal-path "Dream Log")
+  (org-mark-ring-goto))
+#+END_SRC
+
+Always save all files after a refile. A little surprised the files aren't saved automatically. From [[https://emacs.stackexchange.com/questions/26923/org-mode-getting-errors-when-auto-saving-after-refiling][StackOverflow]].
+
+#+BEGIN_SRC emacs-lisp
+(advice-add 'org-refile :after
+  (lambda (&rest _)
+    (org-save-all-org-buffers)))
 #+END_SRC
 
 ** python-mode
