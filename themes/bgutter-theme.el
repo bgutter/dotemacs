@@ -51,7 +51,7 @@
                   :height 75
                   :width normal
                   :family ,bgutter-theme:mono-font))))
-   `(region ((t (:background ,bgutter-theme:dark-gray))))
+   `(region ((t (:background ,bgutter-theme:dark-gray :extend t))))
    `(cursor ((t (:background ,bgutter-theme:white))))
    `(minibuffer-prompt ((t (:background ,bgutter-theme:dark-violet
                             :foreground ,bgutter-theme:white
@@ -90,7 +90,7 @@
                                      :weight bold))) t)
 
    ;; Bookmarks
-   `(bm-face        ((t (:background ,bgutter-theme:pink :foreground ,bgutter-theme:black))))
+   `(bm-face        ((t (:background ,bgutter-theme:pink :foreground ,bgutter-theme:black :extend t))))
    `(bm-fringe-face ((t (:foreground ,bgutter-theme:pink))))
 
    ;; org-agenda
@@ -139,7 +139,8 @@
    `(cfw:face-toolbar-button-on ((t (:foreground ,bgutter-theme:white :weight bold))))
 
    ;; Auto highlight-symbol mode
-   `(ahs-face ((t (:background ,bgutter-theme:darker-gray :foreground ,bgutter-theme:white))))
+   `(ahs-face ((t (:background ,bgutter-theme:obnoxious-green :foreground ,bgutter-theme:black))))
+   '(ahs-definition-face ((t (:inherit ahs-face))))
    `(ahs-plugin-defalt-face ((t nil)))
    `(ahs-plugin-whole-buffer-face ((t nil)))
 
@@ -177,7 +178,7 @@
    `(compilation-line-number ((t (:inherit font-lock-keyword-face :foreground ,bgutter-theme:cyan))))
    `(diff-file-header ((t (:background ,bgutter-theme:bright-gray :foreground ,bgutter-theme:black :weight bold))))
    `(diff-hl-change ((t (:background ,bgutter-theme:obnoxious-yellow-dark :foreground ,bgutter-theme:obnoxious-yellow))))
-   `(hl-line ((t (:background ,bgutter-theme:darker-gray))))
+   `(hl-line ((t (:background ,bgutter-theme:darker-gray :extend t))))
    `(ein:cell-input-area ((t (:background ,bgutter-theme:darker-gray))))
    `(linum ((t (:inherit (shadow default) :background ,bgutter-theme:darker-gray))))
    `(show-paren-match ((t (:background ,bgutter-theme:dark-violet))))

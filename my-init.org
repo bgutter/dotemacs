@@ -150,6 +150,7 @@ The actual package list.
 (package-require 'smex)                  ; Maintain M-x history -- automatically used by counsel-M-x
 (package-require 'csv-mode)              ; Display CSV files in proper columns
 (package-require 'narrow-indirect)       ; Make indirect buffer in new window, then narrow to region
+(package-require 'iedit)                 ; Highlight and edit all occurences of symbol under point
 #+END_SRC
 
 * Localization (post-package)
@@ -1035,6 +1036,7 @@ backends during experimentation.
       "H-z"          'undo-tree-visualize
       "C-c a"        'mark-whole-buffer
       "M-Q"          'unfill-paragraph
+      "H-q"          'iedit-mode
 
       ;; Bookmarks
       "H-SPC"                   'bm-toggle
