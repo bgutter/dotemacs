@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Default Header Argument
+# key: =dha
+# --
+
+#+PROPERTY: header-args :$1 $0

@@ -962,6 +962,7 @@ backends during experimentation.
       "S-<left>"    'tab-bar-switch-to-prev-tab
       "S-<right>"   'tab-bar-switch-to-next-tab
       "S-<up>"      'tab-bar-new-tab
+      "C-S-<up>"    'tab-bar-undo-close-tab
       "S-<down>"    'tab-bar-close-tab
       "C-S-<left>"  (lambda () (interactive) (tab-bar-move-tab -1))
       "C-S-<right>" (lambda () (interactive) (tab-bar-move-tab 1))
@@ -1151,10 +1152,6 @@ backends during experimentation.
       "S-<left>"    'windmove-left
       "S-<down>"    'windmove-down
       "S-<up>"      'windmove-up
-      "C-S-<up>"    (lambda () (interactive) (enlarge-window 5))
-      "C-S-<right>" 'enlarge-window-horizontally
-      "C-S-<down>"  (lambda () (interactive) (shrink-window 5))
-      "C-S-<left>"  'shrink-window-horizontally
       "M-<up>"      'backward-paragraph
       "M-<down>"    'forward-paragraph
       "C-c <down>"  'split-window-above
@@ -1178,6 +1175,7 @@ backends during experimentation.
       "S-<left>"    'tab-bar-switch-to-prev-tab ;; take this back
       "S-<right>"   'tab-bar-switch-to-next-tab
       "S-<up>"      'tab-bar-new-tab
+      "C-S-<up>"    'tab-bar-undo-close-tab
       "S-<down>"    'tab-bar-close-tab
       "C-S-<left>"  (lambda () (interactive) (tab-bar-move-tab -1))
       "C-S-<right>" (lambda () (interactive) (tab-bar-move-tab 1))
@@ -2869,7 +2867,8 @@ from code blocks.
         (lisp . t)
         (elasticsearch . t)
         (R . t)
-        (ruby . t)))))
+        (ruby . t)
+        (sqlite . t)))))
 #+END_SRC
 
 Note: Add this to your IPython init file to render DataFrames and
@@ -3573,12 +3572,6 @@ switched to StumpWM for the time being.
 #+END_SRC
 
 * Final Startup Items
-
-Start the server
-
-#+BEGIN_SRC emacs-lisp
-(server-start)
-#+END_SRC
 
 #+BEGIN_SRC
 (setq pop-up-frames nil)
