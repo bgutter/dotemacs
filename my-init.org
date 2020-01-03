@@ -1870,13 +1870,13 @@ than failing to delete the window).
 (defadvice delete-window (around delete-frame-if-one-win activate)
   "If WINDOW is the only one in its frame, then `delete-frame' too.
    Source: https://www.emacswiki.org/emacs/download/frame-cmds.el"
-   (if (fboundp 'with-selected-window)   ; Emacs 22+
-       (with-selected-window
-         (or (ad-get-arg 0)  (selected-window))
-         (if (one-window-p t) (delete-frame) ad-do-it))
-       (save-current-buffer
-         (select-window (or (ad-get-arg 0)  (selected-window)))
-         (if (one-window-p t) (delete-frame) ad-do-it))))
+  (with-selected-window
+    (or (ad-get-arg 0)  (selected-window))
+    (if (one-window-p t)
+        (if (and (boundp 'tab-bar-mode) tab-bar-mode)
+            (tab-bar-close-tab)
+          (delete-frame))
+      ad-do-it)))
 #+END_SRC
 
 Use icons in Ovy (switch buffer, etc)
