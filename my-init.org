@@ -2532,6 +2532,13 @@ Set our org-modules.
 (customize-set-variable 'org-modules '(org-bbdb org-bibtex org-docview org-gnus org-habit org-info org-irc org-mhe org-rmail org-w3m org-collector))
 #+END_SRC
 
+Make easy template work again. Though the new expansion method looks pretty cool. [[https://github.com/syl20bnr/spacemacs/issues/11798][Discussion here.]]
+
+#+begin_src emacs-lisp
+(when (version<= "9.2" (org-version))
+  (require 'org-tempo)))
+#+end_src
+
 *** Export
 
 Use minted code sections in PDF export, and fixup the margins a bit.
@@ -3594,15 +3601,6 @@ switched to StumpWM for the time being.
     ;(setq exwm-manage-configurations '((t char-mode t))))
 #+END_SRC
 
-* Final Startup Items
-
-#+BEGIN_SRC
-(setq pop-up-frames nil)
-(add-to-list 'default-frame-alist '(alpha . (90 . 90)))
-;;(require 'oneonone)
-;;(1on1-emacs)
-#+END_SRC
-
 * Notes & Vestigial Code
 
 Notes are addressed to myself & my own use-cases.
@@ -3638,3 +3636,59 @@ export $(gnome-keyring-daemon) # run secret-tool store --label="Test" test test 
 emacs --debug-init
 #+END_SRC
 
+** Using Emacs as a Service
+
+Emacs can take some time to start up. Especially if you're loading over around 500 *.org files every time....
+
+Write this to =~/.config/systemd/user/emacs.service=, then use emacs via =emacsclient= for (basically) instant startups. You'll need to change the path to =emacs= and =emacsclient= if you didn't compile it yourself -- they should match src_sh{which emacs}.
+
+Don't forget to src_sh{systemctl enable --user emacs} and src_sh{systemctl start --user emacs}.
+
+#+BEGIN_SRC
+[Unit]
+Description=Emacs text editor
+Documentation=info:emacs man:emacs(1) https://gnu.org/software/emacs/
+
+[Service]
+Type=forking
+ExecStart=/usr/local/bin/emacs --daemon
+ExecStop=/usr/local/bin/emacsclient --eval "(kill-emacs)"
+Environment=SSH_AUTH_SOCK=%t/keyring/ssh
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+#+END_SRC
+
+Now, to edit a file with =emacs= from the command line, you'll want to use =emacsclient -c=. It's faster to use an alias.
+
+Bash:
+
+#+begin_src emacs-lisp
+alias e="emacsclient -c"
+#+end_src
+
+Fish:
+
+#+begin_src fish
+alias e="emacsclient -c"
+#+end_src
+
+** Using emacs as the default editor
+
+In Bash and similar shells:
+
+#+BEGIN_SRC sh
+export ALTERNATE_EDITOR=""
+export EDITOR="emacsclient -c"
+export VISUAL="emacsclient -c -a emacs"
+#+END_SRC
+
+In Fish:
+
+#+BEGIN_SRC fish
+set -Ux EDITOR "emacsclient -c"
+set -Ux VISUAL "emacsclient -c -a emacs"
+#+END_SRC
+
+Substitute =-c= for =-t= if you like that sort of thing.
