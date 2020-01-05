@@ -1069,7 +1069,7 @@ backends during experimentation.
       "<pause>"          (lambda () (interactive) (my:emms-do-then-show 'emms-pause))
 
       ;; hide/show blocks
-      "H-/" 'hs-toggle-hiding
+      "H-/" 'origami-toggle-node
 
       ;; Other
       "H-=" '(lambda () (interactive) (text-scale-increase 1))
@@ -2536,7 +2536,7 @@ Make easy template work again. Though the new expansion method looks pretty cool
 
 #+begin_src emacs-lisp
 (when (version<= "9.2" (org-version))
-  (require 'org-tempo)))
+  (require 'org-tempo))
 #+end_src
 
 *** Export
@@ -3284,11 +3284,14 @@ Change the theme a bit -- for whatever reason this wasn't defcustom'd.
 
 ** slime
 
-Fix the inferior lisp program. Slime looks for 'lisp' by default,
-which is not ever in my path.
+Use the default Roswell implementation, if it exists. Else, SBCL.
 
 #+BEGIN_SRC emacs-lisp
-(setq inferior-lisp-program "sbcl")
+(if (file-directory-p "~/.roswell")
+    (progn
+      (load (expand-file-name "~/.roswell/helper.el"))
+      (setq inferior-lisp-program "ros -Q run"))
+  (setq inferior-lisp-program "sbcl"))
 #+END_SRC
 
 Show information about symbol at point in echo area.
@@ -3664,7 +3667,7 @@ Now, to edit a file with =emacs= from the command line, you'll want to use =emac
 
 Bash:
 
-#+begin_src emacs-lisp
+#+begin_src sh
 alias e="emacsclient -c"
 #+end_src
 
