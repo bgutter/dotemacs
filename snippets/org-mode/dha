@@ -3,4 +3,4 @@
 # key: =dha
 # --
 
-#+PROPERTY: header-args :$1 $0
+#+PROPERTY: header-args:$1 :$2 $0

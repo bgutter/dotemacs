@@ -2541,15 +2541,29 @@ Make easy template work again. Though the new expansion method looks pretty cool
 
 *** Export
 
-Use minted code sections in PDF export, and fixup the margins a bit.
+Use minted code sections in PDF export, and fixup the margins a bit. Some code from the [[https://lists.gnu.org/archive/html/emacs-orgmode/2015-08/msg00122.html][GNU Mailing list]].
 
 #+BEGIN_SRC emacs-lisp
 (setq org-latex-listings 'minted
       org-latex-packages-alist '(("" "minted")
-                                 ("margin=2cm" "geometry" nil))
+                                 ("margin=2cm" "geometry" nil)
+                                 ("" "parskip")
+                                 ("" "float")))
       org-latex-pdf-process
       '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
         "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+
+ (setq org-latex-minted-options
+  '(("fontfamily" "zi4")))
+ ;;'(("linenos")
+ ;;                   ("numbersep"   "5pt")
+ ;;                  ("frame"       "none") ; box frame is created by the mdframed package
+ ;;                   ("framesep"    "2mm")
+                    ;; ("fontfamily"  "zi4") ; required only when using pdflatex
+ ;;                                       ; instead of xelatex
+ ;;                   ;; minted 2.0 specific features
+  ;;                  ("breaklines") ; line wrapping within code blocks
+   ;;                 ))
 
 (customize-set-variable 'org-latex-minted-langs
    '((emacs-lisp "common-lisp")
@@ -2557,6 +2571,7 @@ Use minted code sections in PDF export, and fixup the margins a bit.
      (cperl "perl")
      (shell-script "bash")
      (caml "ocaml")
+     (sqlite "sql")
      (ipython "python")))
 #+END_SRC
 
@@ -2932,6 +2947,97 @@ Live fearlessly.
 
 #+BEGIN_SRC emacs-lisp
 (setq org-confirm-babel-evaluate nil)
+#+END_SRC
+
+Apparently org block switches are a thing that exist, and have nothing to do with org block header arguments...? You need them to enable line numbers in exported blocks, but the current implementation of switches is...partial.
+
+Tobias posted this code on [[https://emacs.stackexchange.com/questions/33971/is-it-possible-to-define-source-block-switches-globally-in-org-mode][the Emacs StackExchange]] which implements the buffer-global property syntax for switches. It's like this:
+
+#+BEGIN_EXAMPLE
+    #+PROPERTY: switches: -n
+#+END_EXAMPLE
+
+#+BEGIN_SRC emacs-lisp
+(require 'cl-lib)
+(require 'org)
+(require 'ox)
+(require 'org-element)
+
+(defvar org-src-switch-alist nil
+  "Alist mapping an org source code switches to its argument parser (which can be nil) and its interpreter.")
+(setq org-src-switches-alist
+  '(("-n" org-src-parse-number (lambda (num) (list :number-lines (cons 'new (or num 0)))))
+    ("+n" org-src-parse-number (lambda (num) (list :number-lines (cons 'continued (or num 0)))))
+    ("-r" nil (:retain-labels nil))
+    ("-i" nil (:preserve-indent t))
+    ("-l" org-src-parse-quoted-string (lambda (str) (assert (stringp str)) (list :label-fmt str)))
+    ("-k" nil (:use-labels t))))
+
+(defun org-src-parse-number ()
+  "Parse number at point and return it as the only element of a list.
+If parsing fails the return value is (nil)."
+  (list
+   (when (looking-at "[0-9]")
+     (read (current-buffer)))))
+
+(defun org-src-parse-quoted-string ()
+  "Parse quoted string at point and return it as the only element of a list.
+If parsing fails the return value is (nil)."
+  (list
+   (when (looking-at "\"")
+     (read (current-buffer)))))
+
+(defun org-src-switch-parse (str)
+  "Parse org mode source block switches in string STR."
+  (let ((sw-re (regexp-opt (mapcar 'car org-src-switches-alist)))
+        ret)
+    (with-temp-buffer
+      (insert str)
+      (goto-char (point-min))
+      (while (progn
+               (skip-syntax-forward  " ")
+               (looking-at sw-re))
+        (goto-char (match-end 0))
+        (let* ((sw (assoc-string (match-string 0) org-src-switches-alist))
+               (parser (cadr sw))
+               (interpreter (nth 2 sw))
+               args)
+          (skip-syntax-forward " ")
+          (when parser
+            (setq args (funcall parser)))
+          (setq ret
+                (append
+                 ret
+                 (if (functionp interpreter)
+                     (apply interpreter args)
+                   interpreter))))))
+    ret))
+
+(defun org-src-switch-propagate (keyword-element)
+  (let ((value
+         (and (string-equal (org-element-property :key keyword-element) "PROPERTY")
+              (org-element-property :value keyword-element))))
+    (when (and value (string-match "switches:" (downcase value)))
+      (setq value (org-src-switch-parse (substring value (match-end 0))))
+      (let ((parent (org-element-property :parent keyword-element)))
+    (when (and
+           (eq (org-element-type parent) 'section)
+           (eq (org-element-type (org-element-property :parent parent)) 'org-data))
+      (setq parent (org-element-property :parent parent)))
+    (org-element-map
+        parent
+        '(src-block example-block)
+      `(lambda (bl)
+         (cl-loop for pair on ',value by 'cddr
+              do (org-element-put-property bl (car pair) (cadr pair)))))))))
+
+(defun org-element-parse-buffer-ad (info)
+  "Filter the INFO returned by `org-element-parse-buffer' for global switches
+and apply them to source code blocks."
+  (org-element-map info 'keyword #'org-src-switch-propagate)
+  info)
+
+(advice-add #'org-element-parse-buffer :filter-return #'org-element-parse-buffer-ad)
 #+END_SRC
 
 *** Habit Tracking
@@ -3546,6 +3652,22 @@ Work around obi [[https://github.com/gregsexton/ob-ipython/issues/135][issue 135
                 (end-of-buffer)
                 (kill-region (region-beginning) (region-end))
                 (goto-char start))))
+#+END_SRC
+
+Remove the "# Out[%d]" stuff from the formatted output. It prevents named result blocks from correctly associating with =#+ATTR_LATEX:= lines, and I'm not sure that it has any functional purpose.
+
+#+BEGIN_SRC emacs-lisp
+(defun ob-ipython--process-response (ret file result-type)
+  (let ((result (cdr (assoc :result ret)))
+        (output (cdr (assoc :output ret))))
+    (if (eq result-type 'output)
+        output
+      (ob-ipython--output output nil)
+      (s-concat
+       (s-join "\n" (->> (-map (-partial 'ob-ipython--render file)
+                               (list (cdr (assoc :value result))
+                                     (cdr (assoc :display result))))
+                         (remove-if-not nil)))))))
 #+END_SRC
 
 ** magit

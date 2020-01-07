@@ -1,0 +1,14 @@
+# -*- mode: snippet -*-
+# name: Org-Babel IPython Captioned Output
+# key: =obico
+# --
+
+#+NAME: fig:$1
+#+BEGIN_SRC ipython
+ $0
+#+END_SRC
+
+#+CAPTION: $2
+#+LABEL: fig:$1
+#+ATTR_LATEX: :height 0.3\textwidth
+#+RESULTS: fig:$1

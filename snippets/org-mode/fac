@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# From https://emacs.stackexchange.com/questions/22092/how-to-place-a-box-around-a-piece-of-text-in-org-mode
+# name: Frame All Code
+# key: =fac
+# --
+
+#+LATEX_HEADER_EXTRA: \usepackage{mdframed}
+#+LATEX_HEADER_EXTRA: \BeforeBeginEnvironment{minted}{\begin{mdframed}}
+#+LATEX_HEADER_EXTRA: \AfterEndEnvironment{minted}{\end{mdframed}}

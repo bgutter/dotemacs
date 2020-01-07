@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: Don't Parse Underscores
+# key: =dpu
+# --
+
+#+OPTIONS: ^:{}
+$0

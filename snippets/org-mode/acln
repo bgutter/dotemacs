@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: All Code Line Numbers
+# key: =acln
+# --
+
+#+PROPERTY: switches: -n
+$0
