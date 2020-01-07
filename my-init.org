@@ -2548,7 +2548,7 @@ Use minted code sections in PDF export, and fixup the margins a bit. Some code f
       org-latex-packages-alist '(("" "minted")
                                  ("margin=2cm" "geometry" nil)
                                  ("" "parskip")
-                                 ("" "float")))
+                                 ("" "float"))
       org-latex-pdf-process
       '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
         "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
