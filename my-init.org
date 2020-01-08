@@ -2280,7 +2280,7 @@ Always open files in the current window.
 Use pdf-tools for viewing PDF documents, rather than docview
 
 #+BEGIN_SRC emacs-lisp
-(pdf-tools-install)
+(pdf-tools-install t)
 #+END_SRC
 
 Emojis everywhere (except for some places).
