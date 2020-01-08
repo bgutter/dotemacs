@@ -735,6 +735,17 @@ Smart tab key framework
   (smart-tab-key 'indent-for-tab-command 'dabbrev-expand 1))
 #+END_SRC
 
+Add a =write-file= wrapper which disables Ivy's automagic directory completion.
+
+#+begin_src emacs-lisp
+(defun my:save-as ()
+  "Calls write-file, doesn't let Ivy autoselect directories upon slash."
+  (interactive)
+  (let
+      ((ivy-magic-slash-non-match-action nil))
+    (call-interactively 'write-file)))
+#+end_src
+
 *** org-mode
 
 Refresh agenda after TODO change. This let's queued entries to be
@@ -1001,7 +1012,7 @@ backends during experimentation.
       ;; File operations
       "<f5>"   'my:find-file
       "<f6>"   'save-buffer
-      "<f7>"   'write-file
+      "<f7>"   'my:save-as
       "H-<f5>" 'my:revert-buffer-no-prompt
 
       ;; OS Utilities
@@ -1085,6 +1096,9 @@ backends during experimentation.
       "<left>"      'isearch-del-char
       "<down>"      'isearch-repeat-forward
       "<up>"        'isearch-repeat-backward)
+
+  (general-define-key :keymaps 'ivy-minibuffer-map
+      "S-<return>" 'ivy-immediate-done)
 
   (general-define-key :keymaps 'camcorder-moode-map
       "M-<print>" 'camcorder-stop)
