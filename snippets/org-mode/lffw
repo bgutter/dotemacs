@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Latex Float Full Width
+# key: =lffw
+# --
+
+#+ATTR_LATEX: :float multicolumn

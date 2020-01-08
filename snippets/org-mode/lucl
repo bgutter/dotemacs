@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Latex Use Color Links
+# key: =lucl
+# --
+
+#+LATEX_HEADER: \hypersetup{colorlinks=true,linkcolor=blue}

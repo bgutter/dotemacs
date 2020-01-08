@@ -1647,6 +1647,19 @@ Insert current time as unix epoch.
   (insert (number-to-string (time-to-seconds))))
 #+END_SRC
 
+** Debugging
+
+Emacs defines commands both ='toggle-debug-on-error= and ='toggle-debug-on-quit=, but debugging on a specific message is only supported by a variable. Add ='toggle-debug-on-message=, which clears the current trigger message if it is set, and otherwise, prompts the user to enter a regex.
+
+#+BEGIN_SRC emacs-lisp
+(defun toggle-debug-on-message (regex)
+  "Set a message to debug on, or clear it."
+  (interactive "sRegex Trigger: ")
+  (if debug-on-message
+      (setq debug-on-message nil)
+    (setq debug-on-message regex)))
+#+END_SRC
+
 * User Interface Settings
 
 This section defines code which modifies how emacs displays buffers
@@ -2546,8 +2559,9 @@ Use minted code sections in PDF export, and fixup the margins a bit. Some code f
 #+BEGIN_SRC emacs-lisp
 (setq org-latex-listings 'minted
       org-latex-packages-alist '(("" "minted")
-                                 ("margin=2cm" "geometry" nil)
+                                 ("margin=1.5cm" "geometry" nil)
                                  ("" "parskip")
+                                 ("" "booktabs")
                                  ("" "float"))
       org-latex-pdf-process
       '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
@@ -2579,6 +2593,36 @@ Don't add a table of contents upon export.
 
 #+BEGIN_SRC emacs-lisp
 (setq org-export-with-toc nil)
+#+END_SRC
+
+Be consistent with caption placement.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'org-latex-caption-above nil)
+#+END_SRC
+
+Use two column layouts with 8pt font for reports and article document classes.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-latex-classes
+  '(("article" "\\documentclass[8pt,twocolumn]{article}"
+    ("\\section{%s}" . "\\section*{%s}")
+    ("\\subsection{%s}" . "\\subsection*{%s}")
+    ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+    ("\\paragraph{%s}" . "\\paragraph*{%s}")
+    ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))
+  ("report" "\\documentclass[8pt,twocolumn]{report}"
+    ("\\part{%s}" . "\\part*{%s}")
+    ("\\chapter{%s}" . "\\chapter*{%s}")
+    ("\\section{%s}" . "\\section*{%s}")
+    ("\\subsection{%s}" . "\\subsection*{%s}")
+    ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
+ ("book" "\\documentclass[11pt]{book}"
+   ("\\part{%s}" . "\\part*{%s}")
+   ("\\chapter{%s}" . "\\chapter*{%s}")
+   ("\\section{%s}" . "\\section*{%s}")
+   ("\\subsection{%s}" . "\\subsection*{%s}")
+   ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))))
 #+END_SRC
 
 *** Agenda

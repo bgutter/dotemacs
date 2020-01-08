@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: Latex Use Half Spacing
+# key: =luhs
+# --
+
+#+LATEX_HEADER: \usepackage{setspace}
+#+LATEX_HEADER: \onehalfspacing

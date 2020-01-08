@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: Latex Use Pretty Font
+# key: =lupf
+# --
+
+#+LaTeX_HEADER: \usepackage[T1]{fontenc}
+#+LaTeX_HEADER: \usepackage{libertine}

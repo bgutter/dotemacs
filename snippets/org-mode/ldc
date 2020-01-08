@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Latex Document Class
+# key: =ldc
+# --
+
+#+LATEX_CLASS: $1
