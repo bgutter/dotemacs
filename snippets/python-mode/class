@@ -1,0 +1,15 @@
+# -*- mode: snippet -*-
+# name: Basic Base Class
+# key: =class
+# --
+
+class $1( object ):
+    """
+    $2
+    """
+
+    def __init__( self ):
+        """
+        $3
+        """
+        $0

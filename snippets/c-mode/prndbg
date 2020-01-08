@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Printf() Debuging
+# key: =prndbg
+# --
+
+printf( "%50s:%d: $0\n", __FILE__, __LINE__ ); // TODO DNS

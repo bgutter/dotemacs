@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: Do-While Statement
+# key: =dwhl
+# --
+
+do
+    {
+    $0
+    } while( $1 );

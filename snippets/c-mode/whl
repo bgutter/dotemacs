@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: While Statement
+# key: =whl
+# --
+
+while( $1 )
+    {
+    $0
+    }

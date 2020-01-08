@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Enforced TODO
+# key: =enftodo
+# --
+
+#error "You forgot to do this."

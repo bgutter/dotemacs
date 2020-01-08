@@ -1,0 +1,15 @@
+# -*- mode: snippet -*-
+# name: Basic Child Class
+# key: =cclass
+# --
+
+class $1( $2 ):
+    """
+    $3
+    """
+
+    def __init__( self ):
+        """
+        $4
+        """
+        $0
