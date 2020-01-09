@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: Source Block Emacs Lisp
+# key: =sbel
+# --
+
+#+BEGIN_SRC emacs-lisp
+$0
+#+END_SRC

@@ -151,6 +151,8 @@ The actual package list.
 (package-require 'csv-mode)              ; Display CSV files in proper columns
 (package-require 'narrow-indirect)       ; Make indirect buffer in new window, then narrow to region
 (package-require 'iedit)                 ; Highlight and edit all occurences of symbol under point
+(package-require 'ac-slime)              ; autocompletion for SLIME
+(package-require 'clhs)                  ; Lookup symbol in Common Lisp Hyper Spec
 #+END_SRC
 
 * Localization (post-package)
@@ -573,6 +575,15 @@ Revert buffer unconditionally;
 Smart tab key framework
 
 #+BEGIN_SRC emacs-lisp
+(defun gen-smart-tab-key (indent autocomplete indent-count)
+  (lexical-let
+      ((indent indent)
+       (autocomplete autocomplete)
+       (indent-count indent-count))
+    (lambda ()
+      (interactive)
+      (smart-tab-key indent autocomplete indent-count))))
+
 (defun smart-tab-key (indent autocomplete indent-count)
 "Indent when at left margin or right of whitespace, autocomplete elsewhere."
   (cond ((or (eq last-command 'yank) (eq last-command 'yank-pop)) (yank-pop))
@@ -979,7 +990,9 @@ backends during experimentation.
 
   (general-define-key :keymaps 'slime-mode-map
       "C-\\" 'my:slime-eval-region-or-sexp
-      "H-h"  (lambda () (interactive) (call-interactively 'slime-documentation)))
+      "H-h"  (lambda () (interactive) (call-interactively 'slime-documentation))
+      "TAB"  (gen-smart-tab-key 'indent-for-tab-command 'auto-complete 2)
+      "H-h" 'common-lisp-hyperspec)
 
   (general-define-key :keymaps 'nov-mode-map
       "<home>" nil
@@ -3331,7 +3344,9 @@ Show information about symbol at point in echo area.
 (add-to-list 'slime-contribs 'slime-autodoc)
 (add-hook 'slime-mode-hook
   (lambda ()
-    (slime-autodoc-mode)))
+    (slime-autodoc-mode)
+    (set-up-slime-ac)
+    (auto-complete-mode)))
 #+END_SRC
 
 ** EMMS
@@ -3423,6 +3438,28 @@ Highlighting is done by line.
 
 #+BEGIN_SRC emacs-lisp
 (customize-set-variable 'bm-highlight-style 'bm-highlight-only-line)
+#+END_SRC
+
+** CLHS
+
+Tell =clhs.el= to read my local copy of the CLHS.
+
+#+BEGIN_SRC emacs-lisp
+(defcustom my:website-archive-root nil "Root directory of my website archives.")
+
+(customize-set-variable 'common-lisp-hyperspec-root
+  (concat my:website-archive-root "clhs"))
+#+END_SRC
+
+** eww
+
+Don't need to see trailing whitespace here -- I won't be fixing it.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'eww-mode-hook
+  (lambda ()
+    (setq show-trailing-whitespace nil)
+    (olivetti-mode 1)))
 #+END_SRC
 
 * Monkey Patching
