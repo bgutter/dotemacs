@@ -10,5 +10,5 @@
 
 #+CAPTION: $2
 #+LABEL: fig:$1
-#+ATTR_LATEX: :height 0.3\textwidth
+#+ATTR_LATEX: :width 0.5\textwidth
 #+RESULTS: fig:$1

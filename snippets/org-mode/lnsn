@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Latex No Section Numbers
+# key: =lnsn
+# --
+
+#+OPTIONS: num:nil

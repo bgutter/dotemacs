@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Latex Use Pretty Captions
+# key: =lupc
+# --
+
+#+LATEX_HEADER: \usepackage[font=footnotesize,labelfont=bf]{caption}

@@ -839,6 +839,8 @@ backends during experimentation.
       "S-<escape>" 'execute-command-toggle-ignore-region
       "H-<print>"  'describe-bindings
       "H-<menu>"   'my:toggle-use-frames
+      "C-x C-z"    nil ; Was suspend-frame. I've never hit this intentionally
+      "C-x C-c"    nil ; Was save-buffers-kill-terminal. Again, I've never done this intentionally.
 
       ;; Window navigation
       "H-<right>" 'windmove-right
@@ -1800,6 +1802,33 @@ Tell Olivetti to use a sane default width.
   '(olivetti-minimum-body-width 130))
 #+END_SRC
 
+Always open shell buffers in the current window.
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'display-buffer-alist
+             '("^\\*shell\\*$" . (display-buffer-same-window)))
+#+END_SRC
+
+** posframe
+
+Use ivy-posframe by default, exempt swiper. Based on [[https://github.com/tumashu/ivy-posframe][the documentation]].
+
+#+BEGIN_SRC emacs-lisp
+(setq ivy-posframe-display-functions-alist
+        '((swiper-isearch . nil)
+          (t . ivy-posframe-display-at-frame-center)))
+
+(setq ivy-posframe-height-alist '((swiper-isearch . 15) (t . 75))
+      ivy-posframe-parameters   '((internal-border-width . 1)
+                                  (left-fringe . 8)
+                                  (right-fringe . 8)
+                                  (alpha . 70 )))
+
+(setq ivy-posframe-width 130)
+
+(ivy-posframe-mode 1)
+#+END_SRC
+
 ** Mode Line & Header Line
 
 This code adds a strongly customized header and mode line.
@@ -2452,6 +2481,7 @@ Use minted code sections in PDF export, and fixup the margins a bit. Some code f
 
 #+BEGIN_SRC emacs-lisp
 (setq org-latex-listings 'minted
+      org-latex-default-figure-position "H"
       org-latex-packages-alist '(("" "minted")
                                  ("margin=1.5cm" "geometry" nil)
                                  ("" "parskip")
@@ -2976,6 +3006,12 @@ and apply them to source code blocks."
   info)
 
 (advice-add #'org-element-parse-buffer :filter-return #'org-element-parse-buffer-ad)
+#+END_SRC
+
+When editing source blocks in indirect buffers, open them in the current window. Do not mess with the window layout.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'org-src-window-setup 'current-window)
 #+END_SRC
 
 *** Habit Tracking
