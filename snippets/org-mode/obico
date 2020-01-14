@@ -3,12 +3,12 @@
 # key: =obico
 # --
 
-#+NAME: fig:$1
+#+NAME: listing-ipython-$1
 #+BEGIN_SRC ipython
  $0
 #+END_SRC
 
 #+CAPTION: $2
-#+LABEL: fig:$1
+#+LABEL: figure-$1
 #+ATTR_LATEX: :width 0.5\textwidth
-#+RESULTS: fig:$1
+#+RESULTS: listing-ipython-$1

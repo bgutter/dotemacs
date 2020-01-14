@@ -3498,6 +3498,14 @@ Don't need to see trailing whitespace here -- I won't be fixing it.
     (olivetti-mode 1)))
 #+END_SRC
 
+** sql
+
+Default to SQLite
+
+#+BEGIN_SRC emacs-lisp
+(sql-set-product 'sqlite)
+#+END_SRC
+
 * Monkey Patching
 ** isearch Advice
 

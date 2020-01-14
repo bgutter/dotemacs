@@ -1,0 +1,19 @@
+# -*- mode: snippet -*-
+# name: Source Block * To Python
+# key: =sb_2py
+# --
+
+#+CAPTION: $3
+#+NAME: listing-$1-$2
+#+BEGIN_SRC $1 :exports code :output-dir intermediate-results :file-ext csv
+$0
+#+END_SRC
+
+#+NAME: listing-ipy-$2
+#+BEGIN_SRC ipython :var csv_path=listing-$1-$2 :exports results
+#+END_SRC
+
+#+CAPTION: $4
+#+LABEL: figure-$2
+#+ATTR_LATEX: :width 0.5\textwidth
+#+RESULTS: listing-ipy-$2
