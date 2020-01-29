@@ -153,6 +153,7 @@ The actual package list.
 (package-require 'iedit)                 ; Highlight and edit all occurences of symbol under point
 (package-require 'ac-slime)              ; autocompletion for SLIME
 (package-require 'clhs)                  ; Lookup symbol in Common Lisp Hyper Spec
+(package-require 'fence-edit)            ; Edit regions of one buffer in another buffer (usually with different major mode)
 #+END_SRC
 
 * Localization (post-package)
@@ -441,6 +442,23 @@ Defined to balance existing function names.
   (interactive)
   (previous-non-sys-buffer))
 #+END_SRC
+
+Edit thing at point as source code using fence-edit.
+
+#+begin_src emacs-lisp
+  (defun my:edit-as-source ()
+    "Like fence-edit-dwim, but always prompts for language."
+    (interactive)
+    (let* ((block (fence-edit--get-block-around-point))
+           (beg (car block))
+           (end (nth 1 block)))
+      (save-mark-and-excursion
+        (set-mark beg)
+        (goto-char end)
+        (activate-mark)
+        (let ((current-prefix-arg '(4)))
+          (call-interactively 'fence-edit-code-region)))))
+#+end_src
 
 *** Python Stuff
 Run python in shell.
@@ -1036,7 +1054,8 @@ backends during experimentation.
 
   (general-define-key :keymaps 'prog-mode-map
       "H-;" 'my:comment-region-or-line
-      "H-e" 'poporg-dwim)
+      "H-e o" 'poporg-dwim
+      "H-e s" 'my:edit-as-source)
 
   (general-define-key :keymaps 'auto-highlight-symbol-mode-map
       "s-<up>"   'ahs-backward
@@ -2391,6 +2410,16 @@ Whenever we start =csv-mode=, freeze the first row & auto-align fields.
 (add-hook 'csv-mode-hook 'csv-header-line)
 #+END_SRC
 
+*** sql-mode
+
+Assume sqlite.
+
+#+begin_src emacs-lisp
+  (add-hook 'sql-mode-hook
+    (lambda ()
+      (sql-set-product 'sqlite)))
+#+end_src
+
 * Package Configurations
 ** org-mode
 *** General Configs
@@ -3498,13 +3527,14 @@ Don't need to see trailing whitespace here -- I won't be fixing it.
     (olivetti-mode 1)))
 #+END_SRC
 
-** sql
+** fence-edit
 
-Default to SQLite
+Add fence regex for Python block strings.
 
-#+BEGIN_SRC emacs-lisp
-(sql-set-product 'sqlite)
-#+END_SRC
+#+begin_src emacs-lisp
+  (add-to-list 'fence-edit-blocks
+      '("\"\"\"" "\"\"\"" 1))
+#+end_src
 
 * Monkey Patching
 ** isearch Advice
