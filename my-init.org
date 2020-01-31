@@ -355,6 +355,45 @@ Defined to balance existing function names.
         'comment-or-uncomment-region
       'comment-line)))
 
+(defun my:comment-region-or-line-keep-clone ()
+  "Copy the current line or region below, then comment out the original."
+  (interactive)
+  (let (beg end)
+    (if (use-region-p)
+
+      ;; If region is active, make sure that it starts at the start
+      ;; of a line, and ends at the end of another line.
+      (let ((temp-beg (region-beginning))
+            (temp-end (region-end)))
+        (save-excursion
+          (goto-char temp-beg)
+          (beginning-of-line)
+          (setq beg (point))
+          (goto-char temp-end)
+          (end-of-line)
+          (setq end (point))))
+
+      ;; Just set beg and end to the extents of the current line
+      (save-excursion
+        (beginning-of-line)
+        (setq beg (point))
+        (end-of-line)
+        (setq end (point))))
+
+    ;; Select region, copy it, comment it, paste it below
+    (save-excursion
+      (set-mark beg)
+      (goto-char end)
+      (activate-mark)
+      (copy-region-as-kill beg end)
+      (my:comment-region-or-line)
+      (newline)
+      (yank))
+
+    ;; Place point at the start of the pasted area (probably)
+    (forward-line)
+    (smart-beginning-of-line)))
+
 (defun newline-after-current ()
   "Skip to end of this line, insert a new one, autoindent, recenter cursor."
   (interactive)
@@ -513,6 +552,20 @@ Use counsel for jedi autocompletions, thanks to [[https://oremacs.com/2015/08/26
         (setq counsel-completion-end
               (move-marker (make-marker) (point)))
         (backward-char 1)))))
+#+END_SRC
+
+Send the current "block" to inferior Python process.
+
+#+BEGIN_SRC emacs-lisp
+(defun python-shell-send-toplevel-thing-at-point ()
+  (interactive)
+  (save-mark-and-excursion
+    (search-backward-regexp "\n\n\[^ \]+")
+    (forward-char)
+    (set-mark (point))
+    (search-forward-regexp "\n\n\[^ \]+")
+    (beginning-of-line)
+    (python-shell-send-region (region-beginning) (region-end))))
 #+END_SRC
 
 *** Navigation Stuff
@@ -847,6 +900,12 @@ backends during experimentation.
       "dbv"                'debug-on-variable-change
       "dbnf"               'cancel-debug-on-entry
       "dbnv"               'cancel-debug-on-variable-change
+
+      ;; "w" -> window management
+      "wb"                 'balance-windows
+      "wu"                 'winner-undo
+      "wr"                 'winner-redo
+      "w RET"              'delete-other-windows
       )
 
   (general-define-key
@@ -1050,10 +1109,12 @@ backends during experimentation.
       "I" 'c-insert-preproc-include-block)
 
   (general-define-key :keymaps 'python-mode-map
-      "H-/" 'counsel-jedi)
+      "H-/"     'counsel-jedi
+      "C-c C-c" 'python-shell-send-block)
 
   (general-define-key :keymaps 'prog-mode-map
-      "H-;" 'my:comment-region-or-line
+      "H-;"   'my:comment-region-or-line
+      "H-:"   'my:comment-region-or-line-keep-clone
       "H-e o" 'poporg-dwim
       "H-e s" 'my:edit-as-source)
 
@@ -2244,6 +2305,12 @@ selection to be replaced by that text.
 
 #+BEGIN_SRC emacs-lisp
 (delete-selection-mode)
+#+END_SRC
+
+Add the ability to undo/redo window arrangement changes.
+
+#+BEGIN_SRC emacs-lisp
+(winner-mode 1)
 #+END_SRC
 
 ** Mode Triggers
