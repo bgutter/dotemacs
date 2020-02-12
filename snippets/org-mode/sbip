@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: Source Block IPython
+# key: =sbip
+# --
+
+#+BEGIN_SRC ipython
+$0
+#+END_SRC

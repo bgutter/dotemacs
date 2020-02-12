@@ -154,6 +154,9 @@ The actual package list.
 (package-require 'ac-slime)              ; autocompletion for SLIME
 (package-require 'clhs)                  ; Lookup symbol in Common Lisp Hyper Spec
 (package-require 'fence-edit)            ; Edit regions of one buffer in another buffer (usually with different major mode)
+(package-require 'ivy-posframe)          ; Move minibuffer to child frame
+(package-require 'counsel-notmuch)       ; Search notmuch emails with ivy
+(package-require 'ts)                    ; Timestamp utility functions for org-mode
 #+END_SRC
 
 * Localization (post-package)
@@ -1898,7 +1901,7 @@ Use ivy-posframe by default, exempt swiper. Based on [[https://github.com/tumash
         '((swiper-isearch . nil)
           (t . ivy-posframe-display-at-frame-center)))
 
-(setq ivy-posframe-height-alist '((swiper-isearch . 15) (t . 75))
+(setq ivy-posframe-height-alist '((swiper-isearch . 15) (t . 35))
       ivy-posframe-parameters   '((internal-border-width . 1)
                                   (left-fringe . 8)
                                   (right-fringe . 8)
@@ -2202,6 +2205,12 @@ Truncate lines, don't wrap.
 (setq-default truncate-lines t)
 #+END_SRC
 
+Full Undo/Redo history as a tree
+
+#+BEGIN_SRC emacs-lisp
+(global-undo-tree-mode 1)
+#+END_SRC
+
 Don't use lockfiles....causes issues in SeaFile.
 
 #+BEGIN_SRC emacs-lisp
@@ -2475,6 +2484,7 @@ Whenever we start =csv-mode=, freeze the first row & auto-align fields.
 #+BEGIN_SRC emacs-lisp
 (add-hook 'csv-mode-hook 'csv-align-mode)
 (add-hook 'csv-mode-hook 'csv-header-line)
+(add-hook 'csv-mode-hook (lambda () (visual-line-mode 0)))
 #+END_SRC
 
 *** sql-mode
@@ -3353,6 +3363,67 @@ I want new items placed at the top of headings.
 (setq org-reverse-note-order t)
 #+END_SRC
 
+Refile a heading to a file+heading+datetree, using the date of the first timestamp in the heading as the date.
+
+This is copied from Alphapapa's [[https://github.com/alphapapa/unpackaged.el#refile-to-datetree-file-using-earliestlatest-timestamp-in-entry][unpackaged.el]].
+
+#+BEGIN_SRC emacs-lisp
+(defun unpackaged/org-refile-to-datetree-using-ts-in-entry (which-ts file &optional subtree-p)
+  "Refile current entry to datetree in FILE using timestamp found in entry.
+WHICH should be `earliest' or `latest'. If SUBTREE-P is non-nil,
+search whole subtree."
+  (interactive (list (intern (completing-read "Which timestamp? " '(earliest latest)))
+                     (read-file-name "File: " (concat org-directory "/") nil 'mustmatch nil
+                                     (lambda (filename)
+                                       (string-suffix-p ".org" filename)))
+                     current-prefix-arg))
+  (require 'ts)
+  (let* ((sorter (pcase which-ts
+                   ('earliest #'ts<)
+                   ('latest #'ts>)))
+         (tss (unpackaged/org-timestamps-in-entry subtree-p))
+         (ts (car (sort tss sorter)))
+         (date (list (ts-month ts) (ts-day ts) (ts-year ts))))
+    (unpackaged/org-refile-to-datetree file :date date)))
+
+(defun unpackaged/org-timestamps-in-entry (&optional subtree-p)
+  "Return timestamp objects for all Org timestamps in entry.
+ If SUBTREE-P is non-nil (interactively, with prefix), search
+ whole subtree."
+  (interactive (list current-prefix-arg))
+  (save-excursion
+    (let* ((beg (org-entry-beginning-position))
+           (end (if subtree-p
+                    (org-end-of-subtree)
+                  (org-entry-end-position))))
+      (goto-char beg)
+      (cl-loop while (re-search-forward org-tsr-regexp-both end t)
+               collect (ts-parse-org (match-string 0))))))
+
+(cl-defun unpackaged/org-refile-to-datetree (file &key (date (calendar-current-date)) entry)
+  "Refile ENTRY or current node to entry for DATE in datetree in FILE."
+  (interactive (list (read-file-name "File: " (concat org-directory "/") nil 'mustmatch nil
+                                     (lambda (filename)
+                                       (string-suffix-p ".org" filename)))))
+  ;; If org-datetree isn't loaded, it will cut the tree but not file
+  ;; it anywhere, losing data. I don't know why
+  ;; org-datetree-file-entry-under is in a separate package, not
+  ;; loaded with the rest of org-mode.
+  (require 'org-datetree)
+  (unless entry
+    (org-cut-subtree))
+  ;; Using a condition-case to be extra careful. In case the refile
+  ;; fails in any way, put cut subtree back.
+  (condition-case err
+      (with-current-buffer (or (org-find-base-buffer-visiting file)
+                               (find-file-noselect file))
+        (org-datetree-file-entry-under (or entry (car kill-ring)) date)
+        (save-buffer))
+    (error (unless entry
+             (org-paste-subtree))
+           (message "Unable to refile! %s" err))))
+#+END_SRC
+
 Quick refile wrapper for dream journaling (used with =voicenotes2org=). A bit awkward, but based on [[https://emacs.stackexchange.com/questions/8045/org-refile-to-a-known-fixed-location][this StackOverflow question]].
 
 #+BEGIN_SRC emacs-lisp
@@ -3366,9 +3437,11 @@ Quick refile wrapper for dream journaling (used with =voicenotes2org=). A bit aw
 (defun my:org-refile-as-dream ()
   "Refile current heading to dream journal."
   (interactive)
-  (org-mark-ring-push)
-  (jay/refile-to my:org-dream-journal-path "Dream Log")
-  (org-mark-ring-goto))
+  ;;(org-mark-ring-push)
+  ;; (jay/refile-to my:org-dream-journal-path "Dream Log")
+  (save-excursion
+    (unpackaged/org-refile-to-datetree-using-ts-in-entry 'latest my:org-dream-journal-path t)))
+  ;;(org-mark-ring-goto))
 
 (defun my:org-refile-as-scrap ()
   "Refile current heading to scraps."
@@ -3461,6 +3534,14 @@ Change the theme a bit -- for whatever reason this wasn't defcustom'd.
 ** slime
 
 Use the default Roswell implementation, if it exists. Else, SBCL.
+
+To install Roswell on Arch:
+
+#+begin_src sh
+yay -S roswell
+ros install sbcl
+ros install slime
+#+end_src
 
 #+BEGIN_SRC emacs-lisp
 (if (file-directory-p "~/.roswell")
