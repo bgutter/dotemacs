@@ -87,76 +87,77 @@ package.
 The actual package list.
 
 #+BEGIN_SRC emacs-lisp
-(package-require 'buffer-move)           ; swap buffers between adjacent windows
-(package-require 'diff-hl)               ; show changes from last commit with edge highlighting
-(package-require 'uniquify)              ; rename buffers of same name intelligently
-(package-require 'undo-tree)             ; incredible undo/redo support
-(package-require 'auto-complete)         ; neat autocompletion
-(package-require 'framemove)             ; jump between frames and windows
-(package-require 'fuzzy)                 ; fuzzy completion
-(package-require 'hi-lock)               ; arbitrary text hilighting
-(package-require 'button-lock)           ; face attribute that makes links from text
-(package-require 'bm)                    ; bookmark manager
-(package-require 'yasnippet)             ; snippet pasting framework
-(package-require 'anzu)                  ; show total/current matches in isearch
-(package-require 'visual-regexp)         ; visualize regular expressions in real-time
-(package-require 'expand-region)         ; Expand region
-(package-require 'origami)               ; awesome code folding
-(package-require 'general)               ; sane key mapping architecture
-(package-require 'which-key)             ; Display options after prefix keys are entered
-(package-require 'ivy)                   ; Awesome completion framework
-(package-require 'swiper)                ; ivy's swoop
-(package-require 'counsel)               ; too many ivy-based utilities to list
-(package-require 'hy-mode)               ; Lisp on Python
-(package-require 'org-autolist)          ; Automatically add bullets on return
-(package-require 'pdf-tools)             ; excellent PDF viewer, replaces docview
-(package-require 'ob-ipython)            ; powerful jupyter notebooks alternative
-(package-require 'pyvenv)                ; make conda envs usable with ob-ipython (and, well, everything else)
-(package-require 'emojify)               ; emoji support
-(package-require 'unicode-fonts)         ; better unicode support
-(package-require 'persistent-soft)       ; caching for unicode mappings
-(package-require 'google-translate)      ; translations
-(package-require 'auto-highlight-symbol) ; highlight the thing under cursor, jump between occurrences
-(package-require 'org-bullets)           ; unicode, indented bullets for org-mode headings
-(package-require 'calfw)                 ; emacs calendar framework
-(package-require 'calfw-org)             ; org-mode calendar support for calfw
-(package-require 'org-caldav)            ; caldav support for emacs
-(package-require 'yequake)               ; quake-style dropdown emacs frame
-(package-require 'flymd)                 ; markdown to html rendering in elisp
-(package-require 'hy-mode)               ; lisp via python
-(package-require 'all-the-icons)         ; icon set for emacs
-(package-require 'all-the-icons-ivy)     ; use icons in buffer switching
-(package-require 'jedi)                  ; python completions
-(package-require 'poporg)                ; inside-out org-babel -- edit comments in source code as org-mode content
-(package-require 'camcorder)             ; record frames to ogv or gif
-(package-require 'slime)                 ; common lisp debugging and interaction
-(package-require 'es-mode)               ; Elasticsearch support in emacs
-(package-require 'battery)               ; Battery life info
-(package-require 'emms-setup)            ; music player in emacs
-(package-require 'hydra)                 ; persistent key submaps
-(package-require 'ess)                   ; emacs speaks statistics -- R support
-(package-require 'conda)                 ; Support for anaconda environments
-(package-require 'treemacs)              ; Advanced folder/file/content browser
-(package-require 'notmuch)               ; reading emails
-(package-require 'smtpmail)              ; sending emails
-(package-require 'lsp-mode)              ; language server protocol support
-(package-require 'ccls)                  ; C/C++/OBJC LSP backend
-(package-require 'olivetti)              ; Center text with fill-columns, critical for large displays.
-(package-require 'rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
-(package-require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
-(package-require 'helm-descbinds)        ; Extremely useful for learning new major modes.
-(package-require 'magit)                 ; Incredible Git client interface in emacs
-(package-require 'emmet-mode)            ; HTML editing mode which generates HTML from CSS-like expressions
-(package-require 'smex)                  ; Maintain M-x history -- automatically used by counsel-M-x
-(package-require 'csv-mode)              ; Display CSV files in proper columns
-(package-require 'narrow-indirect)       ; Make indirect buffer in new window, then narrow to region
-(package-require 'iedit)                 ; Highlight and edit all occurences of symbol under point
-(package-require 'ac-slime)              ; autocompletion for SLIME
-(package-require 'clhs)                  ; Lookup symbol in Common Lisp Hyper Spec
-(package-require 'fence-edit)            ; Edit regions of one buffer in another buffer (usually with different major mode)
-(package-require 'ivy-posframe)          ; Move minibuffer to child frame
-(package-require 'counsel-notmuch)       ; Search notmuch emails with ivy
-(package-require 'ts)                    ; Timestamp utility functions for org-mode
+  (package-require 'buffer-move)           ; swap buffers between adjacent windows
+  (package-require 'diff-hl)               ; show changes from last commit with edge highlighting
+  (package-require 'uniquify)              ; rename buffers of same name intelligently
+  (package-require 'undo-tree)             ; incredible undo/redo support
+  (package-require 'auto-complete)         ; neat autocompletion
+  (package-require 'framemove)             ; jump between frames and windows
+  (package-require 'fuzzy)                 ; fuzzy completion
+  (package-require 'hi-lock)               ; arbitrary text hilighting
+  (package-require 'button-lock)           ; face attribute that makes links from text
+  (package-require 'bm)                    ; bookmark manager
+  (package-require 'yasnippet)             ; snippet pasting framework
+  (package-require 'anzu)                  ; show total/current matches in isearch
+  (package-require 'visual-regexp)         ; visualize regular expressions in real-time
+  (package-require 'expand-region)         ; Expand region
+  (package-require 'origami)               ; awesome code folding
+  (package-require 'general)               ; sane key mapping architecture
+  (package-require 'which-key)             ; Display options after prefix keys are entered
+  (package-require 'ivy)                   ; Awesome completion framework
+  (package-require 'swiper)                ; ivy's swoop
+  (package-require 'counsel)               ; too many ivy-based utilities to list
+  (package-require 'hy-mode)               ; Lisp on Python
+  (package-require 'org-autolist)          ; Automatically add bullets on return
+  (package-require 'pdf-tools)             ; excellent PDF viewer, replaces docview
+  (package-require 'ob-ipython)            ; powerful jupyter notebooks alternative
+  (package-require 'pyvenv)                ; make conda envs usable with ob-ipython (and, well, everything else)
+  (package-require 'emojify)               ; emoji support
+  (package-require 'unicode-fonts)         ; better unicode support
+  (package-require 'persistent-soft)       ; caching for unicode mappings
+  (package-require 'google-translate)      ; translations
+  (package-require 'auto-highlight-symbol) ; highlight the thing under cursor, jump between occurrences
+  (package-require 'org-bullets)           ; unicode, indented bullets for org-mode headings
+  (package-require 'calfw)                 ; emacs calendar framework
+  (package-require 'calfw-org)             ; org-mode calendar support for calfw
+  (package-require 'org-caldav)            ; caldav support for emacs
+  (package-require 'yequake)               ; quake-style dropdown emacs frame
+  (package-require 'flymd)                 ; markdown to html rendering in elisp
+  (package-require 'hy-mode)               ; lisp via python
+  (package-require 'all-the-icons)         ; icon set for emacs
+  (package-require 'all-the-icons-ivy)     ; use icons in buffer switching
+  (package-require 'jedi)                  ; python completions
+  (package-require 'poporg)                ; inside-out org-babel -- edit comments in source code as org-mode content
+  (package-require 'camcorder)             ; record frames to ogv or gif
+  (package-require 'slime)                 ; common lisp debugging and interaction
+  (package-require 'es-mode)               ; Elasticsearch support in emacs
+  (package-require 'battery)               ; Battery life info
+  (package-require 'emms-setup)            ; music player in emacs
+  (package-require 'hydra)                 ; persistent key submaps
+  (package-require 'ess)                   ; emacs speaks statistics -- R support
+  (package-require 'conda)                 ; Support for anaconda environments
+  (package-require 'treemacs)              ; Advanced folder/file/content browser
+  (package-require 'notmuch)               ; reading emails
+  (package-require 'smtpmail)              ; sending emails
+  (package-require 'lsp-mode)              ; language server protocol support
+  (package-require 'ccls)                  ; C/C++/OBJC LSP backend
+  (package-require 'olivetti)              ; Center text with fill-columns, critical for large displays.
+  (package-require 'rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
+  (package-require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
+  (package-require 'helm-descbinds)        ; Extremely useful for learning new major modes.
+  (package-require 'magit)                 ; Incredible Git client interface in emacs
+  (package-require 'emmet-mode)            ; HTML editing mode which generates HTML from CSS-like expressions
+  (package-require 'smex)                  ; Maintain M-x history -- automatically used by counsel-M-x
+  (package-require 'csv-mode)              ; Display CSV files in proper columns
+  (package-require 'narrow-indirect)       ; Make indirect buffer in new window, then narrow to region
+  (package-require 'iedit)                 ; Highlight and edit all occurences of symbol under point
+  (package-require 'ac-slime)              ; autocompletion for SLIME
+  (package-require 'clhs)                  ; Lookup symbol in Common Lisp Hyper Spec
+  (package-require 'fence-edit)            ; Edit regions of one buffer in another buffer (usually with different major mode)
+  (package-require 'ivy-posframe)          ; Move minibuffer to child frame
+  (package-require 'counsel-notmuch)       ; Search notmuch emails with ivy
+  (package-require 'ts)                    ; Timestamp utility functions for org-mode
+  (package-require 'auto-yasnippet)        ; On the fly text templating
 #+END_SRC
 
 * Localization (post-package)
@@ -1045,7 +1046,11 @@ backends during experimentation.
 
       ;; Other
       "H-=" '(lambda () (interactive) (text-scale-increase 1))
-      "H--" '(lambda () (interactive) (text-scale-decrease 1)))
+      "H--" '(lambda () (interactive) (text-scale-decrease 1))
+
+      ;; Auto Yasnippet
+      "H-W" 'aya-create
+      "H-w" 'aya-expand)
 
   (general-define-key :keymaps 'isearch-mode-map
       "<backspace>" 'isearch-del-char
