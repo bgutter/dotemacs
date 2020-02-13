@@ -39,6 +39,13 @@ Set config variables on a per-system basis.
     ))
 #+END_SRC
 
+Utility function to shorten tests against Emacs 27 release.
+
+#+BEGIN_SRC emacs-lisp
+(defun e27-p ()
+  (>= emacs-major-version 27))
+#+END_SRC
+
 * Required Packages
 This section ensures that all required packages are loaded.
 
@@ -1195,9 +1202,9 @@ backends during experimentation.
         (,(kbd "S-<F8>") .      delete-window)
         (,(kbd "S-<F8>") .      delete-window)
         (,(kbd "H-b") .         my:find-buffer)
-        (,(kbd "H-S-<up>") .    (lambda () (interactive) (enlarge-window 5)))
+        (,(kbd "H-S-<up>") .    (lambda () (interactive) (enlarge-window ,(if (e27-p) 1 5)))) ;; Emacs 27 is fast at this
         (,(kbd "H-S-<right>") . enlarge-window-horizontally)
-        (,(kbd "H-S-<down>") .  (lambda () (interactive) (shrink-window 5)))
+        (,(kbd "H-S-<down>") .  (lambda () (interactive) (shrink-window ,(if (e27-p) 1 5)))) ;; Emacs 27 is fast at this
         (,(kbd "H-S-<left>") .  shrink-window-horizontally)
         (,(kbd "H-s <down>") .  split-window-above)
         (,(kbd "H-s <left>") .  split-window-right)
@@ -2305,8 +2312,16 @@ Emojis everywhere (except for some places).
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'after-init-hook #'global-emojify-mode)
+
 (customize-set-variable 'emojify-inhibit-major-modes
     '(dired-mode doc-view-mode debugger-mode pdf-view-mode image-mode help-mode ibuffer-mode magit-popup-mode magit-diff-mode ert-results-mode compilation-mode proced-mode mu4e-headers-mode org-agenda-mode))
+
+(defun my:emojify-inhibit-fix-org-drawers (text beg end)
+  "Since org-mode now uses lower-case :begin:, :end:, etc tags, some of them are
+now being rendered as Emojis. Filter this case out."
+  (and (equal major-mode 'org-mode) (member (downcase text) '(":begin:" ":end:"))))
+
+(add-to-list 'emojify-inhibit-functions 'my:emojify-inhibit-fix-org-drawers)
 #+END_SRC
 
 Unicode setup
@@ -2889,9 +2904,6 @@ https://emacs.stackexchange.com/questions/26351/custom-sorting-for-agenda"
                     (org-agenda-overriding-header "Incomplete Unscheduled Tasks:")
                     (org-agenda-tag-filter-preset '(,omit-work-str)))))
          ((org-agenda-compact-blocks nil)))
-
-         ("g" "Work related TODO items" tags-todo ,work-str
-            ((org-agenda-overriding-header "Work Tasks:")))
 
          ("m" "Closed in Past Month:"
           tags (concat "+TODO={DONE\\|CANCELLED\\|HIATUS}"

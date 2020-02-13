@@ -1,12 +1,25 @@
 # -*- mode: snippet -*-
+# OrgFormatter modified from scimax
 # name: Org-Babel IPython Init
 # key: =obiini
+# expand-env: ((yas-indent-line 'fixed) (yas-wrap-around-region 'nil))
 # --
 
 #+BEGIN_SRC ipython :session `(file-name-base (buffer-file-name))` :exports none :results raw drawer
+import IPython
 import numpy as np
 import matplotlib.pyplot as plt
+from tabulate import tabulate
+
 plt.style.use( "dark_background" )
+
+class OrgFormatter( IPython.core.formatters.BaseFormatter ):
+    def __call__(self, obj):
+        if isinstance( obj, pd.DataFrame ):
+            return tabulate(obj, headers='keys', tablefmt='orgtbl', showindex='always')
+        return None
+ip = get_ipython()
+ip.display_formatter.formatters['text/org'] = OrgFormatter()
 #+END_SRC
 
 #+BEGIN_SRC ipython :session `(file-name-base (buffer-file-name))` :exports both :results raw drawer
