@@ -855,6 +855,7 @@ backends during experimentation.
       "ord"              'my:org-refile-as-dream
       "ors"              'my:org-refile-as-scrap
       "orc"              'my:org-refile-as-concept
+      "orj"              'my:org-refile-as-journal
       "orr"              'org-refile
       "obii"             'ob-ipython-inspect
       "o SPC"            'my:org-toggle-wrap
@@ -3427,42 +3428,49 @@ search whole subtree."
 Quick refile wrapper for dream journaling (used with =voicenotes2org=). A bit awkward, but based on [[https://emacs.stackexchange.com/questions/8045/org-refile-to-a-known-fixed-location][this StackOverflow question]].
 
 #+BEGIN_SRC emacs-lisp
-(defun jay/refile-to (file headline)
-    "Move current headline to specified location"
-    (let ((pos (save-excursion
-                 (find-file file)
-                 (org-find-exact-headline-in-buffer headline))))
-      (org-refile nil nil (list headline file nil pos))))
+  (defun jay/refile-to (file headline)
+      "Move current headline to specified location"
+      (let ((pos (save-excursion
+                   (find-file file)
+                   (org-find-exact-headline-in-buffer headline))))
+        (org-refile nil nil (list headline file nil pos))))
 
-(defun my:org-refile-as-dream ()
-  "Refile current heading to dream journal."
-  (interactive)
-  ;;(org-mark-ring-push)
-  ;; (jay/refile-to my:org-dream-journal-path "Dream Log")
-  (save-excursion
-    (unpackaged/org-refile-to-datetree-using-ts-in-entry 'latest my:org-dream-journal-path t)))
-  ;;(org-mark-ring-goto))
-
-(defun my:org-refile-as-scrap ()
-  "Refile current heading to scraps."
-  (interactive)
-  (org-mark-ring-push)
-  (jay/refile-to my:org-scraps-path "Scraps")
-  (org-mark-ring-goto))
-
-(defun my:org-refile-as-concept ()
-  "Refile current heading to the Notes heading on some concept."
-  (interactive)
-  (let
-      ((file (my-org-find-concept)))
+  (defun my:org-refile-as-dream ()
+    "Refile current heading to dream journal."
+    (interactive)
+    ;;(org-mark-ring-push)
+    ;; (jay/refile-to my:org-dream-journal-path "Dream Log")
     (save-excursion
-      (find-file file)
-      (unless (org-find-exact-headline-in-buffer "Notes")
-        (end-of-buffer)
-        (newline)
-        (insert "* Notes")))
-    (jay/refile-to file "Notes")
-    (org-mark-ring-goto)))
+      (unpackaged/org-refile-to-datetree-using-ts-in-entry 'latest my:org-dream-journal-path t)))
+    ;;(org-mark-ring-goto))
+
+  (defun my:org-refile-as-scrap ()
+    "Refile current heading to scraps."
+    (interactive)
+    (org-mark-ring-push)
+    (jay/refile-to my:org-scraps-path "Scraps")
+    (org-mark-ring-goto))
+
+  (defun my:org-refile-as-journal ()
+    "Refile current heading to today's journal page."
+    (interactive)
+    (org-mark-ring-push)
+    (jay/refile-to (my-org-journal-make-if-missing) "Action Items")
+    (org-mark-ring-goto))
+
+  (defun my:org-refile-as-concept ()
+    "Refile current heading to the Notes heading on some concept."
+    (interactive)
+    (let
+        ((file (my-org-find-concept)))
+      (save-excursion
+        (find-file file)
+        (unless (org-find-exact-headline-in-buffer "Notes")
+          (end-of-buffer)
+          (newline)
+          (insert "* Notes")))
+      (jay/refile-to file "Notes")
+      (org-mark-ring-goto)))
 #+END_SRC
 
 Always save all files after a refile. A little surprised the files aren't saved automatically. From [[https://emacs.stackexchange.com/questions/26923/org-mode-getting-errors-when-auto-saving-after-refiling][StackOverflow]].
