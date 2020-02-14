@@ -5,7 +5,8 @@
 
 #+TITLE: $1
 #+DATE:  `(format-time-string "%Y-%m-%d")`
+#+FILETAGS: $2
 
 * $0
 
-* Action Items :$2:
+* Action Items
