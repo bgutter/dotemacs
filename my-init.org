@@ -1142,16 +1142,8 @@ backends during experimentation.
       "p"           'org-agenda-priority
       "t"           'my:org-agenda-todo-and-redo
       "T"           'org-todo-yesterday
-      "S-<right>"   'windmove-right
-      "S-<left>"    'windmove-left
-      "S-<down>"    'windmove-down
-      "S-<up>"      'windmove-up
       "M-<up>"      'backward-paragraph
       "M-<down>"    'forward-paragraph
-      "C-c <down>"  'split-window-above
-      "C-c <up>"    'split-window-below
-      "C-c <left>"  'split-window-right
-      "C-c <right>" 'split-window-left
       "<RET>"       'my:org-agenda-switch-to)
 
   (general-define-key :keymaps 'shell-mode-map
@@ -1165,7 +1157,7 @@ backends during experimentation.
   (general-define-key :keymaps 'pdf-view-mode-map
       "H-a" 'isearch-forward) ;; pdf-tools has specific support for this search method
 
-  (general-define-key :keymaps 'org-mode-map
+  (general-define-key :keymaps '(org-mode-map org-agenda-mode-map)
       "S-<left>"    'tab-bar-switch-to-prev-tab ;; take this back
       "S-<right>"   'tab-bar-switch-to-next-tab
       "S-<up>"      'tab-bar-new-tab
@@ -2917,11 +2909,21 @@ https://emacs.stackexchange.com/questions/26351/custom-sorting-for-agenda"
          ("x" "Combined Task List"
            (
 
+           (todo "NEXT"
+                   ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+                                                   ;;(zin/org-agenda-skip-tag ,work-str)
+                                                   (zin/org-agenda-skip-tag "NOAGENDA")))
+                    (org-agenda-overriding-header "Your Current Plate:")
+                    ;;(org-agenda-compact-blocks t)
+                    ))
+
            (alltodo ""
                    ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
                                                    ;;(zin/org-agenda-skip-tag ,work-str)
                                                    (zin/org-agenda-skip-tag "NOAGENDA")))
-                    (org-agenda-overriding-header "Open Tasks:")))
+                    (org-agenda-overriding-header "All Open Tasks:")
+                    ;;(org-agenda-compact-blocks t)
+                    ))
 
            ;(tags (concat "+TODO={DONE}"
            ;             "+CLOSED>=\""
