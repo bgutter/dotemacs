@@ -1627,7 +1627,7 @@ Insert current time as unix epoch.
   (insert (number-to-string (time-to-seconds))))
 #+END_SRC
 
-** Debugging
+** Debugging & Maintaining Emacs
 
 Emacs defines commands both ='toggle-debug-on-error= and ='toggle-debug-on-quit=, but debugging on a specific message is only supported by a variable. Add ='toggle-debug-on-message=, which clears the current trigger message if it is set, and otherwise, prompts the user to enter a regex.
 
@@ -1638,6 +1638,15 @@ Emacs defines commands both ='toggle-debug-on-error= and ='toggle-debug-on-quit=
   (if debug-on-message
       (setq debug-on-message nil)
     (setq debug-on-message regex)))
+#+END_SRC
+
+Quickly clear out byte-compiled elisp files.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:clear-byte-compiled-init-files ()
+  "Clean up *.elc files in init dir."
+  (interactive)
+  (shell-command-to-string "find ~/.emacs.d/ -name \"*.elc\" -type f | xargs rm -f"))
 #+END_SRC
 
 * User Interface Settings
