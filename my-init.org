@@ -860,11 +860,7 @@ backends during experimentation.
       "oc"               'my:org-concept-open
       "os"               'my:org-search-concept
       "ov"               'my:voice-notes
-      "ord"              'my:org-refile-as-dream
-      "ors"              'my:org-refile-as-scrap
-      "orc"              'my:org-refile-as-concept
-      "orj"              'my:org-refile-as-journal
-      "orr"              'org-refile
+      "or"               'my:org-refile-transient
       "obii"             'ob-ipython-inspect
       "o SPC"            'my:org-toggle-wrap
 
@@ -3388,63 +3384,63 @@ Refile a heading to a file+heading+datetree, using the date of the first timesta
 This is copied from Alphapapa's [[https://github.com/alphapapa/unpackaged.el#refile-to-datetree-file-using-earliestlatest-timestamp-in-entry][unpackaged.el]].
 
 #+BEGIN_SRC emacs-lisp
-(defun unpackaged/org-refile-to-datetree-using-ts-in-entry (which-ts file &optional subtree-p)
-  "Refile current entry to datetree in FILE using timestamp found in entry.
-WHICH should be `earliest' or `latest'. If SUBTREE-P is non-nil,
-search whole subtree."
-  (interactive (list (intern (completing-read "Which timestamp? " '(earliest latest)))
-                     (read-file-name "File: " (concat org-directory "/") nil 'mustmatch nil
-                                     (lambda (filename)
-                                       (string-suffix-p ".org" filename)))
-                     current-prefix-arg))
-  (require 'ts)
-  (let* ((sorter (pcase which-ts
-                   ('earliest #'ts<)
-                   ('latest #'ts>)))
-         (tss (unpackaged/org-timestamps-in-entry subtree-p))
-         (ts (car (sort tss sorter)))
-         (date (list (ts-month ts) (ts-day ts) (ts-year ts))))
-    (unpackaged/org-refile-to-datetree file :date date)))
+  (defun unpackaged/org-refile-to-datetree-using-ts-in-entry (which-ts file &optional subtree-p)
+    "Refile current entry to datetree in FILE using timestamp found in entry.
+  WHICH should be `earliest' or `latest'. If SUBTREE-P is non-nil,
+  search whole subtree."
+    (interactive (list (intern (completing-read "Which timestamp? " '(earliest latest)))
+                       (read-file-name "File: " (concat org-directory "/") nil 'mustmatch nil
+                                       (lambda (filename)
+                                         (string-suffix-p ".org" filename)))
+                       current-prefix-arg))
+    (require 'ts)
+    (let* ((sorter (pcase which-ts
+                     ('earliest #'ts<)
+                     ('latest #'ts>)))
+           (tss (unpackaged/org-timestamps-in-entry subtree-p))
+           (ts (car (sort tss sorter)))
+           (date (list (ts-month ts) (ts-day ts) (ts-year ts))))
+      (unpackaged/org-refile-to-datetree file :date date)))
 
-(defun unpackaged/org-timestamps-in-entry (&optional subtree-p)
-  "Return timestamp objects for all Org timestamps in entry.
- If SUBTREE-P is non-nil (interactively, with prefix), search
- whole subtree."
-  (interactive (list current-prefix-arg))
-  (save-excursion
-    (let* ((beg (org-entry-beginning-position))
-           (end (if subtree-p
-                    (org-end-of-subtree)
-                  (org-entry-end-position))))
-      (goto-char beg)
-      (cl-loop while (re-search-forward org-tsr-regexp-both end t)
-               collect (ts-parse-org (match-string 0))))))
+  (defun unpackaged/org-timestamps-in-entry (&optional subtree-p)
+    "Return timestamp objects for all Org timestamps in entry.
+   If SUBTREE-P is non-nil (interactively, with prefix), search
+   whole subtree."
+    (interactive (list current-prefix-arg))
+    (save-excursion
+      (let* ((beg (org-entry-beginning-position))
+             (end (if subtree-p
+                      (org-end-of-subtree)
+                    (org-entry-end-position))))
+        (goto-char beg)
+        (cl-loop while (re-search-forward org-tsr-regexp-both end t)
+                 collect (ts-parse-org (match-string 0))))))
 
-(cl-defun unpackaged/org-refile-to-datetree (file &key (date (calendar-current-date)) entry)
-  "Refile ENTRY or current node to entry for DATE in datetree in FILE."
-  (interactive (list (read-file-name "File: " (concat org-directory "/") nil 'mustmatch nil
-                                     (lambda (filename)
-                                       (string-suffix-p ".org" filename)))))
-  ;; If org-datetree isn't loaded, it will cut the tree but not file
-  ;; it anywhere, losing data. I don't know why
-  ;; org-datetree-file-entry-under is in a separate package, not
-  ;; loaded with the rest of org-mode.
-  (require 'org-datetree)
-  (unless entry
-    (org-cut-subtree))
-  ;; Using a condition-case to be extra careful. In case the refile
-  ;; fails in any way, put cut subtree back.
-  (condition-case err
-      (with-current-buffer (or (org-find-base-buffer-visiting file)
-                               (find-file-noselect file))
-        (org-datetree-file-entry-under (or entry (car kill-ring)) date)
-        (save-buffer))
-    (error (unless entry
-             (org-paste-subtree))
-           (message "Unable to refile! %s" err))))
+  (cl-defun unpackaged/org-refile-to-datetree (file &key (date (calendar-current-date)) entry)
+    "Refile ENTRY or current node to entry for DATE in datetree in FILE."
+    (interactive (list (read-file-name "File: " (concat org-directory "/") nil 'mustmatch nil
+                                       (lambda (filename)
+                                         (string-suffix-p ".org" filename)))))
+    ;; If org-datetree isn't loaded, it will cut the tree but not file
+    ;; it anywhere, losing data. I don't know why
+    ;; org-datetree-file-entry-under is in a separate package, not
+    ;; loaded with the rest of org-mode.
+    (require 'org-datetree)
+    (unless entry
+      (org-cut-subtree))
+    ;; Using a condition-case to be extra careful. In case the refile
+    ;; fails in any way, put cut subtree back.
+    (condition-case err
+        (with-current-buffer (or (org-find-base-buffer-visiting file)
+                                 (find-file-noselect file))
+          (org-datetree-file-entry-under (or entry (car kill-ring)) date)
+          (save-buffer))
+      (error (unless entry
+               (org-paste-subtree))
+             (message "Unable to refile! %s" err))))
 #+END_SRC
 
-Quick refile wrapper for dream journaling (used with =voicenotes2org=). A bit awkward, but based on [[https://emacs.stackexchange.com/questions/8045/org-refile-to-a-known-fixed-location][this StackOverflow question]].
+Refiling utility based on [[https://emacs.stackexchange.com/questions/8045/org-refile-to-a-known-fixed-location][this StackOverflow question]].
 
 #+BEGIN_SRC emacs-lisp
   (defun jay/refile-to (file headline)
@@ -3453,46 +3449,59 @@ Quick refile wrapper for dream journaling (used with =voicenotes2org=). A bit aw
                    (find-file file)
                    (org-find-exact-headline-in-buffer headline))))
         (org-refile nil nil (list headline file nil pos))))
+#+END_SRC
 
-  (defun my:org-refile-as-dream ()
-    "Refile current heading to dream journal."
-    (interactive)
-    ;;(org-mark-ring-push)
-    ;; (jay/refile-to my:org-dream-journal-path "Dream Log")
-    (save-excursion
-      (unpackaged/org-refile-to-datetree-using-ts-in-entry 'latest my:org-dream-journal-path t)))
-    ;;(org-mark-ring-goto))
+Custom refile functions.
 
-  (defun my:org-refile-as-scrap ()
-    "Refile current heading to scraps."
-    (interactive)
-    (org-mark-ring-push)
-    (jay/refile-to my:org-scraps-path "Scraps")
-    (org-mark-ring-goto))
+#+BEGIN_SRC emacs-lisp
+  (defmacro my:define-refiler (fname filename-form &optional headline-option)
+    "Macro which defines a function which refiles the heading under point to
+  the filename to which `filename-form' evaluates. `fname' will be the name of
+  that function.
+    If `headline-option' is 'datetree, then content will be refiled into a datetree
+  in that file. Heading will not be prompted."
+    `(defun ,fname ()
+      (interactive)
+      (let ((target-file-path ,filename-form)
+            (target-headline (and (not ,headline-option)
+                                  (ivy-read "Target Heading:" '("Thoughts" "Action Items")))))
 
-  (defun my:org-refile-as-journal (arg)
-    "Refile current heading to today's journal page. With prefix arg, file as action item."
-    (interactive "P")
-    (org-mark-ring-push)
-    (jay/refile-to (my-org-journal-make-if-missing)
-                   (if (equal arg '(4))
-                       "Action Items"
-                     "Thoughts"))
-    (org-mark-ring-goto))
+        ;; Create heading if missing in that file
+        (when target-headline
+          (save-excursion
+            (find-file target-file-path)
+            (unless (org-find-exact-headline-in-buffer target-headline)
+              (end-of-buffer)
+              (newline)
+              (insert (concat "* " target-headline)))))
 
-  (defun my:org-refile-as-concept ()
-    "Refile current heading to the Notes heading on some concept."
-    (interactive)
-    (let
-        ((file (my-org-find-concept)))
-      (save-excursion
-        (find-file file)
-        (unless (org-find-exact-headline-in-buffer "Notes")
-          (end-of-buffer)
-          (newline)
-          (insert "* Notes")))
-      (jay/refile-to file "Notes")
-      (org-mark-ring-goto)))
+        ;; Do the refile
+        (pcase ,headline-option
+          ('datetree      (save-excursion
+                            (unpackaged/org-refile-to-datetree-using-ts-in-entry 'earliest target-file-path t)))
+          ((pred stringp) (progn
+                            (org-mark-ring-push)
+                            (jay/refile-to target-file-path ,headline-option)
+                            (org-mark-ring-goto)))
+          (-              (progn
+                            (org-mark-ring-push)
+                            (jay/refile-to target-file-path target-headline)
+                            (org-mark-ring-goto)))))))
+
+  (my:define-refiler my:org-refile-as-concept (my-org-find-concept))
+  (my:define-refiler my:org-refile-as-journal (my-org-journal-make-if-missing))
+  (my:define-refiler my:org-refile-as-dream my:org-dream-journal-path 'datetree)
+  (my:define-refiler my:org-refile-as-scrap my:org-scraps-path "Scraps")
+
+  (define-transient-command my:org-refile-transient ()
+    "Wrapper for org-refile with some personal shortcuts and behaviors."
+    ["Refile Heading As..."
+     ("c" "Concept" my:org-refile-as-concept)
+     ("j" "Journal" my:org-refile-as-journal)
+     ("s" "Scrap"   my:org-refile-as-scrap)
+     ("d" "Dream"   my:org-refile-as-dream)
+     ("o" "Other"   org-refile)
+     ])
 #+END_SRC
 
 Always save all files after a refile. A little surprised the files aren't saved automatically. From [[https://emacs.stackexchange.com/questions/26923/org-mode-getting-errors-when-auto-saving-after-refiling][StackOverflow]].
