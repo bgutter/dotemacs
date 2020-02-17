@@ -165,6 +165,7 @@ The actual package list.
   (package-require 'counsel-notmuch)       ; Search notmuch emails with ivy
   (package-require 'ts)                    ; Timestamp utility functions for org-mode
   (package-require 'auto-yasnippet)        ; On the fly text templating
+  (package-require 'plantuml-mode)         ; Edit plantuml files; UML generation from plain text.
 #+END_SRC
 
 * Localization (post-package)
@@ -2991,33 +2992,14 @@ from code blocks.
         (elasticsearch . t)
         (R . t)
         (ruby . t)
-        (sqlite . t)))))
+        (sqlite . t)
+        (plantuml . t)))))
 #+END_SRC
 
-Note: Add this to your IPython init file to render DataFrames and
-arrays as org tables. Courtesy of Greg Sexton via the [[https://github.com/gregsexton/ob-ipython][ob-ipython Github]].
+Plantuml blocks also need some special attention to get working. Hope this is consistent across distros; this is the correct value for Ubuntu/WSL Xenial.
 
-It also sets the theme to dark, which makes plot look great when
-inlined in my (dark themed) emacs. Side-effect is that it doesn't look
-great in PDF export.
-
-#+BEGIN_SRC ipython
-import IPython
-from tabulate import tabulate
-
-class OrgFormatter(IPython.core.formatters.BaseFormatter):
-    def __call__(self, obj):
-        try:
-            return tabulate(obj, headers='keys',
-                            tablefmt='orgtbl', showindex='always')
-        except:
-            return None
-
-ip = get_ipython()
-ip.display_formatter.formatters['text/org'] = OrgFormatter()
-
-import matplotlib.pyplot as plt
-plt.style.use( 'dark_background' )
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'org-plantuml-jar-path "/usr/share/plantuml/plantuml.jar")
 #+END_SRC
 
 Display images after each eval
