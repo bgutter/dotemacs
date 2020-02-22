@@ -1903,6 +1903,12 @@ Always open shell buffers in the current window.
              '("^\\*shell\\*$" . (display-buffer-same-window)))
 #+END_SRC
 
+Run with scissors.
+
+#+begin_src emacs-lisp
+(setq disabled-command-function nil)
+#+end_src
+
 ** posframe
 
 Use ivy-posframe by default, exempt swiper. Based on [[https://github.com/tumashu/ivy-posframe][the documentation]].
@@ -2923,11 +2929,20 @@ https://emacs.stackexchange.com/questions/26351/custom-sorting-for-agenda"
                     ;;(org-agenda-compact-blocks t)
                     ))
 
-           (alltodo ""
+          (todo "WAIT"
                    ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
                                                    ;;(zin/org-agenda-skip-tag ,work-str)
                                                    (zin/org-agenda-skip-tag "NOAGENDA")))
-                    (org-agenda-overriding-header "All Open Tasks:")
+                    (org-agenda-overriding-header "Blocked Tasks:")
+                    ;;(org-agenda-compact-blocks t)
+                    ))
+
+           (alltodo ""
+                   ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+                                                   (org-agenda-skip-entry-if 'todo '("NEXT" "Wait"))
+                                                   ;;(zin/org-agenda-skip-tag ,work-str)
+                                                   (zin/org-agenda-skip-tag "NOAGENDA")))
+                    (org-agenda-overriding-header "Other Tasks:")
                     ;;(org-agenda-compact-blocks t)
                     ))
 
