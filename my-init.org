@@ -166,6 +166,7 @@ The actual package list.
   (package-require 'ts)                    ; Timestamp utility functions for org-mode
   (package-require 'auto-yasnippet)        ; On the fly text templating
   (package-require 'plantuml-mode)         ; Edit plantuml files; UML generation from plain text.
+  (package-require 'vterm)                 ; A more compatible terminal emulator for emacs via libvterm
 #+END_SRC
 
 * Localization (post-package)
@@ -813,11 +814,12 @@ Alias some basic functionality to names that may have different
 backends during experimentation.
 
 #+BEGIN_SRC emacs-lisp
-(defalias 'my:find-text               'swiper-isearch)
-(defalias 'my:find-this-text          'swiper-thing-at-point)
-(defalias 'my:find-buffer             'ivy-switch-buffer)
-(defalias 'my:run-program             'counsel-linux-app)
-(defalias 'my:find-file               'counsel-find-file)
+  (defalias 'my:find-text               'swiper-isearch)
+  (defalias 'my:find-this-text          'swiper-thing-at-point)
+  (defalias 'my:find-buffer             'ivy-switch-buffer)
+  (defalias 'my:run-program             'counsel-linux-app)
+  (defalias 'my:find-file               'counsel-find-file)
+  (defalias 'my:terminal-emulator       (if (equal system-type 'windows-nt) 'shell 'vterm))
 #+END_SRC
 
 ** Keys
@@ -984,7 +986,7 @@ backends during experimentation.
       ;; OS Utilities
       "H-f"  'counsel-ag
       "H-F"  (lambda () (interactive) (setq current-prefix-arg '(4))(call-interactively 'counsel-ag))
-      "<f9>" 'shell
+      "<f9>" 'my:terminal-emulator
 
       ;; Text navigation
       "<home>"   'smart-beginning-of-line
