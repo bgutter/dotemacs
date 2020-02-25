@@ -1712,47 +1712,39 @@ Show whitespace
 (setq whitespace-style '(face trailing))
 #+END_SRC
 
-Use visual bell instead of audible, courtesy of Miles Bader. Code
+Use visual bell instead of audible, modified from code by Miles Bader. Code
 mirror on GitHub [[https://github.com/tobias/emacs.d/blob/master/lib/echo-area-bell.el][here]].
 
 #+BEGIN_SRC emacs-lisp
-;; nice little alternative visual bell; Miles Bader <miles /at/ gnu.org>
-(defcustom echo-area-bell-string "*DING* "
-  "Message displayed in mode-line by `echo-area-bell' function."
-  :group 'user)
+  (defun echo-area-flash (color &optional duration message)
+    "Briefly display a highlighted message in the echo-area.
+      The string displayed is the value of `echo-area-bell-string',
+      with a given background; the background highlighting extends to the
+      right margin.  The string is displayed for `echo-area-bell-delay'
+      seconds.
+      This function is intended to be used as a value of `ring-bell-function'."
+    (setq duration (or duration 0.1))
+    (setq message (or message ""))
+    (unless (memq this-command '(keyboard-quit keyboard-escape-quit))
+      (message (propertize
+               (concat
+                (propertize
+                 "x"
+                 'display
+                 `(space :align-to (- right ,(+ 2 (length echo-area-bell-string)))))
+                echo-area-bell-string)
+               'face `(:background ,color :foreground "white" :weight bold)))
+      (sit-for duration)
+      (message "")))
 
-(defcustom echo-area-bell-delay 0.1
-  "Number of seconds `echo-area-bell' displays its message."
-  :group 'user)
-;; internal variables
+  (defun echo-area-bell ()
+    "Flash the some color in the echo area."
+    (echo-area-flash "red" nil "*DING* "))
 
-(defvar echo-area-bell-cached-string nil)
+  (defun ding ()
+    (echo-area-flash "hotpink"))
 
-(defvar echo-area-bell-propertized-string nil)
-
-(defun echo-area-bell ()
-  "Briefly display a highlighted message in the echo-area.
-    The string displayed is the value of `echo-area-bell-string',
-    with a red background; the background highlighting extends to the
-    right margin.  The string is displayed for `echo-area-bell-delay'
-    seconds.
-    This function is intended to be used as a value of `ring-bell-function'."
-  (unless (memq this-command '(keyboard-quit keyboard-escape-quit))
-    (unless (equal echo-area-bell-string echo-area-bell-cached-string)
-      (setq echo-area-bell-propertized-string
-            (propertize
-             (concat
-              (propertize
-               "x"
-               'display
-               `(space :align-to (- right ,(+ 2 (length echo-area-bell-string)))))
-              echo-area-bell-string)
-             'face '(:background "red" :foreground "white" :weight bold)))
-      (setq echo-area-bell-cached-string echo-area-bell-string))
-    (message echo-area-bell-propertized-string)
-    (sit-for echo-area-bell-delay)
-    (message "")))
-(setq ring-bell-function 'echo-area-bell)
+  (setq ring-bell-function 'echo-area-bell)
 #+END_SRC
 
 Get rid of blinking cursor
@@ -1882,6 +1874,18 @@ than failing to delete the window).
             (tab-bar-close-tab)
           (delete-frame))
       ad-do-it)))
+#+END_SRC
+
+Give visual feedback on tab creation/close.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'tab-bar-tab-pre-close-functions
+  (lambda (idx last-tab)
+    (ding)))
+
+(add-hook 'tab-bar-tab-post-open-functions
+  (lambda (tab)
+    (ding)))
 #+END_SRC
 
 Use icons in Ovy (switch buffer, etc)
