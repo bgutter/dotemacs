@@ -1726,12 +1726,7 @@ mirror on GitHub [[https://github.com/tobias/emacs.d/blob/master/lib/echo-area-b
 
 #+BEGIN_SRC emacs-lisp
   (defun echo-area-flash (color &optional duration message)
-    "Briefly display a highlighted message in the echo-area.
-      The string displayed is the value of `echo-area-bell-string',
-      with a given background; the background highlighting extends to the
-      right margin.  The string is displayed for `echo-area-bell-delay'
-      seconds.
-      This function is intended to be used as a value of `ring-bell-function'."
+    "Flash a colorful message in the echo area."
     (setq duration (or duration 0.1))
     (setq message (or message ""))
     (unless (memq this-command '(keyboard-quit keyboard-escape-quit))
@@ -1740,8 +1735,8 @@ mirror on GitHub [[https://github.com/tobias/emacs.d/blob/master/lib/echo-area-b
                 (propertize
                  "x"
                  'display
-                 `(space :align-to (- right ,(+ 2 (length echo-area-bell-string)))))
-                echo-area-bell-string)
+                 `(space :align-to (- right ,(+ 2 (length message)))))
+                message)
                'face `(:background ,color :foreground "white" :weight bold)))
       (sit-for duration)
       (message "")))
