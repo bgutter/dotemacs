@@ -1225,6 +1225,15 @@ seem to work.
           (org-agenda-redo 't)))))
 #+END_SRC
 
+Clear out some keys from the vterm-map that I just never actually need in the terminal.
+
+#+BEGIN_SRC emacs-lisp
+  (mapcar (lambda (key)
+            (define-key vterm-mode-map (kbd key) nil))
+          '("<f1>" "<f2>" "<f3>" "<f4>" "<f5>" "<f6>"
+            "<f7>" "<f8>" "<f9>" "<f10>" "<f11>" "<f12>"))
+#+END_SRC
+
 * Utility
 
 This section defines general purpose code snippets, which are used
