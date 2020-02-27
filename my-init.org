@@ -1141,6 +1141,7 @@ backends during experimentation.
       "p"           'org-agenda-priority
       "t"           'my:org-agenda-todo-and-redo
       "T"           'org-todo-yesterday
+      "s"           'org-agenda-schedule
       "M-<up>"      'backward-paragraph
       "M-<down>"    'forward-paragraph
       "<RET>"       'my:org-agenda-switch-to)
