@@ -167,6 +167,7 @@ The actual package list.
   (package-require 'auto-yasnippet)        ; On the fly text templating
   (package-require 'plantuml-mode)         ; Edit plantuml files; UML generation from plain text.
   (package-require 'vterm)                 ; A more compatible terminal emulator for emacs via libvterm
+  (package-require 'org-ql)                ; A sane interface for finding things in Org
 #+END_SRC
 
 * Localization (post-package)
@@ -776,6 +777,32 @@ Ignore dependencies when I explicitly want to set status. I have dependency chec
     (call-interactively #'org-todo)))
 #+END_SRC
 
+Function to interactively switch the currently clocked task. Modified from [[https://github.com/alphapapa/org-ql/issues/63][org-ql's github]].
+
+#+BEGIN_SRC emacs-lisp
+  (defun my:org-clock-return-to-task ()
+    "Clock-in to another task that's been worked on today."
+    (interactive)
+    (let ((clocked-tasks (org-ql-select (org-agenda-files)
+                           '(clocked :on today)
+                           :action (lambda ()
+                                     (propertize (org-get-heading t)
+                                                 'marker (copy-marker (point)))))))
+      (ivy-read
+       "Return to Task: "
+       clocked-tasks
+       :action
+       (lambda (headline)
+         (let* ((marker (get-text-property 0 'marker headline))
+                (buffer (and (markerp marker) (marker-buffer marker))))
+           (when buffer
+             (with-current-buffer buffer
+               (goto-char marker)
+               (org-show-entry)
+               (org-clock-in)
+               (message (concat "Working on " headline)))))))))
+#+END_SRC
+
 *** counsel, ivy & swiper
 
 Make sure Swiper query replace tries to replace all occurrences.
@@ -892,7 +919,8 @@ backends during experimentation.
       "ci"               'org-clock-in
       "co"               'org-clock-out
       "cq"               'org-clock-cancel
-      "cr"               (lambda () (interactive) (setq current-prefix-arg '(4)) (call-interactively 'org-clock-in-last))
+      "cr"               'my:org-clock-return-to-task
+      "c SPC"            'my:org-clock-new-task-silent
 
       ;; "s" -> system
       "sx"                'my:run-program
@@ -3334,10 +3362,19 @@ Define org-capture templates.
         :empty-lines 1)
 
        ("w"
-        "Work Log"
+        "Ad Hoc Task"
         entry
-        (file+headline my-org-journal-make-if-missing "Work Log")
+        (file+headline my-org-journal-make-if-missing "Ad Hoc Tasks")
         "** %? :%^{Type|talking|texting|meetings|coding|planning|downtime|clerical|tooling|analysis}:"
+        :empty-lines 1
+        :clock-in t
+        :clock-keep t)
+
+       ("y"
+       "Work Log - Silent"
+        entry
+        (file+headline my-org-journal-make-if-missing "Ad Hoc Tasks")
+        "** %?"
         :empty-lines 1
         :clock-in t
         :clock-keep t)
@@ -3377,6 +3414,16 @@ Define org-capture templates.
         "%U\n%?"
         :prepend t
         :empty-lines 1)))
+#+END_SRC
+
+Add a function to rapidly clock into a new task without any information.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:org-clock-new-task-silent ()
+  "Create new ad hoc task & clock in -- don't do anything interactively."
+  (interactive)
+  (org-capture nil "y")
+  (org-capture-finalize))
 #+END_SRC
 
 *** Refile

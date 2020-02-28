@@ -9,10 +9,10 @@
 #+STARTUP: showeverything
 #+PROPERTY: DATE `(format-time-string "%Y-%m-%d")`
 
-#+BEGIN: clocktable :scope file :maxlevel 2 :compact t
+#+BEGIN: clocktable :scope agenda :block `(format-time-string "%Y-%m-%d")` :fileskip0 t :maxlevel 2 :compact t :properties ("TAGS")
 #+END:
 
-* Work Log
+* Ad Hoc Tasks
 
 * Scratch
 
