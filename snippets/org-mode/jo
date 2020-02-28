@@ -5,11 +5,11 @@
 
 # -*- eval: (add-hook 'before-save-hook (lambda () (save-excursion (setq current-prefix-arg '(4)) (org-clock-report t))) nil t) -*-
 #+TITLE: Daily Journal
-#+DATE:  `(format-time-string "%Y-%m-%d")`
+#+DATE:  `(format-time-string "%Y-%m-%d" my:journal-expansion-time)`
 #+STARTUP: showeverything
-#+PROPERTY: DATE `(format-time-string "%Y-%m-%d")`
+#+PROPERTY: DATE `(format-time-string "%Y-%m-%d" my:journal-expansion-time)`
 
-#+BEGIN: clocktable :scope agenda :block `(format-time-string "%Y-%m-%d")` :fileskip0 t :maxlevel 2 :compact t :properties ("TAGS")
+#+BEGIN: clocktable :scope agenda :block `(format-time-string "%Y-%m-%d" my:journal-expansion-time)` :fileskip0 t :maxlevel 2 :compact t :properties ("TAGS")
 #+END:
 
 * Ad Hoc Tasks

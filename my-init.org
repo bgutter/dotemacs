@@ -884,7 +884,9 @@ backends during experimentation.
       "?"                'helm-descbinds
 
       ;; "o"-> Org global shortcuts
-      "od"               'my-org-journal-open-today
+      "odd"              'my-org-journal-open-today
+      "odt"              'my-org-journal-open-tomorrow
+      "ody"              'my-org-journal-open-yesterday
       "oa"               'org-agenda
       "ot"               'org-todo-list
       "oc"               'my:org-concept-open
@@ -3280,36 +3282,60 @@ Add function to search existing concepts, journals, etc.
 Functions for creating and opening daily journal pages.
 
 #+BEGIN_SRC emacs-lisp
-(defun my-org-journal-current-day-path()
+(defvar my:journal-expansion-time nil
+  "Temporarily bound to a date when the journal yasnippet should expand to dates other than today.")
+
+(defun my-org-journal-current-day-path ()
   "Get the path to today's journal file."
+  (my-org-journal-path (current-time)))
+
+(defun my-org-journal-path (time)
+  "Get the path to some day's journal file, given time (compatible with (current-time))."
   (let*
   ((journal-root (concat my:org-file-tree-base-path "/journal/"))
     (filename     "journal.org")
-    (path (concat journal-root (format-time-string "%Y/%m/%e/" (current-time)) filename)))
+    (path (concat journal-root (format-time-string "%Y/%m/%e/" time) filename)))
     path))
 
-(defun my-org-journal-open-today ()
-  "Open today's journal file, creating it if missing."
-  (interactive)
-  (my-org-journal-make-if-missing)
-  (find-file (my-org-journal-current-day-path)))
-
-(defun my-org-journal-make-if-missing()
+(defun my-org-journal-make-if-missing (&optional time)
   "Unless already present, create a journal ORG file for today from the existing template."
   (interactive)
+  (setq time (or time (current-time)))
   (let
-   '(path (my-org-journal-current-day-path))
+   '(path (my-org-journal-path time))
   (progn
     (save-excursion
       (unless (file-exists-p path)
         (progn
           (make-directory (file-name-directory path) t)
           (find-file path)
-          (yas-expand-snippet (yas-lookup-snippet "Journal Page Template" 'org-mode))
+          (let ((my:journal-expansion-time time))
+            (yas-expand-snippet (yas-lookup-snippet "Journal Page Template" 'org-mode)))
           (save-buffer)
           (kill-buffer)
           (my-org-update-agenda-index))))
      path)))
+
+(defun my-org-journal-open-today ()
+  "Open today's journal file, creating it if missing."
+  (interactive)
+  (let ((time (current-time)))
+      (my-org-journal-make-if-missing time)
+      (find-file (my-org-journal-path time))))
+
+(defun my-org-journal-open-yesterday ()
+  "Open yesterday's journal file, creating it if missing."
+  (interactive)
+  (let ((time (time-subtract (current-time) (seconds-to-time (* 60 60 24)))))
+      (my-org-journal-make-if-missing time)
+      (find-file (my-org-journal-path time))))
+
+(defun my-org-journal-open-tomorrow ()
+  "Open tomorrow's journal file, creating it if missing."
+  (interactive)
+  (let ((time (time-add (current-time) (seconds-to-time (* 60 60 24)))))
+      (my-org-journal-make-if-missing time)
+      (find-file (my-org-journal-path time))))
 #+END_SRC
 
 Advise org-save-all-org-buffers to autocommit any changes in my org folder
