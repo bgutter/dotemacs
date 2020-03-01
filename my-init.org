@@ -3020,14 +3020,14 @@ Don't show blocked tasks (ORDERED property set to t)
       org-agenda-dim-blocked-tasks 'invisible)
 #+END_SRC
 
-Show past two weeks and next week in agenda view.
+Show past week and next two in agenda view.
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'org-agenda-mode-hook
   (lambda ()
     (setq org-agenda-span 21
           org-agenda-start-on-weekday nil
-          org-agenda-start-day "-14d")))
+          org-agenda-start-day "-7d")))
 #+END_SRC
 
 *** Babel
