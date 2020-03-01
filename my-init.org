@@ -2846,8 +2846,6 @@ I want to be able to have multiple agenda windows.
 Add custom agenda command, use some awesome code from [[https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html][this blog]] and [[https://stackoverflow.com/questions/10074016/org-mode-filter-on-tag-in-agenda-view/33444799#33444799][this StackOverflow user]].
 
 #+BEGIN_SRC emacs-lisp
-(defcustom my:work-tag               nil "Name of org-mode work tag")
-
 (defun air-org-skip-subtree-if-priority (priority)
   "Skip an agenda subtree if it has a priority of PRIORITY.
 
@@ -2909,108 +2907,23 @@ https://emacs.stackexchange.com/questions/26351/custom-sorting-for-agenda"
           next-headline
         nil))))
 
-(let*
-    ((work-str      (symbol-name my:work-tag))
-     (omit-work-str (concat "-" work-str)))
   (setq org-agenda-custom-commands
-      `(("d" "Daily agenda and all TODOs"
-         (
-          (agenda "" ((org-agenda-span 7)
-                      (org-agenda-skip-function 'air-org-skip-subtree-if-habit)
-                      (org-agenda-overriding-header "Weekly Agenda:")))
-          (agenda "" ((org-agenda-span 1)
-                      (org-agenda-skip-function 'air-org-skip-subtree-unless-habit)
-                      (org-agenda-overriding-header "Open Habits:")))
-          (alltodo ""
-                   ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-                                                   (org-agenda-skip-if nil '(scheduled deadline))))
-                    (org-agenda-overriding-header "Incomplete Unscheduled Tasks:"))))
-         ((org-agenda-compact-blocks nil)))
-
-        ("h" "Habits"
-         (
-          (agenda "" ((org-agenda-span 1)
-                      (org-agenda-skip-function 'air-org-skip-subtree-unless-habit)
-                      (org-agenda-overriding-header "Open Habits:"))))
-        ((org-agenda-compact-blocks nil)))
-
-        ("w" "Filtered Weekly Agenda"
-         (
-          (agenda "" ((org-agenda-span 7)
-                      (org-agenda-skip-function 'air-org-skip-subtree-if-habit)
-                      (org-agenda-overriding-header "Weekly Agenda:"))))
-         ((org-agenda-compact-blocks nil)))
-
-         ("u" "Incomplete, Unscheduled TODO List (non-work)"
-         (
-          (alltodo ""
-                   ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-                                                   (org-agenda-skip-if nil '(scheduled deadline))))
-                    (org-agenda-overriding-header "Incomplete Unscheduled Tasks:")
-                    (org-agenda-tag-filter-preset '(,omit-work-str)))))
-         ((org-agenda-compact-blocks nil)))
-
-         ("m" "Closed in Past Month:"
-          tags (concat "+TODO={DONE\\|CANCELLED\\|HIATUS}"
-                        "+CLOSED>=\""
-                                    (format-time-string "[%Y-%m-%d]" (time-subtract (current-time) (days-to-time 30)))
-                                     "\"")
-                ((org-agenda-overriding-header "Recently Closed:")
-                 (org-agenda-cmp-user-defined (cmp-date-property "CLOSED")) ;; https://emacs.stackexchange.com/questions/26351/custom-sorting-for-agenda
-                 (org-agenda-sorting-strategy '(user-defined-down))))
-
-         ("x" "Combined Task List"
+      `(("x" "Combined Task List"
            (
 
-           (todo "NEXT"
-                   ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-                                                   ;;(zin/org-agenda-skip-tag ,work-str)
-                                                   (zin/org-agenda-skip-tag "NOAGENDA")))
-                    (org-agenda-overriding-header "Your Current Plate:")
-                    ;;(org-agenda-compact-blocks t)
-                    ))
-
           (todo "WAIT"
-                   ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-                                                   ;;(zin/org-agenda-skip-tag ,work-str)
-                                                   (zin/org-agenda-skip-tag "NOAGENDA")))
-                    (org-agenda-overriding-header "Blocked Tasks:")
-                    ;;(org-agenda-compact-blocks t)
-                    ))
+                   ((org-agenda-skip-function '(zin/org-agenda-skip-tag "NOAGENDA"))
+                    (org-agenda-overriding-header "Blocked Tasks:")))
 
            (alltodo ""
-                   ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-                                                   (org-agenda-skip-entry-if 'todo '("NEXT" "Wait"))
-                                                   ;;(zin/org-agenda-skip-tag ,work-str)
-                                                   (zin/org-agenda-skip-tag "NOAGENDA")))
-                    (org-agenda-overriding-header "Other Tasks:")
-                    ;;(org-agenda-compact-blocks t)
-                    ))
+                   ((org-agenda-skip-function '(or (org-agenda-skip-entry-if 'todo '("WAIT"))
+                                                   (zin/org-agenda-skip-tag "NOAGENDA")
+                                                   (zin/org-agenda-skip-tag "UNFILED")
+                                                   (org-agenda-skip-if nil '(scheduled deadline))))
+                    (org-agenda-overriding-header "Current and Unscheduled Tasks:")))
 
-           ;(tags (concat "+TODO={DONE}"
-           ;             "+CLOSED>=\""
-           ;                         (format-time-string "[%Y-%m-%d]" (time-subtract (current-time) (days-to-time 7)))
-           ;                          "\"")
-           ;     ((org-agenda-overriding-header "Recently Completed:")
-           ;      (org-agenda-cmp-user-defined (cmp-date-property "CLOSED")) ;; https://emacs.stackexchange.com/questions/26351/custom-sorting-for-agenda
-           ;      (org-agenda-sorting-strategy '(user-defined-down))
-           ;      (org-agenda-max-entries 10)))
-
-           ;(tags (concat "+TODO={CANCELLED}"
-           ;             "+CLOSED>=\""
-           ;                         (format-time-string "[%Y-%m-%d]" (time-subtract (current-time) (days-to-time 7)))
-           ;                          "\"")
-           ;     ((org-agenda-overriding-header "Recently Cancelled:")
-           ;      (org-agenda-cmp-user-defined (cmp-date-property "CLOSED")) ;; https://emacs.stackexchange.com/questions/26351/custom-sorting-for-agenda
-           ;      (org-agenda-sorting-strategy '(user-defined-down))
-           ;      (org-agenda-max-entries 5)))
-
-           ;(alltodo ""
-           ;        ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-           ;                                        (zin/org-agenda-skip-tag ,work-str 't)
-           ;                                        (zin/org-agenda-skip-tag "NOAGENDA")))
-           ;         (org-agenda-overriding-header "Work Tasks:")))
-           )))))
+           (tags "UNFILED"
+             ((org-agenda-overriding-header "Unfiled Captures:")))))))
 #+END_SRC
 
 Don't show blocked tasks (ORDERED property set to t)
@@ -3224,6 +3137,7 @@ Defcustoms for various personal definitions.
 (defcustom my:org-scraps-path         nil "Writing prompts and scraps")
 (defcustom my:org-dream-journal-path  nil "Dream journal file path")
 (defcustom my:org-file-tree-base-path nil "Base directory of my org directory structure")
+(defcustom my:unfiled-notes-path      nil "Location for captured but uncategorized notes.")
 #+END_SRC
 
 Add function to rebuild org file list. Call it once.
@@ -3385,6 +3299,16 @@ Define org-capture templates.
         entry
         (file+headline my-org-journal-make-if-missing "Thoughts")
         "** %U %?"
+        :empty-lines 1)
+
+       ("i"
+        "inbox"
+        entry
+        (file ,my:unfiled-notes-path)
+        "** TODO %?
+:LOGBOOK:
+- State \"TODO\"       from              %U
+:END:"
         :empty-lines 1)
 
        ("w"
