@@ -1634,6 +1634,15 @@ It's shell hell folks.
 
 ** Other Stuff
 
+Reopen current file as sudo.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:reopen-sudo ()
+  "Reopen current file as sudo."
+  (interactive)
+  (find-file (concat "/sudo::" (buffer-file-name))))
+#+END_SRC
+
 Copy current buffer's path to clipboard. Taken from [[https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-emacs][StackOverflow]].
 
 #+BEGIN_SRC emacs-lisp
