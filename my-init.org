@@ -1963,7 +1963,9 @@ Run with scissors.
 
 Use ivy-posframe by default, exempt swiper. Based on [[https://github.com/tumashu/ivy-posframe][the documentation]].
 
-#+BEGIN_SRC emacs-lisp
+DISABLED: Too buggy for now.
+
+#+BEGIN_SRC
 (setq ivy-posframe-display-functions-alist
         '((swiper-isearch . nil)
           (t . ivy-posframe-display-at-frame-center)))
