@@ -928,6 +928,7 @@ backends during experimentation.
       "sx"                'my:run-program
       "sl"                'counsel-locate
       "sb"                'my:battery-check
+      "sr"                'my:read-pdf-from-scanner/utsushi
 
       ;; t -> translate
       "t"                 'google-translate-at-point
@@ -1505,6 +1506,36 @@ then refreshes images after exiting.
   (start-process "sketch-process" nil "kolourpaint" (concat (file-name-directory (buffer-file-name)) "sketch-" sketch-name ".png")))
 
 (org-link-set-parameters "sketch" :follow 'my:org-edit-sketch)
+#+END_SRC
+
+** Physical Document Capture
+
+Add a command for quickly scanning multi-page PDFs.
+
+TODO: OCR?
+
+#+BEGIN_SRC emacs-lisp
+(defcustom my:preferred-scanner nil
+  "Name of scanner used in the call to utsushi.")
+
+(defcustom my:scanned-document-destination nil
+  "Default directory for storing scanned documents.")
+
+(defun my:read-pdf-from-scanner/utsushi ()
+  "Read a multipage duplex PDF from the automatic document feeder. Uses the utsushi program directly
+because the SANE backend for my scanner does not seem to be working correctly yet.
+Prompts for save location."
+  (interactive)
+  (let ((captured-path (read-file-name "Save File To: " my:scanned-document-destination)))
+    (shell-command-to-string
+      (concat
+        "tmpfileraw=$(mktemp)\n"
+        "tmpfilebig=$(mktemp)\n"
+        "mkdir -p `dirname \"" captured-path "\"`\n"
+        "utsushi scan " my:preferred-scanner " $tmpfileraw --no-interface --image-format=TIFF --resolution=250 --duplex\n"
+        "convert tiff:$tmpfileraw -fuzz 1% -trim -density 250 +repage pdf:$tmpfilebig\n"
+        "gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/printer -dNOPAUSE -dQUIET -dBATCH -sOutputFile=\"" captured-path "\" $tmpfilebig"))
+    (find-file-other-window captured-path)))
 #+END_SRC
 
 ** Voice Notes
