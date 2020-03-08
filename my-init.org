@@ -1527,16 +1527,21 @@ TODO: OCR?
   because the SANE backend for my scanner does not seem to be working correctly yet.
   Prompts for save location."
     (interactive)
-    (let ((captured-path (read-file-name "Save File To: " my:scanned-document-destination)))
-      (shell-command-to-string
-        (concat
-          "tmpfileraw=$(mktemp)\n"
-          "tmpfilebig=$(mktemp)\n"
-          "mkdir -p `dirname \"" captured-path "\"`\n"
-          "utsushi scan " my:preferred-scanner " $tmpfileraw --no-interface --image-format=TIFF --resolution=250 --duplex\n"
-          "convert tiff:$tmpfileraw -fuzz 1% -trim -density 250 +repage pdf:$tmpfilebig\n"
-          "gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/printer -dNOPAUSE -dQUIET -dBATCH -sOutputFile=\"" captured-path "\" $tmpfilebig"))
-      (find-file-other-window captured-path)))
+    (let*
+        ((capture-dir   (read-directory-name "Save Scan Inside: " my:scanned-document-destination))
+         (basename      (read-string "File Name (no extension or date): "))
+         (document-date (org-read-date nil nil nil "Document Date: "))
+         (captured-path (concat (file-name-as-directory capture-dir) document-date "-" basename ".pdf")))
+      (if (y-or-n-p (concat "Scanning to \"" captured-path "\", continue? "))
+        (shell-command-to-string
+          (concat
+            "tmpfileraw=$(mktemp)\n"
+            "tmpfilebig=$(mktemp)\n"
+            "mkdir -p `dirname \"" captured-path "\"`\n"
+            "utsushi scan " my:preferred-scanner " $tmpfileraw --no-interface --image-format=TIFF --resolution=250 --duplex\n"
+            "convert tiff:$tmpfileraw -fuzz 1% -trim -density 250 +repage pdf:$tmpfilebig\n"
+            "gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/printer -dNOPAUSE -dQUIET -dBATCH -sOutputFile=\"" captured-path "\" $tmpfilebig")))
+        (find-file-other-window captured-path)))
 
   (defun my:org-insert-link-to-scanned-document (&optional prefix)
     "At point, insert link to the last modified PDF file in `my:scanned-document-destination'. With
