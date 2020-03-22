@@ -301,10 +301,12 @@ Defined to balance existing function names.
    If point was already at that position, move point to beginning of line.
    https://www.emacswiki.org/emacs/BackToIndentationOrBeginning#toc2"
   (interactive) ; Use (interactive "^") in Emacs 23 to make shift-select work
-  (let ((oldpos (point)))
-    (back-to-indentation)
-    (and (= oldpos (point))
-         (beginning-of-line))))
+  (if (and (equal major-mode 'org-mode) (org-at-heading-p))
+      (org-beginning-of-line)
+    (let ((oldpos (point)))
+      (back-to-indentation)
+      (and (= oldpos (point))
+           (beginning-of-line)))))
 
 (defun smart-copy-paste ()
   "Smart copy or paste"
@@ -801,6 +803,12 @@ Function to interactively switch the currently clocked task. Modified from [[htt
                (org-show-entry)
                (org-clock-in)
                (message (concat "Working on " headline)))))))))
+#+END_SRC
+
+Be smart about home/end on headings.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'org-special-ctrl-a/e t)
 #+END_SRC
 
 *** counsel, ivy & swiper
