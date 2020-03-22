@@ -184,7 +184,7 @@
    `(show-paren-match ((t (:background ,bgutter-theme:dark-violet))))
    `(ecb-default-highlight-face ((t (:background ,bgutter-theme:dark-violet))))
    `(magit-item-highlight ((t (:background ,bgutter-theme:dark-violet))))
-   `(notmuch-search-unread-face ((t (:background ,bgutter-theme:dark-violet :weight bold))))
+   `(notmuch-search-unread-face ((t (:background ,bgutter-theme:dark-violet :weight bold :extend t))))
 
    ;; Deprecated? -- delete eventually
    ;; `(stripe-highlight ((t (:background "gray10"))))
