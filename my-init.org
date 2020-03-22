@@ -2891,6 +2891,8 @@ Mark items closed, as many times as needed.
 
 #+BEGIN_SRC emacs-lisp
 (setq org-log-done 'time)
+(setq org-log-reschedule 'time)
+(setq org-log-redeadline 'time)
 (setq org-closed-keep-when-no-todo t)
 #+END_SRC
 
