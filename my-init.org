@@ -3035,6 +3035,7 @@ from code blocks.
         (lisp . t)
         (elasticsearch . t)
         (R . t)
+        (C . t)
         (ruby . t)
         (sqlite . t)
         (plantuml . t)))))
