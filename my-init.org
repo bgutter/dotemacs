@@ -3210,10 +3210,11 @@ Customize the habit display a bit.
 Defcustoms for various personal definitions.
 
 #+BEGIN_SRC emacs-lisp
-(defcustom my:org-scraps-path         nil "Writing prompts and scraps")
-(defcustom my:org-dream-journal-path  nil "Dream journal file path")
-(defcustom my:org-file-tree-base-path nil "Base directory of my org directory structure")
-(defcustom my:unfiled-notes-path      nil "Location for captured but uncategorized notes.")
+(defcustom my:org-scraps-path                   nil "Writing prompts and scraps")
+(defcustom my:org-dream-journal-path            nil "Dream journal file path")
+(defcustom my:org-file-tree-base-path           nil "Base directory of my org directory structure")
+(defcustom my:unfiled-notes-path                nil "Location for captured but uncategorized notes.")
+(defcustom my:incomprehensible-voice-notes-path nil "File containing transcripts of voice notes that I can't understand.")
 #+END_SRC
 
 Add function to rebuild org file list. Call it once.
@@ -3582,15 +3583,17 @@ Custom refile functions.
   (my:define-refiler my:org-refile-as-journal (my-org-journal-make-if-missing))
   (my:define-refiler my:org-refile-as-dream my:org-dream-journal-path 'datetree)
   (my:define-refiler my:org-refile-as-scrap my:org-scraps-path "Scraps")
+  (my:define-refiler my:org-refile-as-incomprehensible my:incomprehensible-voice-notes-path 'datetree)
 
   (define-transient-command my:org-refile-transient ()
     "Wrapper for org-refile with some personal shortcuts and behaviors."
     ["Refile Heading As..."
-     ("c" "Concept" my:org-refile-as-concept)
-     ("j" "Journal" my:org-refile-as-journal)
-     ("s" "Scrap"   my:org-refile-as-scrap)
-     ("d" "Dream"   my:org-refile-as-dream)
-     ("o" "Other"   org-refile)
+     ("c" "Concept"          my:org-refile-as-concept)
+     ("j" "Journal"          my:org-refile-as-journal)
+     ("s" "Scrap"            my:org-refile-as-scrap)
+     ("d" "Dream"            my:org-refile-as-dream)
+     ("i" "Incomprehensible" my:org-refile-as-incomprehensible)
+     ("o" "Other"            org-refile)
      ])
 #+END_SRC
 
