@@ -1,0 +1,26 @@
+# -*- mode: snippet -*-
+# name: Basic Python Script
+# key: =script
+# expand-env: ((yas-indent-line 'fixed) (yas-wrap-around-region 'nil))
+# --
+
+#!/usr/bin/env python
+"""
+$1
+"""
+
+import argparse
+
+def $2( **kwargs ):
+    """
+    $3
+    """
+    $0
+
+if __name__ == "__main__":
+
+    # Parse CLI
+    p = argparse.ArgumentParser( description=__doc__ )
+    # p.add_argument( "--example", action="store_true" )
+
+    $2( **dict( vars( p.parse_args() ) ) )
