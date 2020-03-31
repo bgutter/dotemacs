@@ -168,6 +168,7 @@ The actual package list.
   (package-require 'plantuml-mode)         ; Edit plantuml files; UML generation from plain text.
   (package-require 'vterm)                 ; A more compatible terminal emulator for emacs via libvterm
   (package-require 'org-ql)                ; A sane interface for finding things in Org
+  (package-require 'realgud)               ; Powerful generalized debugger interface
 #+END_SRC
 
 * Localization (post-package)
@@ -957,6 +958,10 @@ backends during experimentation.
       "wu"                 'winner-undo
       "wr"                 'winner-redo
       "w RET"              'delete-other-windows
+
+      ;; "p" -> python
+      "pp"                 'run-python
+      "pd"                 'realgud:pdb
       )
 
   (general-define-key
@@ -3607,11 +3612,12 @@ Always save all files after a refile. A little surprised the files aren't saved 
 
 ** python-mode
 
-Use IPython
+Use IPython, and use the included initialization script.
 
 #+BEGIN_SRC emacs-lisp
-(setq python-shell-interpreter "ipython"
-        python-shell-interpreter-args "--simple-prompt -i")
+  (setq python-shell-interpreter "ipython"
+          python-shell-interpreter-args (concat "--simple-prompt -i "
+                                                (expand-file-name "~/.emacs.d/emacs-config/emacs.ipy")))
 #+END_SRC
 
 Use Jedi
@@ -3815,6 +3821,14 @@ Add fence regex for Python block strings.
   (add-to-list 'fence-edit-blocks
       '("\"\"\"" "\"\"\"" 1))
 #+end_src
+
+** gud
+
+Don't CD whenever I start debugging -- I'll do that manually.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'gud-chdir-before-run nil)
+#+END_SRC
 
 * Monkey Patching
 ** isearch Advice
