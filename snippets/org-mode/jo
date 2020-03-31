@@ -3,7 +3,6 @@
 # key: =jo
 # --
 
-# -*- eval: (add-hook 'before-save-hook (lambda () (save-excursion (setq current-prefix-arg '(4)) (org-clock-report t))) nil t) -*-
 #+TITLE: Daily Journal
 #+DATE:  `(format-time-string "%Y-%m-%d" my:journal-expansion-time)`
 #+STARTUP: showeverything
