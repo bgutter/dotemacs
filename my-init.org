@@ -169,6 +169,7 @@ The actual package list.
   (package-require 'vterm)                 ; A more compatible terminal emulator for emacs via libvterm
   (package-require 'org-ql)                ; A sane interface for finding things in Org
   (package-require 'realgud)               ; Powerful generalized debugger interface
+  (package-require 'dired-subtree)         ; Better file trees in the directory editor
 #+END_SRC
 
 * Localization (post-package)
@@ -1222,7 +1223,9 @@ backends during experimentation.
 
   (general-define-key :keymaps 'dired-mode-map
       "o" 'dired-omit-mode
-      "p" (lambda () (interactive) (emms-play-dired) (my:voice-note-make-timestamp)))
+      "p" (lambda () (interactive) (emms-play-dired) (my:voice-note-make-timestamp))
+      "i" 'dired-subtree-cycle
+      "e" 'dired-toggle-read-only)
 
   (general-define-key :keymaps 'notmuch-show-mode-map
       "v" (lambda () (interactive) (call-process
