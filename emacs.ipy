@@ -12,3 +12,7 @@ import pandas as pd
 import numpy as np
 import scipy.signal as sps
 import sklearn as skl
+import importlib
+
+def reimport( mod ):
+    return importlib.reload( mod )
