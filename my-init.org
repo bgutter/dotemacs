@@ -1129,10 +1129,11 @@ backends during experimentation.
       "<insert>" 'edit)
 
   (general-define-key :keymaps 'slime-mode-map
-      "C-\\" 'my:slime-eval-region-or-sexp
-      "H-h"  (lambda () (interactive) (call-interactively 'slime-documentation))
-      "TAB"  (gen-smart-tab-key 'indent-for-tab-command 'auto-complete 2)
-      "H-h" 'common-lisp-hyperspec)
+      "C-x C-r" 'slime-macroexpand-1
+      "C-\\"    'my:slime-eval-region-or-sexp
+      "H-h"     (lambda () (interactive) (call-interactively 'slime-documentation))
+      "TAB"     (gen-smart-tab-key 'indent-for-tab-command 'auto-complete 2)
+      "H-h"     'common-lisp-hyperspec)
 
   (general-define-key :keymaps 'nov-mode-map
       "<home>" nil
