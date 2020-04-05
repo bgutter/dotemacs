@@ -2288,6 +2288,27 @@ Don't do special processing for tall lines by default. Way too much cursor lag.
 (setq-default auto-window-vscroll nil)
 #+END_SRC
 
+** Minibuffer
+
+When emacs is fullscreened on very large displays, the minibuffer can
+be so far away from the point of visual focus that I don't even notice
+when it's been unexpectedly activated (y-or-n-p type of
+questions). So, toggle the frame background color whenever the
+minibuffer activates.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:reset-background-color ()
+  (if (minibufferp)
+    (set-background-color "#110022")
+   (set-background-color "Black")))
+
+(defun my:minibuffer-focus-background-color ()
+  (set-background-color "Black"))
+
+(add-hook 'minibuffer-setup-hook #'my:reset-background-color)
+(add-hook 'minibuffer-exit-hook #'my:minibuffer-focus-background-color)
+#+END_SRC
+
 * Theme
 
 Load my theme.
