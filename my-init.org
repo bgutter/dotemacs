@@ -170,6 +170,7 @@ The actual package list.
   (package-require 'org-ql)                ; A sane interface for finding things in Org
   (package-require 'realgud)               ; Powerful generalized debugger interface
   (package-require 'dired-subtree)         ; Better file trees in the directory editor
+  (package-require 'real-auto-save)        ; Actually save the buffer
 #+END_SRC
 
 * Localization (post-package)
@@ -2065,6 +2066,7 @@ nasty.
 (defface mode-line-buffer-name-face            nil "Face of buffer name in mode line.")
 (defface mode-line-buffer-name-inactive-face   nil "Face of buffer name in mode line (inactive).")
 (defface mode-line-notification-face           nil "Face of mode line notifications.")
+(defface mode-line-happy-notification-face     nil "Face of happy mode line notifications.")
 (defface mode-line-notification-inactive-face  nil "Face of mode line notifications (inactive).")
 
 (customize-set-variable 'mode-line-in-non-selected-windows nil)
@@ -2111,6 +2113,22 @@ nasty.
              (let*
                  ((mface (if (window-has-focus)
                              'mode-line-notification-face
+                           'mode-line-notification-inactive-face))
+                  (bface (if (window-has-focus)
+                             'my-header-line-face
+                           'my-header-line-inactive-face)))
+               (concat
+                (propertize ,text
+                           'face mface
+                           'help-echo ,help-echo)
+                (propertize " "
+                            'face bface))))))
+
+(defmacro mode-line-happy-notification-entry (check text help-echo)
+  `'(:eval (when ,check
+             (let*
+                 ((mface (if (window-has-focus)
+                             'mode-line-happy-notification-face
                            'mode-line-notification-inactive-face))
                   (bface (if (window-has-focus)
                              'my-header-line-face
@@ -2205,8 +2223,11 @@ nasty.
                             (my:battery-message) "Battery")
 
     ;;; NOTIFICATIONS: IMPORTANT STUFF
-    (mode-line-notification-entry (and (buffer-modified-p) (buffer-file-name)) " !! "   "Buffer has been modified")
-    (mode-line-notification-entry (buffer-narrowed-p)                          " >< "   "Buffer is narrowed")
+    (mode-line-happy-notification-entry real-auto-save-mode                          " AS " "Autosaving Changes")
+    (mode-line-notification-entry       (and (buffer-modified-p)
+                                             (buffer-file-name)
+                                             (not real-auto-save-mode)) " !! "   "Buffer has been modified")
+    (mode-line-notification-entry       (buffer-narrowed-p)                          " >< "   "Buffer is narrowed")
     ;; (mode-line-notification-entry (< (my:battery-percent) 20) (my:battery-message) "Battery")
 
     ;; '(:eval (debug-window-focus))
@@ -3853,6 +3874,14 @@ Don't CD whenever I start debugging -- I'll do that manually.
 
 #+BEGIN_SRC emacs-lisp
 (customize-set-variable 'gud-chdir-before-run nil)
+#+END_SRC
+
+** real-auto-save
+
+Adjust autosave interval.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'real-auto-save-interval 0.25)
 #+END_SRC
 
 * Monkey Patching

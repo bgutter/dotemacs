@@ -169,6 +169,8 @@
                                       :foreground ,bgutter-theme:white
                                       :weight extra-bold
                                       :family ,bgutter-theme:mono-font))) t)
+   `(mode-line-happy-notification-face ((t (:inherit mode-line-notification-face
+                                            :background ,bgutter-theme:obnoxious-green))) t)
    `(mode-line-notification-inactive-face ((t (:inherit mode-line-notification-face :background ,bgutter-theme:dark-gray :box nil))) t)
 
    ;; Other
