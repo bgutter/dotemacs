@@ -2230,8 +2230,10 @@ nasty.
     (mode-line-happy-notification-entry real-auto-save-mode                          " AS " "Autosaving Changes")
     (mode-line-notification-entry       (and (buffer-modified-p)
                                              (buffer-file-name)
-                                             (not real-auto-save-mode)) " !! "   "Buffer has been modified")
+                                             (not (bound-and-true-p real-auto-save-mode)))
+                                                                                     " !! " "Buffer has been modified")
     (mode-line-notification-entry       (buffer-narrowed-p)                          " >< "   "Buffer is narrowed")
+    (mode-line-notification-entry       (bound-and-true-p realgud-short-key-mode)    " DBG " "Debugger is active.")
     ;; (mode-line-notification-entry (< (my:battery-percent) 20) (my:battery-message) "Battery")
 
     ;; '(:eval (debug-window-focus))
