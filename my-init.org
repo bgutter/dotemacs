@@ -963,8 +963,12 @@ backends during experimentation.
 
       ;; "p" -> python
       "pp"                 'run-python
-      "pd"                 'realgud:pdb
-      )
+      "pd"                 (lambda () ;; run realgud:pdb, but don't let it mess up my window layout.
+                             (interactive)
+                             (let
+                               ((process-buffer (save-window-excursion
+                                                  (call-interactively 'realgud:pdb))))
+                               (display-buffer process-buffer))))
 
   (general-define-key
 
@@ -3868,12 +3872,18 @@ Add fence regex for Python block strings.
       '("\"\"\"" "\"\"\"" 1))
 #+end_src
 
-** gud
+** gud & realgud
 
 Don't CD whenever I start debugging -- I'll do that manually.
 
 #+BEGIN_SRC emacs-lisp
 (customize-set-variable 'gud-chdir-before-run nil)
+#+END_SRC
+
+Install foot gun
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'realgud-safe-mode nil)
 #+END_SRC
 
 ** real-auto-save
