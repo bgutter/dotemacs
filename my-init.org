@@ -999,6 +999,7 @@ backends during experimentation.
       "<S-f8>"    'delete-window
       "<H-f8>"    'my:kill-current-buffer
       "<f8>"      'delete-window
+      "<H-S-f8>"  'kill-buffer-and-window
 
       ;; Workspaces (virtual desktops/saved window configs/etc)
       "S-<left>"    'tab-bar-switch-to-prev-tab
