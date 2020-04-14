@@ -258,6 +258,18 @@ which works well for me.
 
 Functions designed specifically to be used as key mappings.
 
+*** Common Stuff
+
+This is used throughout the config to create unnamed commands (no
+interactive arguments).
+
+#+BEGIN_SRC emacs-lisp
+  (defmacro ilambda (name arg-list &rest body)
+    `(lambda ,name ,arg-list
+       (interactive)
+       ,@body))
+#+END_SRC
+
 *** C stuff
 
 Tab key rebinding.
@@ -670,8 +682,7 @@ Smart tab key framework
       ((indent indent)
        (autocomplete autocomplete)
        (indent-count indent-count))
-    (lambda ()
-      (interactive)
+    (ilambda ()
       (smart-tab-key indent autocomplete indent-count))))
 
 (defun smart-tab-key (indent autocomplete indent-count)
@@ -877,11 +888,11 @@ backends during experimentation.
     ("<escape>" nil                                   "Quit"))
 
   (general-define-key :keymaps 'emms-playlist-mode-map
-    "SPC"      (lambda () (interactive) (my:emms-do-then-show 'emms-pause))
-    "<right>"  (lambda () (interactive) (my:emms-do-then-show 'emms-next))
-    "<left>"   (lambda () (interactive) (my:emms-do-then-show 'emms-previous))
-    "r"        (lambda () (interactive) (my:emms-do-then-show 'emms-random))
-    "m"        (lambda () (interactive) (my:emms-do-then-show 'emms))
+    "SPC"      (ilambda () (my:emms-do-then-show 'emms-pause))
+    "<right>"  (ilambda () (my:emms-do-then-show 'emms-next))
+    "<left>"   (ilambda () (my:emms-do-then-show 'emms-previous))
+    "r"        (ilambda () (my:emms-do-then-show 'emms-random))
+    "m"        (ilambda () (my:emms-do-then-show 'emms))
     "s"        'emms-show
     "a"        'emms-show-all)
 
@@ -946,8 +957,8 @@ backends during experimentation.
       "t"                 'google-translate-at-point
 
       ;; "i" -> input methods
-      "ie"                (lambda () (interactive) (set-input-method nil) (message "English"))
-      "ic"                (lambda () (interactive) (set-input-method 'chinese-tonepy) (message "Chinese (pinyin)"))
+      "ie"                (ilambda () (set-input-method nil) (message "English"))
+      "ic"                (ilambda () (set-input-method 'chinese-tonepy) (message "Chinese (pinyin)"))
 
       ;; "d" -> debug
       "dbf"                'debug-on-entry
@@ -963,8 +974,7 @@ backends during experimentation.
 
       ;; "p" -> python
       "pp"                 'run-python
-      "pd"                 (lambda () ;; run realgud:pdb, but don't let it mess up my window layout.
-                             (interactive)
+      "pd"                 (ilambda () ;; run realgud:pdb, but don't let it mess up my window layout.
                              (let
                                ((process-buffer (save-window-excursion
                                                   (call-interactively 'realgud:pdb))))
@@ -996,8 +1006,8 @@ backends during experimentation.
       "S-<up>"      'tab-bar-new-tab
       "C-S-<up>"    'tab-bar-undo-close-tab
       "S-<down>"    'tab-bar-close-tab
-      "C-S-<left>"  (lambda () (interactive) (tab-bar-move-tab -1))
-      "C-S-<right>" (lambda () (interactive) (tab-bar-move-tab 1))
+      "C-S-<left>"  (ilambda () (tab-bar-move-tab -1))
+      "C-S-<right>" (ilambda () (tab-bar-move-tab 1))
       "C-S-SPC"     'tab-bar-rename-tab
 
       ;; Window splitting
@@ -1019,14 +1029,14 @@ backends during experimentation.
 
       ;; Keyboard macros
       "H-*"        'kmacro-start-macro
-      "<f1>"       (lambda () (interactive) (my:run-or-save-macro "f1"))
-      "<f2>"       (lambda () (interactive) (my:run-or-save-macro "f2"))
-      "<f3>"       (lambda () (interactive) (my:run-or-save-macro "f3"))
-      "<f4>"       (lambda () (interactive) (my:run-or-save-macro "f4"))
-      "C-<f1>"     (lambda () (interactive) (my:run-macro "f1"))
-      "C-<f2>"     (lambda () (interactive) (my:run-macro "f2"))
-      "C-<f3>"     (lambda () (interactive) (my:run-macro "f3"))
-      "C-<f4>"     (lambda () (interactive) (my:run-macro "f4"))
+      "<f1>"       (ilambda () (my:run-or-save-macro "f1"))
+      "<f2>"       (ilambda () (my:run-or-save-macro "f2"))
+      "<f3>"       (ilambda () (my:run-or-save-macro "f3"))
+      "<f4>"       (ilambda () (my:run-or-save-macro "f4"))
+      "C-<f1>"     (ilambda () (my:run-macro "f1"))
+      "C-<f2>"     (ilambda () (my:run-macro "f2"))
+      "C-<f3>"     (ilambda () (my:run-macro "f3"))
+      "C-<f4>"     (ilambda () (my:run-macro "f4"))
 
       ;; File operations
       "<f5>"   'my:find-file
@@ -1036,7 +1046,7 @@ backends during experimentation.
 
       ;; OS Utilities
       "H-f"  'counsel-ag
-      "H-F"  (lambda () (interactive) (setq current-prefix-arg '(4))(call-interactively 'counsel-ag))
+      "H-F"  (ilambda () (setq current-prefix-arg '(4))(call-interactively 'counsel-ag))
       "<f9>" 'my:terminal-emulator
 
       ;; Text navigation
@@ -1096,14 +1106,14 @@ backends during experimentation.
       "M-<print>"   'camcorder-mode
 
       ;; Quick access to toggle play/pause
-      "<pause>"          (lambda () (interactive) (my:emms-do-then-show 'emms-pause))
+      "<pause>"          (ilambda () (my:emms-do-then-show 'emms-pause))
 
       ;; hide/show blocks
       "H-/" 'origami-toggle-node
 
       ;; Other
-      "H-=" '(lambda () (interactive) (text-scale-increase 1))
-      "H--" '(lambda () (interactive) (text-scale-decrease 1))
+      "H-=" '(ilambda () (text-scale-increase 1))
+      "H--" '(ilambda () (text-scale-decrease 1))
 
       ;; Auto Yasnippet
       "H-W" 'aya-create
@@ -1136,7 +1146,7 @@ backends during experimentation.
   (general-define-key :keymaps 'slime-mode-map
       "C-x C-r" 'slime-macroexpand-1
       "C-\\"    'my:slime-eval-region-or-sexp
-      "H-h"     (lambda () (interactive) (call-interactively 'slime-documentation))
+      "H-h"     (ilambda () (call-interactively 'slime-documentation))
       "TAB"     (gen-smart-tab-key 'indent-for-tab-command 'auto-complete 2)
       "H-h"     'common-lisp-hyperspec)
 
@@ -1215,28 +1225,28 @@ backends during experimentation.
       "S-<up>"      'tab-bar-new-tab
       "C-S-<up>"    'tab-bar-undo-close-tab
       "S-<down>"    'tab-bar-close-tab
-      "C-S-<left>"  (lambda () (interactive) (tab-bar-move-tab -1))
-      "C-S-<right>" (lambda () (interactive) (tab-bar-move-tab 1))
+      "C-S-<left>"  (ilambda () (tab-bar-move-tab -1))
+      "C-S-<right>" (ilambda () (tab-bar-move-tab 1))
       "C-S-SPC"     'tab-bar-rename-tab
       "C-c C-t"     'my:org-todo
-      "H-|"         (lambda () (interactive) (save-buffer) (org-latex-export-to-pdf))
+      "H-|"         (ilambda () (save-buffer) (org-latex-export-to-pdf))
       "H-x"         'org-babel-execute-buffer
-      "H-."         (lambda () (interactive) (progn
-                                       (org-insert-time-stamp nil t t)
-                                       (newline)))
+      "H-."         (ilambda () (progn
+                                  (org-insert-time-stamp nil t t)
+                                  (newline)))
       "<H-M-return>" 'org-babel-demarcate-block
       "<print>"      'ros)
 
   (general-define-key :keymaps 'dired-mode-map
       "o" 'dired-omit-mode
-      "p" (lambda () (interactive) (emms-play-dired) (my:voice-note-make-timestamp))
+      "p" (ilambda () (emms-play-dired) (my:voice-note-make-timestamp))
       "i" 'dired-subtree-cycle
       "e" 'dired-toggle-read-only)
 
   (general-define-key :keymaps 'notmuch-show-mode-map
-      "v" (lambda () (interactive) (call-process
-                                     "thunderbird" nil nil nil
-                                     (notmuch-show-get-filename))))
+      "v" (ilambda () (call-process
+                        "thunderbird" nil nil nil
+                        (notmuch-show-get-filename))))
 
   (customize-set-variable 'exwm-input-global-keys
       `((,(kbd "H-<left>") .    windmove-left)
@@ -1248,9 +1258,9 @@ backends during experimentation.
         (,(kbd "S-<F8>") .      delete-window)
         (,(kbd "S-<F8>") .      delete-window)
         (,(kbd "H-b") .         my:find-buffer)
-        (,(kbd "H-S-<up>") .    (lambda () (interactive) (enlarge-window ,(if (e27-p) 1 5)))) ;; Emacs 27 is fast at this
+        (,(kbd "H-S-<up>") .    (ilambda () (enlarge-window ,(if (e27-p) 1 5)))) ;; Emacs 27 is fast at this
         (,(kbd "H-S-<right>") . enlarge-window-horizontally)
-        (,(kbd "H-S-<down>") .  (lambda () (interactive) (shrink-window ,(if (e27-p) 1 5)))) ;; Emacs 27 is fast at this
+        (,(kbd "H-S-<down>") .  (ilambda () (shrink-window ,(if (e27-p) 1 5)))) ;; Emacs 27 is fast at this
         (,(kbd "H-S-<left>") .  shrink-window-horizontally)
         (,(kbd "H-s <down>") .  split-window-above)
         (,(kbd "H-s <left>") .  split-window-right)
@@ -1272,8 +1282,7 @@ seem to work.
   (add-hook 'org-agenda-mode-hook
     (lambda ()
       (local-set-key (kbd "b")
-        (lambda ()
-          (interactive)
+        (ilambda ()
           (if (eq org-agenda-dim-blocked-tasks 't)
               (setq org-agenda-dim-blocked-tasks 'invisible)
             (setq org-agenda-dim-blocked-tasks 't))
@@ -4087,7 +4096,7 @@ Magit doesn't play nicely with Gerrit by default. Workaround from [[https://emac
 When killing emacs, ask to save the desktop. I don't want this done by default, and I want to load the saved desktop only manually (so, no =desktop-save-mode=).
 
 #+BEGIN_SRC emacs-lisp
-(add-hook 'kill-emacs-hook (lambda () (interactive) (when (y-or-n-p "Save Desktop?") (desktop-save-in-desktop-dir))))
+(add-hook 'kill-emacs-hook (ilambda () (when (y-or-n-p "Save Desktop?") (desktop-save-in-desktop-dir))))
 #+END_SRC
 
 * OS Integration
