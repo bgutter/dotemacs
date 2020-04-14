@@ -2044,6 +2044,12 @@ Run with scissors.
 (setq disabled-command-function nil)
 #+end_src
 
+Run faster with scissors
+
+#+BEGIN_SRC emacs-lisp
+(setq confirm-kill-processes nil)
+#+END_SRC
+
 ** posframe
 
 Use ivy-posframe by default, exempt swiper. Based on [[https://github.com/tumashu/ivy-posframe][the documentation]].
