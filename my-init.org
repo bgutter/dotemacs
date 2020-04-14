@@ -974,11 +974,7 @@ backends during experimentation.
 
       ;; "p" -> python
       "pp"                 'run-python
-      "pd"                 (ilambda () ;; run realgud:pdb, but don't let it mess up my window layout.
-                             (let
-                               ((process-buffer (save-window-excursion
-                                                  (call-interactively 'realgud:pdb))))
-                               (display-buffer process-buffer))))
+      "pd"                 'my:simple-pdb)
 
   (general-define-key
 
@@ -2045,7 +2041,7 @@ Run with scissors.
 (setq disabled-command-function nil)
 #+end_src
 
-Run faster with scissors
+Run faster with scissors.
 
 #+BEGIN_SRC emacs-lisp
 (setq confirm-kill-processes nil)
@@ -3902,6 +3898,56 @@ Install foot gun
 
 #+BEGIN_SRC emacs-lisp
 (customize-set-variable 'realgud-safe-mode nil)
+#+END_SRC
+
+Add some code to launch realgud & avoid the excessive window changes.
+
+Call something like realgud:pdb, but, with the following effects;
+  1. Don't let realgud make ANY changes to window or buffer layout.
+  2. Force -in-srcbuf? to t so that realgud doesn't aggressively steal
+     focus into the command buffer.
+  3. Unset the process' query on kill flag, because yes I want to kill
+     it.
+  4. Display the command buffer in a new, non-focus window, like any
+     other package in Emacs would.
+  With any luck, focus will now be in your original source buffer, but
+  with debugging overlays and shortkeys.
+
+#+BEGIN_SRC emacs-lisp
+  (defmacro my:call-realgud (&rest forms)
+    `(let
+         ((process-buffer (save-window-excursion
+                            ,@forms)))
+      (with-current-buffer process-buffer
+        (realgud-cmdbuf-info-in-srcbuf?= t))
+      (set-process-query-on-exit-flag (get-buffer-process process-buffer) nil)
+      (display-buffer process-buffer)))
+#+END_SRC
+
+Launch PDB for the current file, simple.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:simple-pdb ()
+  "Just debug."
+  (interactive)
+  (my:call-realgud
+    (realgud:pdb (pdb-suggest-invocation "pdb"))))
+#+END_SRC
+
+Advise realgud:cmd-quit such that it cleans up after itself. When the
+debugger quits, kill the command buffer, and delete its window.
+
+#+BEGIN_SRC emacs-lisp
+  (defadvice realgud:cmd-quit (after my:cleanup-command-buf activate)
+    "Find the command buffer associated with the current buffer, assert that
+  its process is dead, and kill both it and its window."
+    (let*
+        ((cmdbuf (realgud-get-cmdbuf))
+         (window (and cmdbuf (get-buffer-window cmdbuf))))
+      (when cmdbuf
+        (kill-buffer cmdbuf))
+      (when window
+        (delete-window window))))
 #+END_SRC
 
 ** real-auto-save
