@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Lower Case Vowels
+# key: =vowels
+# --
+
+aeiou

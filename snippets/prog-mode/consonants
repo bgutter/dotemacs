@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Lower Case Consonants
+# key: =consonants
+# --
+
+bcdfghjklmnpqrstvwxyz
