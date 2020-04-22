@@ -1762,6 +1762,18 @@ Insert current time as unix epoch.
   (insert (number-to-string (time-to-seconds))))
 #+END_SRC
 
+Increment the decimal number at point, modified from [[https://www.emacswiki.org/emacs/IncrementNumber][Emacs Wiki]]. Took the "simple" solution and added prefix arg support. The advanced alternative listed there is prone to creating leading zeros on decrement (100->099), which is bad news in languages like C and Python 2, where leading zero implies an octal literal.
+
+#+BEGIN_SRC emacs-lisp
+  (defun my:increment-number-at-point (&optional arg)
+        (interactive "p*")
+        (skip-chars-backward "0-9")
+        (or (looking-at "[0-9]+")
+            (error "No number at point"))
+        (replace-match (number-to-string (+ (string-to-number (match-string 0))
+                                            (if arg arg 1)))))
+#+END_SRC
+
 ** Debugging & Maintaining Emacs
 
 Emacs defines commands both ='toggle-debug-on-error= and ='toggle-debug-on-quit=, but debugging on a specific message is only supported by a variable. Add ='toggle-debug-on-message=, which clears the current trigger message if it is set, and otherwise, prompts the user to enter a regex.
