@@ -1110,8 +1110,8 @@ backends during experimentation.
       "H-/" 'origami-toggle-node
 
       ;; Other
-      "H-=" '(ilambda () (text-scale-increase 1))
-      "H--" '(ilambda () (text-scale-decrease 1))
+      "H-=" (ilambda () (text-scale-increase 1))
+      "H--" (ilambda () (text-scale-decrease 1))
 
       ;; Auto Yasnippet
       "H-W" 'aya-create
