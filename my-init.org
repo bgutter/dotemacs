@@ -2337,16 +2337,20 @@ questions). So, toggle the frame background color whenever the
 minibuffer activates.
 
 #+BEGIN_SRC emacs-lisp
-(defun my:reset-background-color ()
-  (if (minibufferp)
-    (set-background-color "#110022")
-   (set-background-color "Black")))
-
 (defun my:minibuffer-focus-background-color ()
-  (set-background-color "Black"))
+  "If minibuffer is active, change the frame background color."
+  (unless (bound-and-true-p executing-kbd-macro)
+    (if (minibufferp)
+      (set-background-color "#110022")
+     (set-background-color "Black"))))
 
-(add-hook 'minibuffer-setup-hook #'my:reset-background-color)
-(add-hook 'minibuffer-exit-hook #'my:minibuffer-focus-background-color)
+(defun my:minibuffer-reset-background-color ()
+  "Unchange the frame background color."
+  (unless (bound-and-true-p executing-kbd-macro)
+    (set-background-color "Black")))
+
+(add-hook 'minibuffer-setup-hook #'my:minibuffer-focus-background-color)
+(add-hook 'minibuffer-exit-hook #'my:minibuffer-reset-background-color)
 #+END_SRC
 
 * Theme
