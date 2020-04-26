@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: Case
+# key: =case
+# expand-env: ((yas-indent-line 'fixed) (yas-wrap-around-region 'nil))
+# --
+
+(case $1
+  ($0)
+  ()
+  ())

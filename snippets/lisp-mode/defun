@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: Defun
+# key: =defun
+# expand-env: ((yas-indent-line 'fixed) (yas-wrap-around-region 'nil))
+# --
+
+(defun $1 ($2)
+  "$3"
+  $0)

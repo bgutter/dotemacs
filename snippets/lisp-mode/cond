@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: cond
+# key: =cond
+# expand-env: ((yas-indent-line 'fixed) (yas-wrap-around-region 'nil))
+# --
+
+(cond
+  ($0)
+  ()
+  (t))

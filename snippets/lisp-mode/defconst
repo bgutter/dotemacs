@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: Defconstant
+# key: =defconstant
+# expand-env: ((yas-indent-line 'fixed) (yas-wrap-around-region 'nil))
+# --
+
+(defconstant +$1+ $2
+  "$0")

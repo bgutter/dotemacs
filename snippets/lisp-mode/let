@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: Let
+# key: =let
+# expand-env: ((yas-indent-line 'fixed) (yas-wrap-around-region 'nil))
+# --
+
+(let
+    (($0))
+  )

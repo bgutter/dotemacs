@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: Labels
+# key: =labels
+# expand-env: ((yas-indent-line 'fixed) (yas-wrap-around-region 'nil))
+# --
+
+(labels
+    (($1 ($2)
+       $0))
+  )
