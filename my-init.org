@@ -840,6 +840,33 @@ Make sure Swiper query replace tries to replace all occurrences.
 
 *** Slime stuff
 
+Describe symbol with completing read; ivy in my case. This code is from xiongtx on [[https://github.com/slime/slime/issues/303][the Slime github]].
+
+#+BEGIN_SRC emacs-lisp
+(defun my:slime-read-from-minibuffer (prompt &optional initial-value history)
+  "Completing-read a string from the minibuffer, prompting with prompt."
+  (interactive)
+  (let ((minibuffer-setup-hook (slime-minibuffer-setup-hook)))
+    (completing-read prompt (slime-simple-completions (or initial-value ""))
+             nil nil nil
+             (or history 'slime-minibuffer-history))))
+
+(defun my:slime-read-symbol-name (prompt &optional query)
+  "Either read a symbol name or choose the one at point.
+The user is prompted if a prefix argument is in effect, if there is no
+symbol at point, or if QUERY is non-nil."
+  (cond ((or current-prefix-arg query (not (slime-symbol-at-point)))
+         (my:slime-read-from-minibuffer prompt (slime-symbol-at-point)))
+        (t (slime-symbol-at-point))))
+
+(defun my:slime-describe-symbol (symbol-name)
+  "Describe the symbol at point."
+  (interactive (list (my:slime-read-symbol-name "Describe symbol: ")))
+  (when (not symbol-name)
+    (error "No symbol given"))
+  (slime-eval-describe `(swank:describe-symbol ,symbol-name)))
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
 (defun my:slime-eval-region-or-sexp ()
     "If region is active, send it. Else, send last sexp."
@@ -858,6 +885,7 @@ Function to quickly check my emails.
   (interactive)
   (notmuch-search "date:3M.."))
 #+END_SRC
+
 ** Aliases
 
 Alias some basic functionality to names that may have different
@@ -1146,7 +1174,8 @@ backends during experimentation.
       "C-\\"    'my:slime-eval-region-or-sexp
       "H-h"     (ilambda () (call-interactively 'slime-documentation))
       "TAB"     (gen-smart-tab-key 'indent-for-tab-command 'auto-complete 2)
-      "H-h"     'common-lisp-hyperspec)
+      "H-h"     'common-lisp-hyperspec
+      "H-d"     'my:slime-describe-symbol)
 
   (general-define-key :keymaps 'nov-mode-map
       "<home>" nil
