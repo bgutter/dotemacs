@@ -1306,10 +1306,11 @@ seem to work.
 Clear out some keys from the vterm-map that I just never actually need in the terminal.
 
 #+BEGIN_SRC emacs-lisp
-  (mapcar (lambda (key)
-            (define-key vterm-mode-map (kbd key) nil))
-          '("<f1>" "<f2>" "<f3>" "<f4>" "<f5>" "<f6>"
-            "<f7>" "<f8>" "<f9>" "<f10>" "<f11>" "<f12>"))
+  (when (boundp 'vterm-mode-map)
+    (mapcar (lambda (key)
+              (define-key vterm-mode-map (kbd key) nil))
+            '("<f1>" "<f2>" "<f3>" "<f4>" "<f5>" "<f6>"
+              "<f7>" "<f8>" "<f9>" "<f10>" "<f11>" "<f12>")))
 #+END_SRC
 
 * Utility
@@ -2012,10 +2013,11 @@ Clear the minibuffer.
 (delete-minibuffer-contents)
 #+END_SRC
 
-Move the cursor to corner of display.
+Move the cursor to corner of display, except on Windows. On that platform, this makes placing the window via click and drag almost impossible. The window repeatedly moves the cursor away from the window, while the mouse is being clicked...causing the window to continually jump right with it.
 
 #+BEGIN_SRC emacs-lisp
-(mouse-avoidance-mode 'banish)
+(unless (equal system-type 'windows-nt)
+  (mouse-avoidance-mode 'banish))
 #+END_SRC
 
 When deleting the last window in a frame, delete the frame (rather
