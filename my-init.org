@@ -587,20 +587,6 @@ Use counsel for jedi autocompletions, thanks to [[https://oremacs.com/2015/08/26
         (backward-char 1)))))
 #+END_SRC
 
-Send the current "block" to inferior Python process.
-
-#+BEGIN_SRC emacs-lisp
-(defun python-shell-send-toplevel-thing-at-point ()
-  (interactive)
-  (save-mark-and-excursion
-    (search-backward-regexp "\n\n\[^ \]+")
-    (forward-char)
-    (set-mark (point))
-    (search-forward-regexp "\n\n\[^ \]+")
-    (beginning-of-line)
-    (python-shell-send-region (region-beginning) (region-end))))
-#+END_SRC
-
 *** Navigation Stuff
 
 #+BEGIN_SRC emacs-lisp
@@ -1215,7 +1201,7 @@ backends during experimentation.
 
   (general-define-key :keymaps 'python-mode-map
       "H-/"     'counsel-jedi
-      "C-c C-c" 'python-shell-send-block)
+      "C-c C-c" 'python-shell-send-defun)
 
   (general-define-key :keymaps 'prog-mode-map
       "H-;"   'my:comment-region-or-line
