@@ -172,6 +172,7 @@ The actual package list.
   (package-require 'dired-subtree)         ; Better file trees in the directory editor
   (package-require 'real-auto-save)        ; Actually save the buffer
   (package-require 'wgrep-ag)              ; Edit an ag results buffer in-place (regex replace across all files)
+  (package-require 'ob-http)               ; Send HTTP requests in org-babel
 #+END_SRC
 
 * Localization (post-package)
@@ -3154,6 +3155,7 @@ from code blocks.
         (elasticsearch . t)
         (R . t)
         (C . t)
+        (http . t)
         (ruby . t)
         (sqlite . t)
         (plantuml . t)))))
