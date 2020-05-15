@@ -272,6 +272,14 @@ interactive arguments).
        ,@body))
 #+END_SRC
 
+This is used to call a function interactively with given prefix argument.
+
+#+begin_src emacs-lisp
+(defun call-with-prefix-arg (arg fn)
+  (let ((current-prefix-arg (list arg)))
+     (call-interactively fn)))
+#+end_src
+
 *** C stuff
 
 Tab key rebinding.
@@ -528,8 +536,7 @@ Edit thing at point as source code using fence-edit.
         (set-mark beg)
         (goto-char end)
         (activate-mark)
-        (let ((current-prefix-arg '(4)))
-          (call-interactively 'fence-edit-code-region)))))
+        (call-with-prefix-arg 4 'fence-edit-code-region))))
 #+end_src
 
 *** Python Stuff
@@ -682,9 +689,8 @@ Smart tab key framework
            (eq last-command 'find-tag-wrapped)
            (eq last-command 'find-tag-wrapped-new-window))
          (progn
-           (let ((current-prefix-arg '(4)))
-             (message "Finding next possible definition...")
-             (call-interactively 'find-tag))
+           (message "Finding next possible definition...")
+           (call-with-prefix-arg 4 'find-tag)
            (recenter-top-bottom)
            (setq this-command 'find-tag)))
         ((use-region-p) (indent-rigidly (region-beginning) (region-end) indent-count))
@@ -1056,10 +1062,11 @@ backends during experimentation.
       "<f6>"   'save-buffer
       "<f7>"   'my:save-as
       "H-<f5>" 'my:revert-buffer-no-prompt
+      "S-<f6>" (ilambda () (call-with-prefix-arg 4 'save-some-buffers))
 
       ;; OS Utilities
       "H-f"  'counsel-ag
-      "H-F"  (ilambda () (setq current-prefix-arg '(4))(call-interactively 'counsel-ag))
+      "H-F"  (ilambda () (call-with-prefix-arg 'counsel-ag))
       "<f9>" 'my:terminal-emulator
 
       ;; Text navigation
