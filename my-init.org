@@ -2688,6 +2688,14 @@ Use employer's preferred C format...
     (visual-line-mode t)))
 #+END_SRC
 
+*** vterm-mode
+#+BEGIN_SRC emacs-lisp
+(when (boundp 'vterm-mode-hook)
+  (add-hook 'vterm-mode-hook
+    (lambda ()
+      (setq show-trailing-whitespace nil))))
+#+END_SRC
+
 *** python-mode
 #+BEGIN_SRC emacs-lisp
 (defun my/python-interrupt()
@@ -4055,6 +4063,21 @@ Adjust autosave interval.
 
 #+BEGIN_SRC emacs-lisp
 (customize-set-variable 'real-auto-save-interval 0.25)
+#+END_SRC
+
+** vterm
+
+Use fish shell, if it is available.
+
+#+BEGIN_SRC emacs-lisp
+(when (executable-find "fish")
+  (customize-set-variable 'vterm-shell "fish"))
+#+END_SRC
+
+Kill buffers when the shell exits.
+
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'vterm-kill-buffer-on-exit t)
 #+END_SRC
 
 * Monkey Patching
