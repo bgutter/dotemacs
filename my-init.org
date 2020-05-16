@@ -46,6 +46,39 @@ Utility function to shorten tests against Emacs 27 release.
   (>= emacs-major-version 27))
 #+END_SRC
 
+* Init Utility Functions
+
+Define a few utility functions & macros which are used throughout the init script.
+
+This is used to create unnamed commands (no interactive arguments).
+
+#+BEGIN_SRC emacs-lisp
+  (defmacro ilambda (name arg-list &rest body)
+    `(lambda ,name ,arg-list
+       (interactive)
+       ,@body))
+#+END_SRC
+
+This is used to call a function interactively with given prefix argument.
+
+#+begin_src emacs-lisp
+(defun call-with-prefix-arg (arg fn)
+  (let ((current-prefix-arg (list arg)))
+     (call-interactively fn)))
+#+end_src
+
+A more succinct way to gate Microsoft Windows only behavior.
+
+#+BEGIN_SRC emacs-lisp
+(defmacro when-on-windows (&rest body)
+  `(when (equal system-type 'windows-nt)
+    ,@body))
+
+(defmacro unless-on-windows (&rest body)
+  `(unless (equal system-type 'windows-nt)
+    ,@body))
+#+END_SRC
+
 * Required Packages
 This section ensures that all required packages are loaded.
 
@@ -181,32 +214,30 @@ Specify paths to basic utilities on Windows 7 systems (just use WSL on
 windows 10).
 
 #+BEGIN_SRC emacs-lisp
-(if (equal system-type 'windows-nt)
-  (progn
-    (setq
-      find-program        "\"C:/Program Files (x86)/Git/bin/find.exe\""
-      grep-program        "\"C:/Program Files (x86)/Git/bin/grep.exe\""
-      diff-program        "\"C:/Program Files (x86)/Git/bin/diff.exe\""
-      diff-command        "\"C:/Program Files (x86)/Git/bin/diff.exe\""
-      git-program         "\"C:/Program Files (x86)/Git/bin/git.exe\""
-      ispell-program-name "\"C:/Program Files (x86)/Aspell/bin/aspell.exe\""
-      scheme-program      "\"C:/Program Files (x86)/MIT-GNU Scheme/bin/mit-scheme.exe\""
-      ctags-bin-name      "\"C:/Program Files (x86)/ctags/ctags.exe\"")
+(when-on-windows
+  (setq
+    find-program        "\"C:/Program Files (x86)/Git/bin/find.exe\""
+    grep-program        "\"C:/Program Files (x86)/Git/bin/grep.exe\""
+    diff-program        "\"C:/Program Files (x86)/Git/bin/diff.exe\""
+    diff-command        "\"C:/Program Files (x86)/Git/bin/diff.exe\""
+    git-program         "\"C:/Program Files (x86)/Git/bin/git.exe\""
+    ispell-program-name "\"C:/Program Files (x86)/Aspell/bin/aspell.exe\""
+    scheme-program      "\"C:/Program Files (x86)/MIT-GNU Scheme/bin/mit-scheme.exe\""
+    ctags-bin-name      "\"C:/Program Files (x86)/ctags/ctags.exe\"")
     (add-to-list 'exec-path "C:/cygwin64/bin")
     (add-to-list 'exec-path "C:/Program Files (x86)/Git/bin")
     (setenv "PATH" (concat "C:\\Program Files (x86)\\Git\\bin;" (getenv "PATH")))
     (setenv "CYGWIN" "nodosfilewarning") ;; I don't remember but this did, but I remember it being very frustrating
     (setenv "WORKON_HOME" "C:/Users/guttersohn/AppData/Local/conda/conda/envs/py36_64/") ;; don't use the weird preloaded Python 2.7
-    (pyvenv-mode 1)))
+    (pyvenv-mode 1))
 #+END_SRC
 
 Special hacks for Windows
 
 #+BEGIN_SRC emacs-lisp
-(if (equal system-type 'windows-nt)
-  (progn
-    (autoload 'ansi-color-for-comint-mode-on "ansi-color" nil t)
-    (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)))
+(when-on-windows
+  (autoload 'ansi-color-for-comint-mode-on "ansi-color" nil t)
+  (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on))
 #+END_SRC
 
 * Key Mappings
@@ -243,7 +274,7 @@ SetTitleMatchMode, 2
 ...with the following elisp...
 
 #+BEGIN_SRC emacs-lisp
-(if (equal system-type 'windows-nt)
+(when-on-windows
   (setq w32-pass-lwindow-to-system nil
         w32-pass-rwindow-to-system nil
         w32-pass-apps-to-system nil
@@ -259,26 +290,6 @@ which works well for me.
 ** Functions
 
 Functions designed specifically to be used as key mappings.
-
-*** Common Stuff
-
-This is used throughout the config to create unnamed commands (no
-interactive arguments).
-
-#+BEGIN_SRC emacs-lisp
-  (defmacro ilambda (name arg-list &rest body)
-    `(lambda ,name ,arg-list
-       (interactive)
-       ,@body))
-#+END_SRC
-
-This is used to call a function interactively with given prefix argument.
-
-#+begin_src emacs-lisp
-(defun call-with-prefix-arg (arg fn)
-  (let ((current-prefix-arg (list arg)))
-     (call-interactively fn)))
-#+end_src
 
 *** C stuff
 
@@ -2023,7 +2034,7 @@ Clear the minibuffer.
 Move the cursor to corner of display, except on Windows. On that platform, this makes placing the window via click and drag almost impossible. The window repeatedly moves the cursor away from the window, while the mouse is being clicked...causing the window to continually jump right with it.
 
 #+BEGIN_SRC emacs-lisp
-(unless (equal system-type 'windows-nt)
+(unless-on-windows
   (mouse-avoidance-mode 'banish))
 #+END_SRC
 
@@ -3730,10 +3741,17 @@ Use IPython, and use the included initialization script.
                                                 (expand-file-name "~/.emacs.d/emacs-config/emacs.ipy")))
 #+END_SRC
 
-Use Jedi
+Use Jedi, but make it a little less invasive.
 
 #+BEGIN_SRC emacs-lisp
 (setq jedi:complete-on-dot nil)
+#+END_SRC
+
+Just another Microsoft Windows hack. Without this, PDB doesn't show any output until the process exits.
+
+#+BEGIN_SRC emacs-lisp
+(when-on-windows
+  (setenv "PYTHONUNBUFFERED" "TRUE"))
 #+END_SRC
 
 ** yasnippet
