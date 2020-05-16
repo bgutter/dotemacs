@@ -79,6 +79,14 @@ A more succinct way to gate Microsoft Windows only behavior.
     ,@body))
 #+END_SRC
 
+Append to an environment variable (unlixlike).
+
+#+BEGIN_SRC emacs-lisp
+(defun append-env (env new-item)
+  (setenv env (concat (getenv env) ":"
+                      new-item)))
+#+END_SRC
+
 * Required Packages
 This section ensures that all required packages are loaded.
 
@@ -221,11 +229,16 @@ Convenience functions for accessing Windows paths.
   (defun msys2-path (relpath)
     (concat (file-name-as-directory my:msys2-root-dir) relpath))
 
+  (defun programs-x86-path (relpath)
+    (concat (file-name-as-directory (getenv "ProgramFiles(x86)")) relpath))
+
   (defun local-appdata-path (relpath)
     (concat (file-name-as-directory (getenv "LOCALAPPDATA")) relpath)))
 #+END_SRC
 
-Use MSYS2 bash as the shell. Via [[https://www.masteringemacs.org/article/running-shells-in-emacs-overview][Mastering Emacs]].
+Use MSYS2 bash as the shell, and clean up PS1 a bit to remove some
+shell markup which Emacs can't cope with. Modified from [[https://www.masteringemacs.org/article/running-shells-in-emacs-overview][Mastering
+Emacs]].
 
 #+BEGIN_SRC emacs-lisp
 (when-on-windows
@@ -233,6 +246,9 @@ Use MSYS2 bash as the shell. Via [[https://www.masteringemacs.org/article/runnin
         shell-file-name "bash"
         explicit-bash-args '("--login" "-i"))
   (setenv "SHELL" shell-file-name)
+  (setenv "MSYS2_PATH_TYPE" "inherit")
+  (append-env "PATH" (programs-x86-path "Git/bin"))
+  (setenv "PS1" "\\n\\[\\e[32m\\]\\u@\\h \\[\\e[32m\\]$MSYSTEM\\[\\e[0m\\] \\[\\e[33m\\]\\w\\[\\e[0m\\]\\n\\$ ")
   (add-hook 'comint-output-filter-functions 'comint-strip-ctrl-m))
 #+END_SRC
 
@@ -241,8 +257,8 @@ Use a pile of MSYS programs.
 #+BEGIN_SRC emacs-lisp
   (when-on-windows
     (setq
-      find-program        "\"C:/Program Files (x86)/Git/bin/find.exe\""
-      git-program         "\"C:/Program Files (x86)/Git/bin/git.exe\""
+      find-program        (programs-x86-path "Git/bin/find.exe")
+      git-program         (programs-x86-path "Git/bin/git.exe")
       diff-program        (msys2-path "usr/bin/diff.exe")
       diff-command        (msys2-path "usr/bin/diff.exe")
       ispell-program-name (msys2-path "usr/bin/aspell.exe")
