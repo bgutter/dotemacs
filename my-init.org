@@ -208,27 +208,52 @@ The actual package list.
   (package-require 'ob-http)               ; Send HTTP requests in org-babel
 #+END_SRC
 
-* Localization (post-package)
+* Microsoft Windows Settings
 
-Specify paths to basic utilities on Windows 7 systems (just use WSL on
-windows 10).
+Convenience functions for accessing Windows paths.
 
 #+BEGIN_SRC emacs-lisp
 (when-on-windows
-  (setq
-    find-program        "\"C:/Program Files (x86)/Git/bin/find.exe\""
-    grep-program        "\"C:/Program Files (x86)/Git/bin/grep.exe\""
-    diff-program        "\"C:/Program Files (x86)/Git/bin/diff.exe\""
-    diff-command        "\"C:/Program Files (x86)/Git/bin/diff.exe\""
-    git-program         "\"C:/Program Files (x86)/Git/bin/git.exe\""
-    ispell-program-name "\"C:/Program Files (x86)/Aspell/bin/aspell.exe\""
-    scheme-program      "\"C:/Program Files (x86)/MIT-GNU Scheme/bin/mit-scheme.exe\""
-    ctags-bin-name      "\"C:/Program Files (x86)/ctags/ctags.exe\"")
-    (add-to-list 'exec-path "C:/cygwin64/bin")
-    (add-to-list 'exec-path "C:/Program Files (x86)/Git/bin")
-    (setenv "PATH" (concat "C:\\Program Files (x86)\\Git\\bin;" (getenv "PATH")))
-    (setenv "CYGWIN" "nodosfilewarning") ;; I don't remember but this did, but I remember it being very frustrating
-    (setenv "WORKON_HOME" "C:/Users/guttersohn/AppData/Local/conda/conda/envs/py36_64/") ;; don't use the weird preloaded Python 2.7
+
+  (defcustom my:msys2-root-dir "C:/msys64"
+    "Root path to the MSYS2 installation.")
+
+  (defun msys2-path (relpath)
+    (concat (file-name-as-directory my:msys2-root-dir) relpath))
+
+  (defun local-appdata-path (relpath)
+    (concat (file-name-as-directory (getenv "LOCALAPPDATA")) relpath)))
+#+END_SRC
+
+Use MSYS2 bash as the shell. Via [[https://www.masteringemacs.org/article/running-shells-in-emacs-overview][Mastering Emacs]].
+
+#+BEGIN_SRC emacs-lisp
+(when-on-windows
+  (setq explicit-shell-file-name (msys2-path "usr/bin/bash.exe")
+        shell-file-name "bash"
+        explicit-bash-args '("--login" "-i"))
+  (setenv "SHELL" shell-file-name)
+  (add-hook 'comint-output-filter-functions 'comint-strip-ctrl-m))
+#+END_SRC
+
+Use a pile of MSYS programs.
+
+#+BEGIN_SRC emacs-lisp
+  (when-on-windows
+    (setq
+      find-program        "\"C:/Program Files (x86)/Git/bin/find.exe\""
+      git-program         "\"C:/Program Files (x86)/Git/bin/git.exe\""
+      diff-program        (msys2-path "usr/bin/diff.exe")
+      diff-command        (msys2-path "usr/bin/diff.exe")
+      ispell-program-name (msys2-path "usr/bin/aspell.exe")
+      ctags-bin-name      (msys2-path "usr/bin/ctags.exe")))
+#+END_SRC
+
+Use conda's Python by default.
+
+#+BEGIN_SRC emacs-lisp
+  (when-on-windows
+    (setenv "WORKON_HOME" (local-appdata-path "conda/conda/envs/py36_64/"))
     (pyvenv-mode 1))
 #+END_SRC
 
