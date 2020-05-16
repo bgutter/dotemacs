@@ -189,6 +189,8 @@ The actual package list.
   (package-require 'smtpmail)              ; sending emails
   (package-require 'lsp-mode)              ; language server protocol support
   (package-require 'ccls)                  ; C/C++/OBJC LSP backend
+  (package-require 'lsp-ui)                ; LSP UI parts
+  (package-require 'company-lsp)           ; LSP support in company completion
   (package-require 'olivetti)              ; Center text with fill-columns, critical for large displays.
   (package-require 'rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
   (package-require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
