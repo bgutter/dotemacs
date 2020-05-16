@@ -3988,14 +3988,24 @@ Call something like realgud:pdb, but, with the following effects;
       (display-buffer process-buffer)))
 #+END_SRC
 
-Launch PDB for the current file, simple.
+Launch PDB for the current file. Without prefix arg, the command to start PDB will be the last one used. If this is the first call to PDB, we'll guess. With prefix arg, it allows realgud to prompt for input.
 
 #+BEGIN_SRC emacs-lisp
-(defun my:simple-pdb ()
-  "Just debug."
-  (interactive)
-  (my:call-realgud
-    (realgud:pdb (pdb-suggest-invocation "pdb"))))
+  (defun my:simple-pdb (arg)
+    "Just debug."
+    (interactive "P")
+    (my:call-realgud
+     (realgud:pdb
+      (cond
+       ;; Given an prefix arg -- don't tell realgud what to do, it will ask
+       (arg
+        nil)
+       ;; There's no history -- just guess
+       ((null (cdr realgud:pdb-minibuffer-history))
+        (pdb-suggest-invocation "pdb"))
+       ;; No prefix arg and history available -- run last command
+       (t
+        (car realgud:pdb-minibuffer-history))))))
 #+END_SRC
 
 Advise realgud:cmd-quit such that it cleans up after itself. When the
