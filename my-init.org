@@ -542,7 +542,8 @@ Defined to balance existing function names.
   (funcall advance-f)
   (if (and
        (not (eq base (buffer-name)))
-       (hidden-buffer-p))
+       (or (hidden-buffer-p)
+           (my:journal-buffer-p)))
       (next-non-sys-buffer-with-basecase advance-f base)))
 
 (defun next-sys-buffer ()
@@ -568,11 +569,15 @@ Defined to balance existing function names.
 
 (defun next-appropriate-buffer ()
   (interactive)
-  (next-non-sys-buffer))
+  (if (my:journal-buffer-p)
+    (my:visit-next-journal-page)
+    (next-non-sys-buffer)))
 
 (defun previous-appropriate-buffer ()
   (interactive)
-  (previous-non-sys-buffer))
+  (if (my:journal-buffer-p)
+    (my:visit-previous-journal-page)
+    (previous-non-sys-buffer)))
 #+END_SRC
 
 Edit thing at point as source code using fence-edit.
@@ -992,6 +997,7 @@ backends during experimentation.
       "obii"             'ob-ipython-inspect
       "o SPC"            'my:org-toggle-wrap
       "oli"              'my:org-insert-link-to-scanned-document
+      "oj"               'my:open-journal
 
       ;; "v"-> VC (Magit) global shortcuts
       "vs"               'magit-status
@@ -1369,7 +1375,8 @@ Clear out some keys from the vterm-map that I just never actually need in the te
     (mapcar (lambda (key)
               (define-key vterm-mode-map (kbd key) nil))
             '("<f1>" "<f2>" "<f3>" "<f4>" "<f5>" "<f6>"
-              "<f7>" "<f8>" "<f9>" "<f10>" "<f11>" "<f12>")))
+              "<f7>" "<f8>" "<f9>" "<f10>" "<f11>" "<f12>"
+              "<prior>" "<next>")))
 #+END_SRC
 
 * Utility
@@ -3448,60 +3455,123 @@ Add function to search existing concepts, journals, etc.
 Functions for creating and opening daily journal pages.
 
 #+BEGIN_SRC emacs-lisp
-(defvar my:journal-expansion-time nil
-  "Temporarily bound to a date when the journal yasnippet should expand to dates other than today.")
+  (defvar my:journal-expansion-time nil
+    "Temporarily bound to a date when the journal yasnippet should expand to dates other than today.")
 
-(defun my-org-journal-current-day-path ()
-  "Get the path to today's journal file."
-  (my-org-journal-path (current-time)))
+  (defun my-org-journal-current-day-path ()
+    "Get the path to today's journal file."
+    (my-org-journal-path (current-time)))
 
-(defun my-org-journal-path (time)
-  "Get the path to some day's journal file, given time (compatible with (current-time))."
-  (let*
-  ((journal-root (concat my:org-file-tree-base-path "/journal/"))
-    (filename     "journal.org")
-    (path (concat journal-root (format-time-string "%Y/%m/%e/" time) filename)))
-    path))
+  (defun my-org-journal-path (time)
+    "Get the path to some day's journal file, given time (compatible with (current-time))."
+    (let*
+    ((journal-root (concat my:org-file-tree-base-path "/journal/"))
+      (filename     "journal.org")
+      (path (concat journal-root (format-time-string "%Y/%m/%e/" time) filename)))
+      path))
 
-(defun my-org-journal-make-if-missing (&optional time)
-  "Unless already present, create a journal ORG file for today from the existing template."
-  (interactive)
-  (setq time (or time (current-time)))
-  (let
-   '(path (my-org-journal-path time))
-  (progn
-    (save-excursion
-      (unless (file-exists-p path)
-        (progn
-          (make-directory (file-name-directory path) t)
-          (find-file path)
-          (let ((my:journal-expansion-time time))
-            (yas-expand-snippet (yas-lookup-snippet "Journal Page Template" 'org-mode)))
-          (save-buffer)
-          (kill-buffer)
-          (my-org-update-agenda-index))))
-     path)))
+  (defun my-org-journal-make-if-missing (&optional time)
+    "Unless already present, create a journal ORG file for today from the existing template."
+    (interactive)
+    (setq time (or time (current-time)))
+    (let
+     '(path (my-org-journal-path time))
+    (progn
+      (save-excursion
+        (unless (file-exists-p path)
+          (progn
+            (make-directory (file-name-directory path) t)
+            (find-file path)
+            (let ((my:journal-expansion-time time))
+              (yas-expand-snippet (yas-lookup-snippet "Journal Page Template" 'org-mode)))
+            (save-buffer)
+            (kill-buffer)
+            (my-org-update-agenda-index))))
+       path)))
 
-(defun my-org-journal-open-today ()
-  "Open today's journal file, creating it if missing."
-  (interactive)
-  (let ((time (current-time)))
-      (my-org-journal-make-if-missing time)
-      (find-file (my-org-journal-path time))))
+  (defun my-org-journal-open-today ()
+    "Open today's journal file, creating it if missing."
+    (interactive)
+    (let ((time (current-time)))
+        (my-org-journal-make-if-missing time)
+        (find-file (my-org-journal-path time))))
 
-(defun my-org-journal-open-yesterday ()
-  "Open yesterday's journal file, creating it if missing."
-  (interactive)
-  (let ((time (time-subtract (current-time) (seconds-to-time (* 60 60 24)))))
-      (my-org-journal-make-if-missing time)
-      (find-file (my-org-journal-path time))))
+  (defun my-org-journal-open-yesterday ()
+    "Open yesterday's journal file, creating it if missing."
+    (interactive)
+    (let ((time (time-subtract (current-time) (seconds-to-time (* 60 60 24)))))
+        (my-org-journal-make-if-missing time)
+        (find-file (my-org-journal-path time))))
 
-(defun my-org-journal-open-tomorrow ()
-  "Open tomorrow's journal file, creating it if missing."
-  (interactive)
-  (let ((time (time-add (current-time) (seconds-to-time (* 60 60 24)))))
-      (my-org-journal-make-if-missing time)
-      (find-file (my-org-journal-path time))))
+  (defun my-org-journal-open-tomorrow ()
+    "Open tomorrow's journal file, creating it if missing."
+    (interactive)
+    (let ((time (time-add (current-time) (seconds-to-time (* 60 60 24)))))
+        (my-org-journal-make-if-missing time)
+        (find-file (my-org-journal-path time))))
+
+  (defun my:get-journal-date (&optional buffer)
+    "Get the datetime associated with a journal buffer."
+    (with-current-buffer (or buffer (current-buffer))
+      (let ((date-str (plist-get (org-export-get-environment) :date)))
+        (when date-str
+          (encode-time (mapcar (lambda (x) (or x 0)) (parse-time-string (car date-str))))))))
+
+  (defun my:list-journal-pages (&optional newest-first)
+    "Return a sorted alist mapping datetime to journal page path."
+    (let* ((journal-root  (concat my:org-file-tree-base-path "/journal/"))
+           (filename      "^journal.org$")
+           (raw-list      (directory-files-recursively journal-root filename))
+           (journal-alist (mapcar (lambda (fname)
+                                    (let* ((components (split-string (file-relative-name fname (concat my:org-file-tree-base-path "/journal/")) "/"))
+                                           (year (string-to-number (first components)))
+                                           (month (string-to-number (second components)))
+                                           (day (string-to-number (third components))))
+                                      (cons (encode-time (list 0 0 0 day month year 0 -1 0))
+                                            fname)))
+                                  raw-list)))
+      (sort journal-alist (lambda (a b)
+                            (if newest-first
+                              (not (time-less-p (car a) (car b)))
+                              (time-less-p (car a) (car b)))))))
+
+  (defun my:open-journal ()
+    "Interactively open a journal file"
+    (interactive)
+    (let ((pages (my:list-journal-pages t)))
+      (find-file (completing-read "Journal: " (mapcar #'cdr pages)))))
+
+  (defun my:visit-previous-journal-page ()
+    "Open the newest journal page before current."
+    (interactive)
+    (let* ((pages   (my:list-journal-pages))
+           (curtime (my:get-journal-date))
+           (prev-page (cdar (last (seq-filter (lambda (pair)
+                                           (time-less-p (first pair) curtime))
+                                         pages)))))
+      (if prev-page
+        (find-file prev-page)
+        (progn (ding)
+          (message "Oldest journal page!")))))
+
+  (defun my:visit-next-journal-page ()
+    "Open the oldest journal page after current."
+    (interactive)
+    (let* ((pages   (my:list-journal-pages))
+           (curtime (my:get-journal-date))
+           (next-page (cdr (second (seq-filter (lambda (pair)
+                         (not (time-less-p (first pair) curtime)))
+                          pages)))))
+      (if next-page
+        (find-file next-page)
+        (progn (ding)
+               (message "Newest journal page!")))))
+
+  (defun my:journal-buffer-p ()
+    "Is the current buffer assocted with a journal file?"
+    (let ((fname (buffer-file-name)))
+      (when fname
+        (string= (file-name-nondirectory fname) "journal.org"))))
 #+END_SRC
 
 Advise org-save-all-org-buffers to autocommit any changes in my org folder
