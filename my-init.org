@@ -2685,6 +2685,8 @@ Use employer's preferred C format...
      (set 'c-basic-offset  4)
      (set 'c-electric-flag nil)
      (c-set-style "whitesmith")
+     (when (locate-dominating-file default-directory ".ccls-root")
+       (lsp))
      (setq comment-start "// ")
      (setq comment-end   "")))
 #+END_SRC
