@@ -3329,8 +3329,7 @@ Show past week and next two in agenda view.
 
 *** Babel
 
-Enable IPython, shell commands, Common Lisp, and Elasticsearch queries
-from code blocks.
+Enable many different languages in org-babel. Remember to reload org whenever these change (C-c C-c on the file header).
 
 #+BEGIN_SRC emacs-lisp
 (with-eval-after-load 'org
