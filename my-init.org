@@ -2103,20 +2103,27 @@ Move the cursor to corner of display, except on Windows. On that platform, this 
   (mouse-avoidance-mode 'banish))
 #+END_SRC
 
-When deleting the last window in a frame, delete the frame (rather
-than failing to delete the window).
+Advise delete-window to deal with single-window frames, single-window tabs, and single-tab frames.
+
+- If the window is the last window in its tab, and also the last tab in the frame, then delete the frame.
+- If the window is the last window in its tab, but there are more tabs in the frame, then just close the tab.
+- If tab bar mode is disabled and the window is the last one in the frame, then delete the frame.
+- In any other case, allow delete-window to actually delete the window.
+
+Modified from [[https://www.emacswiki.org/emacs/download/frame-cmds.el][frame-cmds.el]].
 
 #+BEGIN_SRC emacs-lisp
-(defadvice delete-window (around delete-frame-if-one-win activate)
-  "If WINDOW is the only one in its frame, then `delete-frame' too.
-   Source: https://www.emacswiki.org/emacs/download/frame-cmds.el"
-  (with-selected-window
-    (or (ad-get-arg 0)  (selected-window))
-    (if (one-window-p t)
-        (if (and (boundp 'tab-bar-mode) tab-bar-mode)
-            (tab-bar-close-tab)
-          (delete-frame))
-      ad-do-it)))
+  (defadvice delete-window (around delete-frame-if-one-win activate)
+    "If WINDOW is the only one in its frame, then `delete-frame' too."
+    (with-selected-window
+      (or (ad-get-arg 0)  (selected-window))
+      (if (one-window-p t)
+          (if (and (boundp 'tab-bar-mode) tab-bar-mode)
+              (if (> (length (tab-bar-tabs)) 1)
+                  (tab-bar-close-tab)
+                (delete-frame))
+            (delete-frame))
+        ad-do-it)))
 #+END_SRC
 
 Give visual feedback on tab creation/close.
