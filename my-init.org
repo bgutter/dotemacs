@@ -980,6 +980,18 @@ backends during experimentation.
     ("S-<down>"  my:fancy-resize-frame-smaller-vertically "Shorten the frame.")
     ("<escape>"  nil                                 "Quit"))
 
+  (defhydra my:window-hydra ()
+    "Moving the window."
+    ("<right>"   buf-move-right                              "Move the window right.")
+    ("<left>"    buf-move-left                               "Move the window left.")
+    ("<up>"      buf-move-up                                 "Move the window up.")
+    ("<down>"    buf-move-down                               "Move the window down.")
+    ("S-<right>" my:fancy-resize-window-bigger-horizontally  "Widen the window.")
+    ("S-<left>"  my:fancy-resize-window-smaller-horizontally "Skinny the window.")
+    ("S-<up>"    my:fancy-resize-window-bigger-vertically    "Tallen the window.")
+    ("S-<down>"  my:fancy-resize-window-smaller-vertically   "Shorten the window.")
+    ("<escape>"  nil                                         "Quit"))
+
   (general-define-key :keymaps 'emms-playlist-mode-map
     "SPC"      (ilambda () (my:emms-do-then-show 'emms-pause))
     "<right>"  (ilambda () (my:emms-do-then-show 'emms-next))
@@ -1065,6 +1077,7 @@ backends during experimentation.
       "wu"                 'winner-undo
       "wr"                 'winner-redo
       "w RET"              'delete-other-windows
+      "ww"                 'my:window-hydra/body
 
       ;; "f" -> frame management
       "f"                  'my:frame-hydra/body
@@ -1112,10 +1125,10 @@ backends during experimentation.
       "H-s <up>"    'split-window-below
 
       ; Window resizing
-      "H-S-<up>"      'enlarge-window
-      "H-S-<right>"   'enlarge-window-horizontally
-      "H-S-<down>"    'shrink-window
-      "H-S-<left>"    'shrink-window-horizontally
+      "H-S-<up>"      'my:fancy-resize-window-bigger-vertically
+      "H-S-<right>"   'my:fancy-resize-window-bigger-horizontally
+      "H-S-<down>"    'my:fancy-resize-window-smaller-vertically
+      "H-S-<left>"    'my:fancy-resize-window-smaller-horizontally
 
       ;; Frame manipulations
       "<H-f11>"       'toggle-frame-fullscreen
@@ -2412,24 +2425,25 @@ assume that we're using StumpWM & load it.
 This function produces a closure which helps in calculating easing offsets.
 
 #+BEGIN_SRC emacs-lisp
-  (defun make-easing-calculator (easing-period-seconds reset-period-seconds &optional throttle-period-seconds max-step-size)
+  (defun make-easing-calculator (easing-period-seconds reset-period-seconds &optional throttle-period-seconds max-step-size power)
     "Returns a closure which yields an eased value."
     (lexical-let ((start-time nil)
                   (last-time  nil)
                   (max-step-size (or max-step-size 1.0))
                   (easing-period-seconds easing-period-seconds)
                   (reset-period-seconds reset-period-seconds)
+                  (power (or power 1))
                   (throttle-period-seconds throttle-period-seconds))
       (lambda ()
         (let* ((now         (float-time))
                (in-progress (and last-time (< (- now last-time) reset-period-seconds)))
                (duration    (if in-progress (- now start-time) 0.0))
                (speed       (min 1.0 (/ duration easing-period-seconds)))
-               ;; (speed       (* speed speed))
-               (distance    (max 1 (* speed max-step-size))))
+               (speed       (expt speed power))
+               (distance    (* speed max-step-size)))
 
           ;; First event, set start time
-          (if (not in-progress)
+          (when (not in-progress)
               (setq start-time now))
 
           ;; Skip update if too fast
@@ -2458,11 +2472,16 @@ Functions for moving frames with an eased speed.
     (interactive)
     (fancy-move-frame :down))
 
-  (setq move-frame-easing-calc   (make-easing-calculator 0.5 0.15 0.01 47))
+  (setq move-frame-easing-calc (make-easing-calculator 0.75
+                                                       0.25
+                                                       (/ 1.0 45)
+                                                       (/ (display-pixel-width) 15)
+                                                       3))
   (defun fancy-move-frame (direction)
     "Move frame with easing. Use with a repeatable keybinding."
     (let ((distance (funcall move-frame-easing-calc)))
       (when distance
+        (setq distance (max distance 1))
         (case direction
           (:right (move-frame distance 0))
           (:left  (move-frame (- distance) 0))
@@ -2496,16 +2515,21 @@ Functions for resizing frames with an eased speed.
     (interactive)
     (fancy-resize-frame :smaller-vertically))
 
-  (setq resize-frame-easing-calc (make-easing-calculator 0.5 0.15 0.03 8))
+  (setq resize-frame-easing-calc (make-easing-calculator 0.75
+                                                         0.25
+                                                         (/ 1.0 45)
+                                                         8
+                                                         3))
   (defun fancy-resize-frame (direction)
     "Resize frame with easing. Use with a repeatable keybinding."
     (let ((distance (funcall resize-frame-easing-calc)))
       (when distance
+        (setq distance (max distance 1))
         (case direction
-        (:bigger-horizontally  (resize-frame distance 0))
-        (:smaller-horizontally (resize-frame (- distance) 0))
-        (:bigger-vertically    (resize-frame 0 (* 0.5 distance)))
-        (:smaller-vertically   (resize-frame 0 (* 0.5 (- distance))))))))
+          (:bigger-horizontally  (resize-frame distance 0))
+          (:smaller-horizontally (resize-frame (- distance) 0))
+          (:bigger-vertically    (resize-frame 0 (* 0.5 distance)))
+          (:smaller-vertically   (resize-frame 0 (* 0.5 (- distance))))))))
 
   (defun resize-frame (delta-x delta-y)
     (let* ((x     (frame-width))
@@ -2515,6 +2539,39 @@ Functions for resizing frames with an eased speed.
            (new-y (round (+ y delta-y)))
            (new-y (max 0 (min (display-pixel-height) new-y))))
     (set-frame-size nil new-x new-y)))
+#+END_SRC
+
+Functions for resizing windows with eased speed.
+
+#+BEGIN_SRC emacs-lisp
+  (defun my:fancy-resize-window-bigger-horizontally ()
+    (interactive)
+    (fancy-resize-window :bigger-horizontally))
+  (defun my:fancy-resize-window-smaller-horizontally ()
+    (interactive)
+    (fancy-resize-window :smaller-horizontally))
+  (defun my:fancy-resize-window-bigger-vertically ()
+    (interactive)
+    (fancy-resize-window :bigger-vertically))
+  (defun my:fancy-resize-window-smaller-vertically ()
+    (interactive)
+    (fancy-resize-window :smaller-vertically))
+
+  (setq resize-window-easing-calc (make-easing-calculator 0.75
+                                                         0.25
+                                                         (/ 1.0 15)
+                                                         20
+                                                         3))
+  (defun fancy-resize-window (direction)
+    "Resize window with easing. Use with a repeatable keybinding."
+    (let ((distance (funcall resize-window-easing-calc)))
+      (when distance
+        (setq distance (round (max distance 1)))
+        (case direction
+          (:bigger-horizontally  (shrink-window (- distance) t))
+          (:smaller-horizontally (shrink-window distance t))
+          (:bigger-vertically    (shrink-window (- distance)) nil)
+          (:smaller-vertically   (shrink-window distance))))))
 #+END_SRC
 
 ** Buffers
