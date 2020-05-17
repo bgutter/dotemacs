@@ -968,6 +968,18 @@ backends during experimentation.
     ("a"        emms-show-all                         "Show All Track Info")
     ("<escape>" nil                                   "Quit"))
 
+  (defhydra my:frame-hydra ()
+    "Moving the frame."
+    ("<right>"   my:fancy-move-frame-right           "Move the frame right.")
+    ("<left>"    my:fancy-move-frame-left            "Move the frame left.")
+    ("<up>"      my:fancy-move-frame-up              "Move the frame up.")
+    ("<down>"    my:fancy-move-frame-down            "Move the frame down.")
+    ("S-<right>" my:fancy-resize-frame-bigger-horizontally "Widen the frame.")
+    ("S-<left>"  my:fancy-resize-frame-smaller-horizontally "Skinny the frame.")
+    ("S-<up>"    my:fancy-resize-frame-bigger-vertically  "Tallen the frame.")
+    ("S-<down>"  my:fancy-resize-frame-smaller-vertically "Shorten the frame.")
+    ("<escape>"  nil                                 "Quit"))
+
   (general-define-key :keymaps 'emms-playlist-mode-map
     "SPC"      (ilambda () (my:emms-do-then-show 'emms-pause))
     "<right>"  (ilambda () (my:emms-do-then-show 'emms-next))
@@ -1054,6 +1066,9 @@ backends during experimentation.
       "wr"                 'winner-redo
       "w RET"              'delete-other-windows
 
+      ;; "f" -> frame management
+      "f"                  'my:frame-hydra/body
+
       ;; "p" -> python
       "pp"                 'run-python
       "pd"                 'my:simple-pdb)
@@ -1103,8 +1118,8 @@ backends during experimentation.
       "H-S-<left>"    'shrink-window-horizontally
 
       ;; Frame manipulations
-      "<H-f11>"   'toggle-frame-fullscreen
-      "H-t"       'my:set-window-opacity
+      "<H-f11>"       'toggle-frame-fullscreen
+      "H-t"           'my:set-window-opacity
 
       ;; Keyboard macros
       "H-*"        'kmacro-start-macro
@@ -1301,22 +1316,22 @@ backends during experimentation.
       "H-a" 'isearch-forward) ;; pdf-tools has specific support for this search method
 
   (general-define-key :keymaps '(org-mode-map org-agenda-mode-map)
-      "S-<left>"    'tab-bar-switch-to-prev-tab ;; take this back
-      "S-<right>"   'tab-bar-switch-to-next-tab
-      "S-<up>"      'tab-bar-new-tab
-      "C-S-<up>"    'tab-bar-undo-close-tab
-      "S-<down>"    'tab-bar-close-tab
-      "C-S-<left>"  (ilambda () (tab-bar-move-tab -1))
-      "C-S-<right>" (ilambda () (tab-bar-move-tab 1))
-      "C-S-SPC"     'tab-bar-rename-tab
-      "C-c C-t"     'my:org-todo
-      "H-|"         (ilambda () (save-buffer) (org-latex-export-to-pdf))
-      "H-x"         'org-babel-execute-buffer
-      "H-."         (ilambda () (progn
-                                  (org-insert-time-stamp nil t t)
-                                  (newline)))
-      "<H-M-return>" 'org-babel-demarcate-block
-      "<print>"      'ros)
+      "S-<left>"      'tab-bar-switch-to-prev-tab ;; take this back
+      "S-<right>"     'tab-bar-switch-to-next-tab
+      "S-<up>"        'tab-bar-new-tab
+      "C-S-<up>"      'tab-bar-undo-close-tab
+      "S-<down>"      'tab-bar-close-tab
+      "C-S-<left>"    (ilambda () (tab-bar-move-tab -1))
+      "C-S-<right>"   (ilambda () (tab-bar-move-tab 1))
+      "C-S-SPC"       'tab-bar-rename-tab
+      "C-c C-t"       'my:org-todo
+      "H-|"           (ilambda () (save-buffer) (org-latex-export-to-pdf))
+      "H-x"           'org-babel-execute-buffer
+      "H-."           (ilambda () (progn
+                                    (org-insert-time-stamp nil t t)
+                                    (newline)))
+      "<H-M-return>"  'org-babel-demarcate-block
+      "<print>"       'ros)
 
   (general-define-key :keymaps 'dired-mode-map
       "o" 'dired-omit-mode
@@ -2387,6 +2402,114 @@ assume that we're using StumpWM & load it.
     (setq pop-up-frames t)))
 #+END_SRC
 
+This function produces a closure which helps in calculating easing offsets.
+
+#+BEGIN_SRC emacs-lisp
+  (defun make-easing-calculator (easing-period-seconds reset-period-seconds &optional throttle-period-seconds max-step-size)
+    "Returns a closure which yields an eased value."
+    (lexical-let ((start-time nil)
+                  (last-time  nil)
+                  (max-step-size (or max-step-size 1.0))
+                  (easing-period-seconds easing-period-seconds)
+                  (reset-period-seconds reset-period-seconds)
+                  (throttle-period-seconds throttle-period-seconds))
+      (lambda ()
+        (let* ((now         (float-time))
+               (in-progress (and last-time (< (- now last-time) reset-period-seconds)))
+               (duration    (if in-progress (- now start-time) 0.0))
+               (speed       (min 1.0 (/ duration easing-period-seconds)))
+               ;; (speed       (* speed speed))
+               (distance    (max 1 (* speed max-step-size))))
+
+          ;; First event, set start time
+          (if (not in-progress)
+              (setq start-time now))
+
+          ;; Skip update if too fast
+          (let ((act-now (or (not throttle-period-seconds)
+                             (not in-progress)
+                             (and last-time
+                                  (>= (- now last-time) throttle-period-seconds)))))
+            (when act-now
+              (setq last-time now)
+               distance))))))
+#+END_SRC
+
+Functions for moving frames with an eased speed.
+
+#+BEGIN_SRC emacs-lisp
+  (defun my:fancy-move-frame-right ()
+    (interactive)
+    (fancy-move-frame :right))
+  (defun my:fancy-move-frame-left ()
+    (interactive)
+    (fancy-move-frame :left))
+  (defun my:fancy-move-frame-up ()
+    (interactive)
+    (fancy-move-frame :up))
+  (defun my:fancy-move-frame-down ()
+    (interactive)
+    (fancy-move-frame :down))
+
+  (setq move-frame-easing-calc   (make-easing-calculator 0.5 0.15 0.01 47))
+  (defun fancy-move-frame (direction)
+    "Move frame with easing. Use with a repeatable keybinding."
+    (let ((distance (funcall move-frame-easing-calc)))
+      (when distance
+        (case direction
+          (:right (move-frame distance 0))
+          (:left  (move-frame (- distance) 0))
+          (:down  (move-frame 0 distance))
+          (:up    (move-frame 0 (- distance)))))))
+
+  (defun move-frame (delta-x delta-y)
+    (let* ((pos   (frame-position))
+           (x     (car pos))
+           (y     (cdr pos))
+           (new-x (round (+ x delta-x)))
+           (new-x (max 0 (min (display-pixel-width) new-x)))
+           (new-y (round (+ y delta-y)))
+           (new-y (max 0 (min (display-pixel-height) new-y))))
+      (set-frame-position nil new-x new-y)))
+#+END_SRC
+
+Functions for resizing frames with an eased speed.
+
+#+BEGIN_SRC emacs-lisp
+  (defun my:fancy-resize-frame-bigger-horizontally ()
+    (interactive)
+    (fancy-resize-frame :bigger-horizontally))
+  (defun my:fancy-resize-frame-smaller-horizontally ()
+    (interactive)
+    (fancy-resize-frame :smaller-horizontally))
+  (defun my:fancy-resize-frame-bigger-vertically ()
+    (interactive)
+    (fancy-resize-frame :bigger-vertically))
+  (defun my:fancy-resize-frame-smaller-vertically ()
+    (interactive)
+    (fancy-resize-frame :smaller-vertically))
+
+  (setq resize-frame-easing-calc (make-easing-calculator 0.5 0.15 0.03 8))
+  (defun fancy-resize-frame (direction)
+    "Resize frame with easing. Use with a repeatable keybinding."
+    (let ((distance (funcall resize-frame-easing-calc)))
+      (when distance
+        (case direction
+        (:bigger-horizontally  (resize-frame distance 0))
+        (:smaller-horizontally (resize-frame (- distance) 0))
+        (:bigger-vertically    (resize-frame 0 (* 0.5 distance)))
+        (:smaller-vertically   (resize-frame 0 (* 0.5 (- distance))))))))
+
+  (defun resize-frame (delta-x delta-y)
+    (let* ((x     (frame-width))
+           (y     (frame-height))
+           (new-x (round (+ x delta-x)))
+           (new-x (max 0 (min (display-pixel-width) new-x)))
+           (new-y (round (+ y delta-y)))
+           (new-y (max 0 (min (display-pixel-height) new-y))))
+    (set-frame-size nil new-x new-y)))
+#+END_SRC
+
 ** Buffers
 
 Tell the =uniquify= package how to rename buffers.
@@ -2551,6 +2674,7 @@ Manage workspaces.
 Help me with my keys
 
 #+BEGIN_SRC emacs-lisp
+(customize-set-variable 'which-key-idle-delay 0.25)
 (which-key-mode)
 #+END_SRC
 
