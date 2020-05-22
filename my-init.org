@@ -4124,7 +4124,7 @@ ros install slime
 (if (file-directory-p "~/.roswell")
     (progn
       (load (expand-file-name "~/.roswell/helper.el"))
-      (setq inferior-lisp-program "ros -Q run"))
+      (setq inferior-lisp-program "ros dynamic-space-size=22768 -Q run"))
   (setq inferior-lisp-program "sbcl"))
 #+END_SRC
 
