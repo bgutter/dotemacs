@@ -183,7 +183,7 @@
    `(hl-line ((t (:background ,bgutter-theme:darker-gray :extend t))))
    `(ein:cell-input-area ((t (:background ,bgutter-theme:darker-gray))))
    `(linum ((t (:inherit (shadow default) :background ,bgutter-theme:darker-gray))))
-   `(show-paren-match ((t (:background ,bgutter-theme:dark-violet))))
+   `(show-paren-match ((t (:background ,bgutter-theme:dark-violet :extend t))))
    `(ecb-default-highlight-face ((t (:background ,bgutter-theme:dark-violet))))
    `(magit-item-highlight ((t (:background ,bgutter-theme:dark-violet))))
    `(notmuch-search-unread-face ((t (:background ,bgutter-theme:darker-gray :weight normal :extend t))))
