@@ -209,7 +209,8 @@ The actual package list.
   (package-require 'ts)                    ; Timestamp utility functions for org-mode
   (package-require 'auto-yasnippet)        ; On the fly text templating
   (package-require 'plantuml-mode)         ; Edit plantuml files; UML generation from plain text.
-  (package-require 'vterm)                 ; A more compatible terminal emulator for emacs via libvterm
+  (unless-on-windows                       ; A more compatible terminal emulator for emacs via libvterm
+    (package-require 'vterm))
   (package-require 'org-ql)                ; A sane interface for finding things in Org
   (package-require 'realgud)               ; Powerful generalized debugger interface
   (package-require 'dired-subtree)         ; Better file trees in the directory editor
