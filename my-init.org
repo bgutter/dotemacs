@@ -3413,6 +3413,7 @@ Enable many different languages in org-babel. Remember to reload org whenever th
         (ipython . t)
         (shell . t)
         (lisp . t)
+        (gnuplot . t)
         (elasticsearch . t)
         (R . t)
         (C . t)
