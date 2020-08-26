@@ -1665,6 +1665,10 @@ TODO: OCR?
   (defcustom my:scanned-document-destination nil
     "Default directory for storing scanned documents.")
 
+  (defun my:utsushi-list-devices ()
+    "Get a list of all devices utsushi can see."
+    (split-string (shell-command-to-string "utsushi list")))
+
   (defun my:read-pdf-from-scanner/utsushi ()
     "Read a multipage duplex PDF from the automatic document feeder. Uses the utsushi program directly
   because the SANE backend for my scanner does not seem to be working correctly yet.
@@ -1675,7 +1679,10 @@ TODO: OCR?
          (basename            (read-string "File Name (no extension or date): "))
          (document-date       (org-read-date nil nil nil "Document Date: "))
          (captured-path       (concat (file-name-as-directory capture-dir) document-date "-" basename ".pdf"))
-         (file-already-exists (file-exists-p captured-path)))
+         (file-already-exists (file-exists-p captured-path))
+         (scanner-list        (my:utsushi-list-devices))
+         (scanner             (or (and my:preferred-scanner (memq my:preferred-scanner scanner-list))
+                                  (concat "\"" (completing-read "Choose scanner: " scanner-list) "\""))))
       (when (and (y-or-n-p (concat "Scanning to \"" captured-path "\", continue? "))
                (or (not file-already-exists)
                    (yes-or-no-p (concat captured-path " already exists -- sure you want to overwrite? "))))
@@ -1684,7 +1691,7 @@ TODO: OCR?
             "tmpfileraw=$(mktemp)\n"
             "tmpfilebig=$(mktemp)\n"
             "mkdir -p `dirname \"" captured-path "\"`\n"
-            "utsushi scan " my:preferred-scanner " $tmpfileraw --no-interface --image-format=TIFF --resolution=250 --duplex\n"
+            "utsushi scan " scanner " $tmpfileraw --no-interface --image-format=TIFF --resolution=250 --duplex\n"
             "convert tiff:$tmpfileraw -fuzz 1% -trim -density 250 +repage pdf:$tmpfilebig\n"
             "gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/printer -dNOPAUSE -dQUIET -dBATCH -sOutputFile=\"" captured-path "\" $tmpfilebig"))
         (find-file-other-window captured-path))))
