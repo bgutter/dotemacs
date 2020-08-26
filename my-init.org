@@ -1351,7 +1351,8 @@ backends during experimentation.
                                     (org-insert-time-stamp nil t t)
                                     (newline)))
       "<H-M-return>"  'org-babel-demarcate-block
-      "<print>"       'ros)
+      "<print>"       'ros
+      "H-;"           'my:comment-region-or-line)
 
   (general-define-key :keymaps 'dired-mode-map
       "o" 'dired-omit-mode
