@@ -79,12 +79,18 @@ A more succinct way to gate Microsoft Windows only behavior.
     ,@body))
 #+END_SRC
 
-Append to an environment variable (unlixlike).
+Work with unix-like paths.
 
 #+BEGIN_SRC emacs-lisp
 (defun append-env (env new-item)
   (setenv env (concat (getenv env) ":"
                       new-item)))
+
+(defun path-as-list ()
+  (split-string (getenv "PATH") ":"))
+
+(defun apply-path-list (list)
+  (setenv "PATH" (string-join list ":")))
 #+END_SRC
 
 * Required Packages
