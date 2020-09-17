@@ -1345,7 +1345,7 @@ backends during experimentation.
       "C-S-<right>"   (ilambda () (tab-bar-move-tab 1))
       "C-S-SPC"       'tab-bar-rename-tab
       "C-c C-t"       'my:org-todo
-      "H-|"           (ilambda () (save-buffer) (org-latex-export-to-pdf))
+      "H-|"           (ilambda () (save-buffer) (org-latex-export-to-pdf) (my:ob-ipython-clean-resource-dir))
       "H-x"           'org-babel-execute-buffer
       "H-."           (ilambda () (progn
                                     (org-insert-time-stamp nil t t)
