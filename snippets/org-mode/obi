@@ -3,6 +3,6 @@
 # key: =obi
 # --
 
-#+BEGIN_SRC ipython :session `(file-name-base (buffer-file-name))` :exports both :results raw drawer
+#+BEGIN_SRC ipython :session (my:org-buffer-babel-session-name) :exports both :results raw drawer
 $0
 #+END_SRC

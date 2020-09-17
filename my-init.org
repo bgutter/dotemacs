@@ -3561,6 +3561,16 @@ When editing source blocks in indirect buffers, open them in the current window.
 (customize-set-variable 'org-src-window-setup 'current-window)
 #+END_SRC
 
+Provide a function to generate a session name for source blocks the current buffer.
+
+#+BEGIN_SRC emacs-lisp
+(defun my:org-buffer-babel-session-name ()
+  "Generate a session name based on the current buffer file name."
+  (let* ((filename (buffer-file-name))
+         (session-name (replace-regexp-in-string "[^a-zA-Z0-9]" "_" filename)))
+    session-name))
+#+END_SRC
+
 *** Habit Tracking
 
 Sort org-habits by priority. See [[https://emacs.stackexchange.com/questions/32430/how-to-sort-habits-by-priority-in-the-org-agenda-view][StackOverflow]].

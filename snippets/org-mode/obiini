@@ -5,9 +5,10 @@
 # expand-env: ((yas-indent-line 'fixed) (yas-wrap-around-region 'nil))
 # --
 
-#+BEGIN_SRC ipython :session `(file-name-base (buffer-file-name))` :exports none :results raw drawer
+#+BEGIN_SRC ipython :session (my:org-buffer-babel-session-name) :exports none :results raw drawer
 import IPython
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from tabulate import tabulate
 
@@ -22,6 +23,6 @@ ip = get_ipython()
 ip.display_formatter.formatters['text/org'] = OrgFormatter()
 #+END_SRC
 
-#+BEGIN_SRC ipython :session `(file-name-base (buffer-file-name))` :exports both :results raw drawer
+#+BEGIN_SRC ipython :session (my:org-buffer-babel-session-name) :exports both :results raw drawer
 $0
 #+END_SRC
