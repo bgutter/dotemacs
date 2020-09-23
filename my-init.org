@@ -2937,7 +2937,8 @@ Use employer's preferred C format...
 
 (add-hook 'python-mode-hook
   (lambda ()
-    (jedi:setup)
+    ;(jedi:setup)
+    (olivetti-mode)
     (local-set-key (kbd "<tab>")         'python-smart-tab-key)
     (local-set-key (kbd "TAB")           'python-smart-tab-key)
     (local-set-key (kbd "C-t")           'indent-for-tab-command)
