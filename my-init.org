@@ -107,7 +107,7 @@ Initialize the package system. Tell emacs to load the newest version of anything
 (add-to-list 'load-path "~/.emacs.d/elpa/")
 
 (add-to-list 'package-archives
-    '("melpa" . "http://melpa.milkbox.net/packages/") t)
+    '("melpa" . "http://melpa.org/packages/") t)
 
 (customize-set-variable 'load-prefer-newer t)
 (package-initialize)
@@ -141,88 +141,88 @@ package.
 The actual package list.
 
 #+BEGIN_SRC emacs-lisp
-  (package-require 'buffer-move)           ; swap buffers between adjacent windows
-  (package-require 'diff-hl)               ; show changes from last commit with edge highlighting
-  (package-require 'uniquify)              ; rename buffers of same name intelligently
-  (package-require 'undo-tree)             ; incredible undo/redo support
-  (package-require 'auto-complete)         ; neat autocompletion
-  (package-require 'framemove)             ; jump between frames and windows
-  (package-require 'fuzzy)                 ; fuzzy completion
-  (package-require 'hi-lock)               ; arbitrary text hilighting
-  (package-require 'button-lock)           ; face attribute that makes links from text
-  (package-require 'bm)                    ; bookmark manager
-  (package-require 'yasnippet)             ; snippet pasting framework
-  (package-require 'anzu)                  ; show total/current matches in isearch
-  (package-require 'visual-regexp)         ; visualize regular expressions in real-time
-  (package-require 'expand-region)         ; Expand region
-  (package-require 'origami)               ; awesome code folding
-  (package-require 'general)               ; sane key mapping architecture
-  (package-require 'which-key)             ; Display options after prefix keys are entered
-  (package-require 'ivy)                   ; Awesome completion framework
-  (package-require 'swiper)                ; ivy's swoop
-  (package-require 'counsel)               ; too many ivy-based utilities to list
-  (package-require 'hy-mode)               ; Lisp on Python
-  (package-require 'org-autolist)          ; Automatically add bullets on return
-  (package-require 'pdf-tools)             ; excellent PDF viewer, replaces docview
-  (package-require 'ob-ipython)            ; powerful jupyter notebooks alternative
-  (package-require 'pyvenv)                ; make conda envs usable with ob-ipython (and, well, everything else)
-  (package-require 'emojify)               ; emoji support
-  (package-require 'unicode-fonts)         ; better unicode support
-  (package-require 'persistent-soft)       ; caching for unicode mappings
-  (package-require 'google-translate)      ; translations
-  (package-require 'auto-highlight-symbol) ; highlight the thing under cursor, jump between occurrences
-  (package-require 'org-bullets)           ; unicode, indented bullets for org-mode headings
-  (package-require 'calfw)                 ; emacs calendar framework
-  (package-require 'calfw-org)             ; org-mode calendar support for calfw
-  (package-require 'org-caldav)            ; caldav support for emacs
-  (package-require 'yequake)               ; quake-style dropdown emacs frame
-  (package-require 'flymd)                 ; markdown to html rendering in elisp
-  (package-require 'hy-mode)               ; lisp via python
-  (package-require 'all-the-icons)         ; icon set for emacs
-  (package-require 'all-the-icons-ivy)     ; use icons in buffer switching
-  (package-require 'jedi)                  ; python completions
-  (package-require 'poporg)                ; inside-out org-babel -- edit comments in source code as org-mode content
-  (package-require 'camcorder)             ; record frames to ogv or gif
-  (package-require 'slime)                 ; common lisp debugging and interaction
-  (package-require 'es-mode)               ; Elasticsearch support in emacs
-  (package-require 'battery)               ; Battery life info
-  (package-require 'emms-setup)            ; music player in emacs
-  (package-require 'hydra)                 ; persistent key submaps
-  (package-require 'ess)                   ; emacs speaks statistics -- R support
-  (package-require 'conda)                 ; Support for anaconda environments
-  (package-require 'treemacs)              ; Advanced folder/file/content browser
-  (package-require 'notmuch)               ; reading emails
-  (package-require 'smtpmail)              ; sending emails
-  (package-require 'lsp-mode)              ; language server protocol support
-  (package-require 'ccls)                  ; C/C++/OBJC LSP backend
-  (package-require 'lsp-ui)                ; LSP UI parts
-  (package-require 'company-lsp)           ; LSP support in company completion
-  (package-require 'olivetti)              ; Center text with fill-columns, critical for large displays.
-  (package-require 'rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
-  (package-require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
-  (package-require 'helm-descbinds)        ; Extremely useful for learning new major modes.
-  (package-require 'magit)                 ; Incredible Git client interface in emacs
-  (package-require 'emmet-mode)            ; HTML editing mode which generates HTML from CSS-like expressions
-  (package-require 'smex)                  ; Maintain M-x history -- automatically used by counsel-M-x
-  (package-require 'csv-mode)              ; Display CSV files in proper columns
-  (package-require 'narrow-indirect)       ; Make indirect buffer in new window, then narrow to region
-  (package-require 'iedit)                 ; Highlight and edit all occurences of symbol under point
-  (package-require 'ac-slime)              ; autocompletion for SLIME
-  (package-require 'clhs)                  ; Lookup symbol in Common Lisp Hyper Spec
-  (package-require 'fence-edit)            ; Edit regions of one buffer in another buffer (usually with different major mode)
-  (package-require 'ivy-posframe)          ; Move minibuffer to child frame
-  (package-require 'counsel-notmuch)       ; Search notmuch emails with ivy
-  (package-require 'ts)                    ; Timestamp utility functions for org-mode
-  (package-require 'auto-yasnippet)        ; On the fly text templating
-  (package-require 'plantuml-mode)         ; Edit plantuml files; UML generation from plain text.
-  (unless-on-windows                       ; A more compatible terminal emulator for emacs via libvterm
-    (package-require 'vterm))
-  (package-require 'org-ql)                ; A sane interface for finding things in Org
-  (package-require 'realgud)               ; Powerful generalized debugger interface
-  (package-require 'dired-subtree)         ; Better file trees in the directory editor
-  (package-require 'real-auto-save)        ; Actually save the buffer
-  (package-require 'wgrep-ag)              ; Edit an ag results buffer in-place (regex replace across all files)
-  (package-require 'ob-http)               ; Send HTTP requests in org-babel
+    (package-require 'buffer-move)           ; swap buffers between adjacent windows
+    (package-require 'diff-hl)               ; show changes from last commit with edge highlighting
+    (package-require 'uniquify)              ; rename buffers of same name intelligently
+    (package-require 'undo-tree)             ; incredible undo/redo support
+    (package-require 'auto-complete)         ; neat autocompletion
+    (package-require 'framemove)             ; jump between frames and windows
+    (package-require 'fuzzy)                 ; fuzzy completion
+    (package-require 'hi-lock)               ; arbitrary text hilighting
+    (package-require 'button-lock)           ; face attribute that makes links from text
+    (package-require 'bm)                    ; bookmark manager
+    (package-require 'yasnippet)             ; snippet pasting framework
+    (package-require 'anzu)                  ; show total/current matches in isearch
+    (package-require 'visual-regexp)         ; visualize regular expressions in real-time
+    (package-require 'expand-region)         ; Expand region
+    (package-require 'origami)               ; awesome code folding
+    (package-require 'general)               ; sane key mapping architecture
+    (package-require 'which-key)             ; Display options after prefix keys are entered
+    (package-require 'ivy)                   ; Awesome completion framework
+    (package-require 'swiper)                ; ivy's swoop
+    (package-require 'counsel)               ; too many ivy-based utilities to list
+    (package-require 'hy-mode)               ; Lisp on Python
+    (package-require 'org-autolist)          ; Automatically add bullets on return
+    (package-require 'pdf-tools)             ; excellent PDF viewer, replaces docview
+    (package-require 'ob-ipython)            ; powerful jupyter notebooks alternative
+    (package-require 'pyvenv)                ; make conda envs usable with ob-ipython (and, well, everything else)
+    (package-require 'emojify)               ; emoji support
+    (package-require 'unicode-fonts)         ; better unicode support
+    (package-require 'persistent-soft)       ; caching for unicode mappings
+    (package-require 'google-translate)      ; translations
+    (package-require 'auto-highlight-symbol) ; highlight the thing under cursor, jump between occurrences
+    (package-require 'org-bullets)           ; unicode, indented bullets for org-mode headings
+    (package-require 'calfw)                 ; emacs calendar framework
+    (package-require 'calfw-org)             ; org-mode calendar support for calfw
+    (package-require 'org-caldav)            ; caldav support for emacs
+    (package-require 'yequake)               ; quake-style dropdown emacs frame
+    (package-require 'flymd)                 ; markdown to html rendering in elisp
+    (package-require 'hy-mode)               ; lisp via python
+    (package-require 'all-the-icons)         ; icon set for emacs
+    (package-require 'all-the-icons-ivy)     ; use icons in buffer switching
+    (package-require 'jedi)                  ; python completions
+    (package-require 'poporg)                ; inside-out org-babel -- edit comments in source code as org-mode content
+    (package-require 'camcorder)             ; record frames to ogv or gif
+    (package-require 'slime)                 ; common lisp debugging and interaction
+    (package-require 'es-mode)               ; Elasticsearch support in emacs
+    (package-require 'battery)               ; Battery life info
+    (package-require 'emms-setup)            ; music player in emacs
+    (package-require 'hydra)                 ; persistent key submaps
+    (package-require 'ess)                   ; emacs speaks statistics -- R support
+    (package-require 'conda)                 ; Support for anaconda environments
+    (package-require 'treemacs)              ; Advanced folder/file/content browser
+    (package-require 'notmuch)               ; reading emails
+    (package-require 'smtpmail)              ; sending emails
+    (package-require 'lsp-mode)              ; language server protocol support
+    (package-require 'ccls)                  ; C/C++/OBJC LSP backend
+    (package-require 'lsp-ui)                ; LSP UI parts
+  ;;  (package-require 'company-lsp)           ; LSP support in company completion
+    (package-require 'olivetti)              ; Center text with fill-columns, critical for large displays.
+    (package-require 'rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
+    (package-require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
+    (package-require 'helm-descbinds)        ; Extremely useful for learning new major modes.
+    (package-require 'magit)                 ; Incredible Git client interface in emacs
+    (package-require 'emmet-mode)            ; HTML editing mode which generates HTML from CSS-like expressions
+    (package-require 'smex)                  ; Maintain M-x history -- automatically used by counsel-M-x
+    (package-require 'csv-mode)              ; Display CSV files in proper columns
+    (package-require 'narrow-indirect)       ; Make indirect buffer in new window, then narrow to region
+    (package-require 'iedit)                 ; Highlight and edit all occurences of symbol under point
+    (package-require 'ac-slime)              ; autocompletion for SLIME
+    (package-require 'clhs)                  ; Lookup symbol in Common Lisp Hyper Spec
+    (package-require 'fence-edit)            ; Edit regions of one buffer in another buffer (usually with different major mode)
+    (package-require 'ivy-posframe)          ; Move minibuffer to child frame
+    (package-require 'counsel-notmuch)       ; Search notmuch emails with ivy
+    (package-require 'ts)                    ; Timestamp utility functions for org-mode
+    (package-require 'auto-yasnippet)        ; On the fly text templating
+    (package-require 'plantuml-mode)         ; Edit plantuml files; UML generation from plain text.
+    (unless-on-windows                       ; A more compatible terminal emulator for emacs via libvterm
+      (package-require 'vterm))
+    (package-require 'org-ql)                ; A sane interface for finding things in Org
+    (package-require 'realgud)               ; Powerful generalized debugger interface
+    (package-require 'dired-subtree)         ; Better file trees in the directory editor
+    (package-require 'real-auto-save)        ; Actually save the buffer
+    (package-require 'wgrep-ag)              ; Edit an ag results buffer in-place (regex replace across all files)
+    (package-require 'ob-http)               ; Send HTTP requests in org-babel
 #+END_SRC
 
 * Microsoft Windows Settings
@@ -3610,11 +3610,15 @@ Customize the habit display a bit.
 Defcustoms for various personal definitions.
 
 #+BEGIN_SRC emacs-lisp
-(defcustom my:org-scraps-path                   nil "Writing prompts and scraps")
-(defcustom my:org-dream-journal-path            nil "Dream journal file path")
-(defcustom my:org-file-tree-base-path           nil "Base directory of my org directory structure")
-(defcustom my:unfiled-notes-path                nil "Location for captured but uncategorized notes.")
-(defcustom my:incomprehensible-voice-notes-path nil "File containing transcripts of voice notes that I can't understand.")
+  (defcustom my:org-file-tree-base-path nil "Base directory of my org directory structure")
+  (defun my:org-scraps-path ()
+    (concat my:org-file-tree-base-path "/scraps/scraps.org"))
+  (defun my:org-dream-journal-path ()
+    (concat my:org-file-tree-base-path "/concepts/dreams/journal/concept.org"))
+  (defun my:incomprehensible-voice-notes-path ()
+    (concat my:org-file-tree-base-path "/voice-notes/incomprehensible.org"))
+  (defun my:unfiled-notes-path ()
+    (concat my:org-file-tree-base-path "/voice-notes/unfiled-notes.org"))
 #+END_SRC
 
 Add function to rebuild org file list. Call it once.
@@ -3844,7 +3848,7 @@ Define org-capture templates.
        ("i"
         "inbox"
         entry
-        (file ,my:unfiled-notes-path)
+        (file ,(my:unfiled-notes-path))
         "** TODO %?
 :LOGBOOK:
 - State \"TODO\"       from              %U
@@ -3892,7 +3896,7 @@ Define org-capture templates.
        ("d"
         "Dream Journal"
         entry
-        (file+headline ,my:org-dream-journal-path "Dream Log")
+        (file+headline ,(my:org-dream-journal-path) "Dream Log")
         "** %U\n%?"
         :prepend t
         :empty-lines 1)
@@ -3900,7 +3904,7 @@ Define org-capture templates.
        ("p"
         "Writing Prompt"
         plain
-        (file+headline ,my:org-scraps-path "Scraps")
+        (file+headline ,(my:org-scraps-path) "Scraps")
         "%U\n%?"
         :prepend t
         :empty-lines 1)))
@@ -4008,56 +4012,64 @@ Refiling utility based on [[https://emacs.stackexchange.com/questions/8045/org-r
 Custom refile functions.
 
 #+BEGIN_SRC emacs-lisp
-  (defmacro my:define-refiler (fname filename-form &optional headline-option)
-    "Macro which defines a function which refiles the heading under point to
-  the filename to which `filename-form' evaluates. `fname' will be the name of
-  that function.
-    If `headline-option' is 'datetree, then content will be refiled into a datetree
-  in that file. Heading will not be prompted."
-    `(defun ,fname ()
-      (interactive)
-      (let ((target-file-path ,filename-form)
-            (target-headline (and (not ,headline-option)
-                                  (ivy-read "Target Heading:" '("Thoughts" "Action Items")))))
+              (defmacro my:define-refiler (fname filename-form &optional headline-option)
+                "Macro which defines a function which refiles the heading under point to
+              the filename to which `filename-form' evaluates. `fname' will be the name of
+              that function.
+                If `headline-option' is 'datetree, then content will be refiled into a datetree
+              in that file. Heading will not be prompted."
+                `(defun ,fname ()
+                  (interactive)
+                  (let ((target-file-path ,filename-form)
+                        (target-headline (and (not ,headline-option)
+                                              (ivy-read "Target Heading:" '("Thoughts" "Action Items")))))
 
-        ;; Create heading if missing in that file
-        (when target-headline
-          (save-excursion
-            (find-file target-file-path)
-            (unless (org-find-exact-headline-in-buffer target-headline)
-              (end-of-buffer)
-              (newline)
-              (insert (concat "* " target-headline)))))
+                    ;; Create heading if missing in that file
+                    (when target-headline
+                      (save-excursion
+                        (find-file target-file-path)
+                        (unless (org-find-exact-headline-in-buffer target-headline)
+                          (end-of-buffer)
+                          (newline)
+                          (insert (concat "* " target-headline)))))
 
-        ;; Do the refile
-        (pcase ,headline-option
-          ('datetree      (save-excursion
-                            (unpackaged/org-refile-to-datetree-using-ts-in-entry 'earliest target-file-path t)))
-          ((pred stringp) (progn
-                            (org-mark-ring-push)
-                            (jay/refile-to target-file-path ,headline-option)
-                            (org-mark-ring-goto)))
-          (-              (progn
-                            (org-mark-ring-push)
-                            (jay/refile-to target-file-path target-headline)
-                            (org-mark-ring-goto)))))))
+                    ;; Do the refile
+                    (pcase ,headline-option
+                      ('datetree      (save-excursion
+                                        (unpackaged/org-refile-to-datetree-using-ts-in-entry 'earliest target-file-path t)))
+                      ((pred stringp) (progn
+                                        (org-mark-ring-push)
+                                        (jay/refile-to target-file-path ,headline-option)
+                                        (org-mark-ring-goto)))
+                      (-              (progn
+                                        (org-mark-ring-push)
+                                        (jay/refile-to target-file-path target-headline)
+                                        (org-mark-ring-goto)))))))
 
-  (my:define-refiler my:org-refile-as-concept (my-org-find-concept))
-  (my:define-refiler my:org-refile-as-journal (my-org-journal-make-if-missing))
-  (my:define-refiler my:org-refile-as-dream my:org-dream-journal-path 'datetree)
-  (my:define-refiler my:org-refile-as-scrap my:org-scraps-path "Scraps")
-  (my:define-refiler my:org-refile-as-incomprehensible my:incomprehensible-voice-notes-path 'datetree)
+              (my:define-refiler my:org-refile-as-concept (my-org-find-concept))
+              (my:define-refiler my:org-refile-as-journal (my-org-journal-make-if-missing))
+              (my:define-refiler my:org-refile-as-dream (my:org-dream-journal-path) 'datetree)
+              (my:define-refiler my:org-refile-as-scrap (my:org-scraps-path) "Scraps")
+              (my:define-refiler my:org-refile-as-incomprehensible (my:incomprehensible-voice-notes-path) 'datetree)
 
-  (define-transient-command my:org-refile-transient ()
-    "Wrapper for org-refile with some personal shortcuts and behaviors."
-    ["Refile Heading As..."
-     ("c" "Concept"          my:org-refile-as-concept)
-     ("j" "Journal"          my:org-refile-as-journal)
-     ("s" "Scrap"            my:org-refile-as-scrap)
-     ("d" "Dream"            my:org-refile-as-dream)
-     ("i" "Incomprehensible" my:org-refile-as-incomprehensible)
-     ("o" "Other"            org-refile)
-     ])
+              (defun my:org-refile-transient ()
+                "Wrapper for org-refile with some personal shortcuts and behaviors."
+                (interactive)
+                (let
+                    ((choice (read-multiple-choice "Refile Heading As..."
+                                                   '((?c "Concept")
+                                                     (?j "Journal")
+                                                     (?s "Scrap")
+                                                     (?d "Dream")
+                                                     (?i "Incomprehensible")
+                                                     (?o "Other")))))
+                  (case (first choice)
+                    (?c (my:org-refile-as-concept))
+                    (?j (my:org-refile-as-journal))
+                    (?s (my:org-refile-as-scrap))
+                    (?d (my:org-refile-as-dream))
+                    (?i (my:org-refile-as-incomprehensible))
+                    (?o (org-refile)))))
 #+END_SRC
 
 Always save all files after a refile. A little surprised the files aren't saved automatically. From [[https://emacs.stackexchange.com/questions/26923/org-mode-getting-errors-when-auto-saving-after-refiling][StackOverflow]].
