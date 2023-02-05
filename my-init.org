@@ -1064,7 +1064,7 @@ backends during experimentation.
       "sx"                'my:run-program
       "sl"                'counsel-locate
       "sb"                'my:battery-check
-      "sr"                'my:read-pdf-from-scanner/utsushi
+      "sr"                'my:read-pdf-from-scanner/scanimage
 
       ;; t -> translate
       "t"                 'google-translate-at-point
@@ -1663,6 +1663,28 @@ then refreshes images after exiting.
 
 Add a command for quickly scanning multi-page PDFs.
 
+Notes on getting these to work on Linux:
+- Have these working with an Epson ES-400, using document feeder and
+  full-duplex scanning correctly
+- utsushi is a pain to install and a pain to keep working. Try
+  scanimage first. The latter works okay on Ubuntu, but I had no such
+  luck on Archlinux.
+- Imagemagick's default settings aren't very practical. You need to
+  remember to enable PDF mode (security risk due to historical bugs in
+  ghostscript), and need to remember to grow the disk cache limits.
+
+Under ubuntu, the imagemagick settings can be edited with "sudo nano
+/etc/ImageMagick-6/policy.xml"
+- Change: <policy domain="coder" rights="none" pattern="PDF" />
+- To:     <policy domain="coder" rights="read|write" pattern="PDF" />
+- Change: <policy domain="resource" name="disk" value="1GiB"/>
+- To:     <policy domain="resource" name="disk" value="80GiB"/>
+- (or something that feels okay to you)
+
+If you don't change the disk limit, ImageMagick will start truncating
+your PDFs. It spits out a warning, but emacs won't show it. Make this
+a big value to avoid data loss!
+
 TODO: OCR?
 
 #+BEGIN_SRC emacs-lisp
@@ -1675,6 +1697,10 @@ TODO: OCR?
   (defun my:utsushi-list-devices ()
     "Get a list of all devices utsushi can see."
     (split-string (shell-command-to-string "utsushi list")))
+
+  (defun my:scanimage-list-devices ()
+    "Get a list of all devices utsushi can see."
+    (split-string (shell-command-to-string "scanimage -L")))
 
   (defun my:read-pdf-from-scanner/utsushi ()
     "Read a multipage duplex PDF from the automatic document feeder. Uses the utsushi program directly
@@ -1701,6 +1727,34 @@ TODO: OCR?
             "utsushi scan " scanner " $tmpfileraw --no-interface --image-format=TIFF --resolution=250 --duplex\n"
             "convert tiff:$tmpfileraw -fuzz 1% -trim -density 250 +repage pdf:$tmpfilebig\n"
             "gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/printer -dNOPAUSE -dQUIET -dBATCH -sOutputFile=\"" captured-path "\" $tmpfilebig"))
+        (find-file-other-window captured-path))))
+
+  (defun my:read-pdf-from-scanner/scanimage ()
+    "Read a multipage duplex PDF from the automatic document feeder. Uses the scanimage program. Prompts for save location."
+    (interactive)
+    (let*
+        ((capture-dir         (read-directory-name "Save Scan Inside: " my:scanned-document-destination))
+         (basename            (read-string "File Name (no extension or date): "))
+         (document-date       (org-read-date nil nil nil "Document Date: "))
+         (captured-path       (concat (file-name-as-directory capture-dir) document-date "-" basename ".pdf"))
+         (file-already-exists (file-exists-p captured-path))
+         (scanner              my:preferred-scanner) ;; scanimage -L is VERY slow...10 seconds or more
+         ;(scanner-list        (my:scanimage-list-devices))
+         ;(scanner             (or (and my:preferred-scanner (memq my:preferred-scanner scanner-list))
+         ;                         (concat "\"" (completing-read "Choose scanner: " scanner-list) "\"")))
+         )
+      (when (and (y-or-n-p (concat "Scanning to \"" captured-path "\", continue? "))
+               (or (not file-already-exists)
+                   (yes-or-no-p (concat captured-path " already exists -- sure you want to overwrite? "))))
+        (shell-command-to-string
+          (concat
+           "tmpdir=$(mktemp -d)\n"
+           "mkdir -p \"$tmpdir/raws\"\n"
+           "mkdir -p `dirname \"" captured-path "\"`\n"
+           "scanimage -d \"" scanner "\" --format tiff --mode Color --resolution 300 --batch=\"$tmpdir/raws/p-%04d.tiff\" --source 'ADF Duplex'\n"
+           "convert \"$tmpdir/raws/p-*.tiff\" -fuzz 1% -trim -compress jpeg -quality 70 +repage \"$tmpdir/combined.pdf\"\n"
+           "cp \"$tmpdir/combined.pdf\" \"" captured-path "\"\n"
+            ))
         (find-file-other-window captured-path))))
 
   (defun my:org-insert-link-to-scanned-document (&optional prefix)
