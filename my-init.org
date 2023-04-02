@@ -165,7 +165,6 @@ The actual package list.
     (package-require 'org-autolist)          ; Automatically add bullets on return
     (package-require 'pdf-tools)             ; excellent PDF viewer, replaces docview
     (package-require 'ob-ipython)            ; powerful jupyter notebooks alternative
-    (package-require 'pyvenv)                ; make conda envs usable with ob-ipython (and, well, everything else)
     (package-require 'emojify)               ; emoji support
     (package-require 'unicode-fonts)         ; better unicode support
     (package-require 'persistent-soft)       ; caching for unicode mappings
@@ -186,10 +185,9 @@ The actual package list.
     (package-require 'slime)                 ; common lisp debugging and interaction
     (package-require 'es-mode)               ; Elasticsearch support in emacs
     (package-require 'battery)               ; Battery life info
-    (package-require 'emms-setup)            ; music player in emacs
+    (package-require 'emms)                  ; music player in emacs
     (package-require 'hydra)                 ; persistent key submaps
     (package-require 'ess)                   ; emacs speaks statistics -- R support
-    (package-require 'conda)                 ; Support for anaconda environments
     (package-require 'treemacs)              ; Advanced folder/file/content browser
     (package-require 'notmuch)               ; reading emails
     (package-require 'smtpmail)              ; sending emails
@@ -272,14 +270,6 @@ Use a pile of MSYS programs.
       diff-command        (msys2-path "usr/bin/diff.exe")
       ispell-program-name (msys2-path "usr/bin/aspell.exe")
       ctags-bin-name      (msys2-path "usr/bin/ctags.exe")))
-#+END_SRC
-
-Use conda's Python by default.
-
-#+BEGIN_SRC emacs-lisp
-  (when-on-windows
-    (setenv "WORKON_HOME" (local-appdata-path "conda/conda/envs/py36_64/"))
-    (pyvenv-mode 1))
 #+END_SRC
 
 Special hacks for Windows
@@ -4251,17 +4241,6 @@ playback), then echos the current track.
   (emms-show))
 #+END_SRC
 
-** conda
-
-Configure the conda package such that we always use the Conda
-environment (rather then system Python).
-
-#+BEGIN_SRC emacs-lisp
-(conda-env-initialize-interactive-shells)
-(conda-env-initialize-eshell)
-(conda-env-autoactivate-mode t)
-#+END_SRC
-
 ** AHS
 
 Jump through all occurrences in buffer.
@@ -4815,13 +4794,11 @@ Emacs for Windows works extremely well, but still have constant hangs and crashe
 2. Make paths more MSYS/MINGW/GitForWindows compatible with =ln -s /mnt/c /c=.
 3. Install =fish=, =build-essential=, and whatever other system apps I use.
 4. Build emacs from the git mirror, unless you want a very old build. Not needed if using the Arch image. Make sure to use the GTK and ImageMagick switches. At time of writing, enabling XWidgets causes a compilation error due to missing typenames (something related to Lisp/JS interop?). Enabling cairo seems to be fine.
-5. Install and configure Anaconda. Create the py36_64 environment. Install the jedi module.
-6. Configure =xmodmap= like in Linux, as discussed in the Key Mappings section.
-7. Install =fonts-noto= and =fonts-liberation=, =silversearcher-ag=, and whatever else is needed.
-8. Install =vcxsrv= on Windows and run it.
-9. Mount network shares like =sudo mount -t drvfs '\\blah.com\SHARE' /mnt/blah=. Save any recurring mounts in ~/mount-drives.sh. TODO: fstab?
-10. Save the script below as =runemacs.sh=. It will run GUI emacs in the py36_64 conda env.
-11. Kindly ask IT, just one more time, to let you install native Linux. :)
+5. Configure =xmodmap= like in Linux, as discussed in the Key Mappings section.
+6. Install =fonts-noto= and =fonts-liberation=, =silversearcher-ag=, and whatever else is needed.
+7. Install =vcxsrv= on Windows and run it.
+8. Mount network shares like =sudo mount -t drvfs '\\blah.com\SHARE' /mnt/blah=. Save any recurring mounts in ~/mount-drives.sh. TODO: fstab?
+9. Kindly ask IT, just one more time, to let you install native Linux. :)
 
 #+BEGIN_SRC sh
 #!/bin/bash
