@@ -8,6 +8,10 @@ in the emacs community, and to the best of my knowledge, the original
 source for each section has been attributed. Please let me know if you
 find missing or incorrect attributions!
 
+#+BEGIN_SRC emacs-lisp
+  (message "Start processing of user-init ORG file.")
+#+END_SRC
+
 * Localization (pre-package)
 
 Set config variables on a per-system basis.
@@ -16,6 +20,10 @@ Set config variables on a per-system basis.
 | *use-frames* | Whether or not to tune use frame-oriented options in emacs. StumpWM is assumed |
 | *commit-org* | Whether we should git-commit after saving all org buffers.                     |
 |--------------+--------------------------------------------------------------------------------|
+
+#+BEGIN_SRC emacs-lisp
+  (message "SECTION: Localization.")
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (defvar my:use-frames nil)
@@ -51,6 +59,10 @@ Utility function to shorten tests against Emacs 27 release.
 Define a few utility functions & macros which are used throughout the init script.
 
 This is used to create unnamed commands (no interactive arguments).
+
+#+BEGIN_SRC emacs-lisp
+  (message "SECTION: Init utility functions.")
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp
   (defmacro ilambda (name arg-list &rest body)
@@ -95,6 +107,10 @@ Work with unix-like paths.
 
 * Required Packages
 This section ensures that all required packages are loaded.
+
+#+BEGIN_SRC emacs-lisp
+  (message "SECTION: Required Packages.")
+#+END_SRC
 
 ** Package System Config
 
@@ -164,7 +180,6 @@ The actual package list.
     (package-require 'hy-mode)               ; Lisp on Python
     (package-require 'org-autolist)          ; Automatically add bullets on return
     (package-require 'pdf-tools)             ; excellent PDF viewer, replaces docview
-    (package-require 'ob-ipython)            ; powerful jupyter notebooks alternative
     (package-require 'emojify)               ; emoji support
     (package-require 'unicode-fonts)         ; better unicode support
     (package-require 'persistent-soft)       ; caching for unicode mappings
@@ -225,6 +240,10 @@ The actual package list.
 
 * Microsoft Windows Settings
 
+#+BEGIN_SRC emacs-lisp
+  (message "SECTION: Windows hacks.")
+#+END_SRC
+
 Convenience functions for accessing Windows paths.
 
 #+BEGIN_SRC emacs-lisp
@@ -281,6 +300,11 @@ Special hacks for Windows
 #+END_SRC
 
 * Key Mappings
+
+#+BEGIN_SRC emacs-lisp
+  (message "SECTION: Key Mappings")
+#+END_SRC
+
 ** Background
 Most of my custom key-bindings use the hyper key. The goal here is to
 prevent any reasonable possibility of collision between personal
@@ -1017,7 +1041,6 @@ backends during experimentation.
       "os"               'my:org-search-concept
       "ov"               'my:voice-notes
       "or"               'my:org-refile-transient
-      "obii"             'ob-ipython-inspect
       "o SPC"            'my:org-toggle-wrap
       "oli"              'my:org-insert-link-to-scanned-document
       "oj"               'my:open-journal
@@ -1335,7 +1358,6 @@ backends during experimentation.
       "C-S-<right>"   (ilambda () (tab-bar-move-tab 1))
       "C-S-SPC"       'tab-bar-rename-tab
       "C-c C-t"       'my:org-todo
-      "H-|"           (ilambda () (save-buffer) (org-latex-export-to-pdf) (my:ob-ipython-clean-resource-dir))
       "H-x"           'org-babel-execute-buffer
       "H-."           (ilambda () (progn
                                     (org-insert-time-stamp nil t t)
@@ -1408,6 +1430,10 @@ Clear out some keys from the vterm-map that I just never actually need in the te
 #+END_SRC
 
 * Utility
+
+#+BEGIN_SRC emacs-lisp
+  (message "SECTION: Utility.")
+#+END_SRC
 
 This section defines general purpose code snippets, which are used
 throughout the rest of the file.
@@ -1972,6 +1998,10 @@ Quickly clear out byte-compiled elisp files.
 #+END_SRC
 
 * User Interface Settings
+
+#+BEGIN_SRC emacs-lisp
+  (message "SECTION: User Interface Settings")
+#+END_SRC
 
 This section defines code which modifies how emacs displays buffers
 and interacts with the user.
@@ -2702,6 +2732,10 @@ minibuffer activates.
 
 * Theme
 
+#+BEGIN_SRC emacs-lisp
+  (message "SECTION: Theme")
+#+END_SRC
+
 Load my theme.
 
 #+BEGIN_SRC emacs-lisp
@@ -2710,6 +2744,10 @@ Load my theme.
 #+END_SRC
 
 * File Associations
+
+#+BEGIN_SRC emacs-lisp
+  (message "SECTION: File Associations")
+#+END_SRC
 
 ** Quick Mappings
 #+BEGIN_SRC emacs-lisp
@@ -2746,6 +2784,10 @@ Monkey-C Mode
 #+END_SRC
 
 * Mode Management
+
+#+BEGIN_SRC emacs-lisp
+  (message "SECTION: Mode Management")
+#+END_SRC
 
 Handle which modes/settings are triggered where.
 
@@ -3070,6 +3112,11 @@ Assume sqlite.
 #+end_src
 
 * Package Configurations
+
+#+BEGIN_SRC emacs-lisp
+  (message "SECTION: Package Configurations")
+#+END_SRC
+
 ** org-mode
 *** General Configs
 
@@ -3462,7 +3509,6 @@ Enable many different languages in org-babel. Remember to reload org whenever th
       'org-babel-load-languages
       '((python . t)
         (emacs-lisp . t)
-        (ipython . t)
         (shell . t)
         (lisp . t)
         (gnuplot . t)
@@ -4430,6 +4476,11 @@ Kill buffers when the shell exits.
 #+END_SRC
 
 * Monkey Patching
+
+#+BEGIN_SRC emacs-lisp
+  (message "SECTION: Monkey Patching")
+#+END_SRC
+
 ** isearch Advice
 
 This advice modifies isearch such that it will always auto-wrap
@@ -4537,68 +4588,6 @@ Yes, I do want to create the directories....
         (make-directory dir)))))
 #+END_SRC
 
-** ob-ipython
-
-Add an interactive function to clean up unused files from the resource
-directory.
-
-#+BEGIN_SRC emacs-lisp
-(defun my:org-buffer-links ()
-  "https://emacs.stackexchange.com/questions/16909/how-can-i-get-all-file-links-in-one-org-mode-file"
-  (org-element-map (org-element-parse-buffer) 'link
-    (lambda (link)
-      (when (string= (org-element-property :type link) "file")
-        (org-element-property :path link)))))
-
-(defun my:ob-ipython-clean-resource-dir ()
-  "Delete files in `ob-ipython-resources-dir' which are not linked to in the current buffer.
-This assmes that the directory is dedicated to the current buffer, which will NOT be the case
-if your path is an absolute path, or if you have multiple org files in the same directory."
-  (interactive)
-  (let*
-      ((links        (my:org-buffer-links))
-       (files        (mapcar
-                       (lambda (x) (concat ob-ipython-resources-dir x))
-                       (seq-filter (lambda (x) (not (file-directory-p x))) (directory-files ob-ipython-resources-dir))))
-       (unused-files (seq-filter (lambda (x) (not (cl-member x links :test #'string-match-p))) files)))
-    (dolist (unwanted-file unused-files)
-      (delete-file unwanted-file))))
-#+END_SRC
-
-Work around obi [[https://github.com/gregsexton/ob-ipython/issues/135][issue 135]].
-
-#+BEGIN_SRC emacs-lisp
-; kill extraneous content in ipython returns between top-level JSON objects
-(advice-add 'ob-ipython--collect-json :before
-            (lambda (&rest args)
-              (let ((start (point)))
-                (set-mark (point))
-                (while (re-search-forward "{" nil t)
-                  (backward-char)
-                  (kill-region (region-beginning) (region-end))
-                  (re-search-forward "}\n" nil t)
-                  (set-mark (point)))
-                (end-of-buffer)
-                (kill-region (region-beginning) (region-end))
-                (goto-char start))))
-#+END_SRC
-
-Remove the "# Out[%d]" stuff from the formatted output. It prevents named result blocks from correctly associating with =#+ATTR_LATEX:= lines, and I'm not sure that it has any functional purpose.
-
-#+BEGIN_SRC emacs-lisp
-(defun ob-ipython--process-response (ret file result-type)
-  (let ((result (cdr (assoc :result ret)))
-        (output (cdr (assoc :output ret))))
-    (if (eq result-type 'output)
-        output
-      (ob-ipython--output output nil)
-      (s-concat
-       (s-join "\n" (->> (-map (-partial 'ob-ipython--render file)
-                               (list (cdr (assoc :value result))
-                                     (cdr (assoc :display result))))
-                         (remove-if-not nil)))))))
-#+END_SRC
-
 ** magit
 
 Magit doesn't play nicely with Gerrit by default. Workaround from [[https://emacs.stackexchange.com/questions/19672/magit-gerrit-push-to-other-branch][StackOverflow]]. Modified to specify remote branch as well (master, features/xyz, etc).
@@ -4619,8 +4608,10 @@ Magit doesn't play nicely with Gerrit by default. Workaround from [[https://emac
 
 When killing emacs, ask to save the desktop. I don't want this done by default, and I want to load the saved desktop only manually (so, no =desktop-save-mode=).
 
+2023-4-2: Disabled to get fg daemon working correctly, and I don't use this anyway
+
 #+BEGIN_SRC emacs-lisp
-(add-hook 'kill-emacs-hook (ilambda () (when (y-or-n-p "Save Desktop?") (desktop-save-in-desktop-dir))))
+;(add-hook 'kill-emacs-hook (ilambda () (when (y-or-n-p "Save Desktop?") (desktop-save-in-desktop-dir))))
 #+END_SRC
 
 
@@ -4752,6 +4743,10 @@ Tweak =org-cycle= such that it has a fourth state -- subtree without drawers -- 
 
 * OS Integration
 
+#+BEGIN_SRC emacs-lisp
+  (message "SECTION: OS Integration")
+#+END_SRC
+
 ** EXWM
 
 Support for using EXWM (Emacs X-Window Manager). :) Though, I've
@@ -4783,6 +4778,10 @@ switched to StumpWM for the time being.
 #+END_SRC
 
 * Notes & Vestigial Code
+
+#+BEGIN_SRC emacs-lisp
+  (message "SECTION: Notes & Vestigial Code")
+#+END_SRC
 
 Notes are addressed to myself & my own use-cases.
 
