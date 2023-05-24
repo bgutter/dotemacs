@@ -194,7 +194,6 @@ The actual package list.
     (package-require 'hy-mode)               ; lisp via python
     (package-require 'all-the-icons)         ; icon set for emacs
     (package-require 'all-the-icons-ivy)     ; use icons in buffer switching
-    (package-require 'jedi)                  ; python completions
     (package-require 'poporg)                ; inside-out org-babel -- edit comments in source code as org-mode content
     (package-require 'camcorder)             ; record frames to ogv or gif
     (package-require 'slime)                 ; common lisp debugging and interaction
@@ -1056,6 +1055,7 @@ backends during experimentation.
       ;; "e" -> Email
       "ee"               'my:check-emails
       "es"               'counsel-notmuch
+      "em"               'mu4e
 
       ;; "l" -> language modes
       "lm"               'markdown-mode
@@ -2202,7 +2202,7 @@ Move the cursor to corner of display, except on Windows. On that platform, this 
 
 #+BEGIN_SRC emacs-lisp
 (unless-on-windows
-  (mouse-avoidance-mode 'banish))
+  (mouse-avoidance-mode 'none))
 #+END_SRC
 
 Advise delete-window to deal with single-window frames, single-window tabs, and single-tab frames.
@@ -4474,6 +4474,20 @@ Kill buffers when the shell exits.
 #+BEGIN_SRC emacs-lisp
 (customize-set-variable 'vterm-kill-buffer-on-exit t)
 #+END_SRC
+
+** mu4e
+
+#+begin_src emacs-lisp
+  (require 'mu4e)
+  ;(require 'mu4e-views)
+
+  (setq mail-user-agent 'mu4e-user-agent)
+
+  (setq mu4e-sent-folder   "/Sent"
+      mu4e-drafts-folder "/Drafts"
+      mu4e-trash-folder  "/Trash")
+
+#+end_src
 
 * Monkey Patching
 
