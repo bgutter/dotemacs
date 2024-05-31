@@ -157,84 +157,100 @@ package.
 The actual package list.
 
 #+BEGIN_SRC emacs-lisp
-    (package-require 'buffer-move)           ; swap buffers between adjacent windows
-    (package-require 'diff-hl)               ; show changes from last commit with edge highlighting
-    (package-require 'uniquify)              ; rename buffers of same name intelligently
-    (package-require 'undo-tree)             ; incredible undo/redo support
-    (package-require 'auto-complete)         ; neat autocompletion
-    (package-require 'framemove)             ; jump between frames and windows
-    (package-require 'fuzzy)                 ; fuzzy completion
-    (package-require 'hi-lock)               ; arbitrary text hilighting
-    (package-require 'button-lock)           ; face attribute that makes links from text
-    (package-require 'bm)                    ; bookmark manager
-    (package-require 'yasnippet)             ; snippet pasting framework
-    (package-require 'anzu)                  ; show total/current matches in isearch
-    (package-require 'visual-regexp)         ; visualize regular expressions in real-time
-    (package-require 'expand-region)         ; Expand region
-    (package-require 'origami)               ; awesome code folding
-    (package-require 'general)               ; sane key mapping architecture
-    (package-require 'which-key)             ; Display options after prefix keys are entered
-    (package-require 'ivy)                   ; Awesome completion framework
-    (package-require 'swiper)                ; ivy's swoop
-    (package-require 'counsel)               ; too many ivy-based utilities to list
-    (package-require 'hy-mode)               ; Lisp on Python
-    (package-require 'org-autolist)          ; Automatically add bullets on return
-    (package-require 'pdf-tools)             ; excellent PDF viewer, replaces docview
-    (package-require 'emojify)               ; emoji support
-    (package-require 'unicode-fonts)         ; better unicode support
-    (package-require 'persistent-soft)       ; caching for unicode mappings
-    (package-require 'google-translate)      ; translations
-    (package-require 'auto-highlight-symbol) ; highlight the thing under cursor, jump between occurrences
-    (package-require 'org-bullets)           ; unicode, indented bullets for org-mode headings
-    (package-require 'calfw)                 ; emacs calendar framework
-    (package-require 'calfw-org)             ; org-mode calendar support for calfw
-    (package-require 'org-caldav)            ; caldav support for emacs
-    (package-require 'yequake)               ; quake-style dropdown emacs frame
-    (package-require 'flymd)                 ; markdown to html rendering in elisp
-    (package-require 'hy-mode)               ; lisp via python
-    (package-require 'all-the-icons)         ; icon set for emacs
-    (package-require 'all-the-icons-ivy)     ; use icons in buffer switching
-    (package-require 'poporg)                ; inside-out org-babel -- edit comments in source code as org-mode content
-    (package-require 'camcorder)             ; record frames to ogv or gif
-    (package-require 'slime)                 ; common lisp debugging and interaction
-    (package-require 'es-mode)               ; Elasticsearch support in emacs
-    (package-require 'battery)               ; Battery life info
-    (package-require 'emms)                  ; music player in emacs
-    (package-require 'hydra)                 ; persistent key submaps
-    (package-require 'ess)                   ; emacs speaks statistics -- R support
-    (package-require 'treemacs)              ; Advanced folder/file/content browser
-    (package-require 'notmuch)               ; reading emails
-    (package-require 'smtpmail)              ; sending emails
-    (package-require 'lsp-mode)              ; language server protocol support
-    (package-require 'ccls)                  ; C/C++/OBJC LSP backend
-    (package-require 'lsp-ui)                ; LSP UI parts
-  ;;  (package-require 'company-lsp)           ; LSP support in company completion
-    (package-require 'olivetti)              ; Center text with fill-columns, critical for large displays.
-    (package-require 'rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
-    (package-require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
-    (package-require 'helm-descbinds)        ; Extremely useful for learning new major modes.
-    (package-require 'magit)                 ; Incredible Git client interface in emacs
-    (package-require 'emmet-mode)            ; HTML editing mode which generates HTML from CSS-like expressions
-    (package-require 'smex)                  ; Maintain M-x history -- automatically used by counsel-M-x
-    (package-require 'csv-mode)              ; Display CSV files in proper columns
-    (package-require 'narrow-indirect)       ; Make indirect buffer in new window, then narrow to region
-    (package-require 'iedit)                 ; Highlight and edit all occurences of symbol under point
-    (package-require 'ac-slime)              ; autocompletion for SLIME
-    (package-require 'clhs)                  ; Lookup symbol in Common Lisp Hyper Spec
-    (package-require 'fence-edit)            ; Edit regions of one buffer in another buffer (usually with different major mode)
-    (package-require 'ivy-posframe)          ; Move minibuffer to child frame
-    (package-require 'counsel-notmuch)       ; Search notmuch emails with ivy
-    (package-require 'ts)                    ; Timestamp utility functions for org-mode
-    (package-require 'auto-yasnippet)        ; On the fly text templating
-    (package-require 'plantuml-mode)         ; Edit plantuml files; UML generation from plain text.
-    (unless-on-windows                       ; A more compatible terminal emulator for emacs via libvterm
-      (package-require 'vterm))
-    (package-require 'org-ql)                ; A sane interface for finding things in Org
-    (package-require 'realgud)               ; Powerful generalized debugger interface
-    (package-require 'dired-subtree)         ; Better file trees in the directory editor
-    (package-require 'real-auto-save)        ; Actually save the buffer
-    (package-require 'wgrep-ag)              ; Edit an ag results buffer in-place (regex replace across all files)
-    (package-require 'ob-http)               ; Send HTTP requests in org-babel
+      (package-require 'buffer-move)           ; swap buffers between adjacent windows
+      (package-require 'diff-hl)               ; show changes from last commit with edge highlighting
+      (package-require 'uniquify)              ; rename buffers of same name intelligently
+      (package-require 'undo-tree)             ; incredible undo/redo support
+      (package-require 'auto-complete)         ; neat autocompletion
+      (package-require 'framemove)             ; jump between frames and windows
+      (package-require 'fuzzy)                 ; fuzzy completion
+      (package-require 'hi-lock)               ; arbitrary text hilighting
+      (package-require 'button-lock)           ; face attribute that makes links from text
+      (package-require 'bm)                    ; bookmark manager
+      (package-require 'yasnippet)             ; snippet pasting framework
+      (package-require 'anzu)                  ; show total/current matches in isearch
+      (package-require 'visual-regexp)         ; visualize regular expressions in real-time
+      (package-require 'expand-region)         ; Expand region
+      (package-require 'origami)               ; awesome code folding
+      (package-require 'general)               ; sane key mapping architecture
+      (package-require 'which-key)             ; Display options after prefix keys are entered
+      (package-require 'ivy)                   ; Awesome completion framework
+      (package-require 'swiper)                ; ivy's swoop
+      (package-require 'counsel)               ; too many ivy-based utilities to list
+      (package-require 'hy-mode)               ; Lisp on Python
+      (package-require 'org-autolist)          ; Automatically add bullets on return
+      (package-require 'pdf-tools)             ; excellent PDF viewer, replaces docview
+      (package-require 'emojify)               ; emoji support
+      (package-require 'unicode-fonts)         ; better unicode support
+      (package-require 'persistent-soft)       ; caching for unicode mappings
+      (package-require 'google-translate)      ; translations
+      (package-require 'auto-highlight-symbol) ; highlight the thing under cursor, jump between occurrences
+      (package-require 'org-bullets)           ; unicode, indented bullets for org-mode headings
+      (package-require 'calfw)                 ; emacs calendar framework
+      (package-require 'calfw-org)             ; org-mode calendar support for calfw
+      (package-require 'org-caldav)            ; caldav support for emacs
+      (package-require 'yequake)               ; quake-style dropdown emacs frame
+      (package-require 'flymd)                 ; markdown to html rendering in elisp
+      (package-require 'hy-mode)               ; lisp via python
+      (package-require 'all-the-icons)         ; icon set for emacs
+      (package-require 'all-the-icons-ivy)     ; use icons in buffer switching
+      (package-require 'poporg)                ; inside-out org-babel -- edit comments in source code as org-mode content
+      (package-require 'camcorder)             ; record frames to ogv or gif
+      (package-require 'slime)                 ; common lisp debugging and interaction
+      (package-require 'es-mode)               ; Elasticsearch support in emacs
+      (package-require 'battery)               ; Battery life info
+      (package-require 'emms)                  ; music player in emacs
+      (package-require 'hydra)                 ; persistent key submaps
+      (package-require 'ess)                   ; emacs speaks statistics -- R support
+      (package-require 'treemacs)              ; Advanced folder/file/content browser
+      (package-require 'notmuch)               ; reading emails
+      (package-require 'smtpmail)              ; sending emails
+      (package-require 'lsp-mode)              ; language server protocol support
+      (package-require 'ccls)                  ; C/C++/OBJC LSP backend
+      (package-require 'lsp-ui)                ; LSP UI parts
+    ;;  (package-require 'company-lsp)           ; LSP support in company completion
+      (package-require 'olivetti)              ; Center text with fill-columns, critical for large displays.
+      (package-require 'rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
+      (package-require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
+      (package-require 'helm-descbinds)        ; Extremely useful for learning new major modes.
+      (package-require 'magit)                 ; Incredible Git client interface in emacs
+      (package-require 'emmet-mode)            ; HTML editing mode which generates HTML from CSS-like expressions
+      (package-require 'smex)                  ; Maintain M-x history -- automatically used by counsel-M-x
+      (package-require 'csv-mode)              ; Display CSV files in proper columns
+      (package-require 'narrow-indirect)       ; Make indirect buffer in new window, then narrow to region
+      (package-require 'iedit)                 ; Highlight and edit all occurences of symbol under point
+      (package-require 'ac-slime)              ; autocompletion for SLIME
+      (package-require 'clhs)                  ; Lookup symbol in Common Lisp Hyper Spec
+      (package-require 'fence-edit)            ; Edit regions of one buffer in another buffer (usually with different major mode)
+      (package-require 'ivy-posframe)          ; Move minibuffer to child frame
+      (package-require 'counsel-notmuch)       ; Search notmuch emails with ivy
+      (package-require 'ts)                    ; Timestamp utility functions for org-mode
+      (package-require 'auto-yasnippet)        ; On the fly text templating
+      (package-require 'plantuml-mode)         ; Edit plantuml files; UML generation from plain text.
+      (unless-on-windows                       ; A more compatible terminal emulator for emacs via libvterm
+        (package-require 'vterm))
+      (package-require 'org-ql)                ; A sane interface for finding things in Org
+      (package-require 'realgud)               ; Powerful generalized debugger interface
+      (package-require 'dired-subtree)         ; Better file trees in the directory editor
+      (package-require 'real-auto-save)        ; Actually save the buffer
+      (package-require 'wgrep-ag)              ; Edit an ag results buffer in-place (regex replace across all files)
+      (package-require 'ob-http)               ; Send HTTP requests in org-babel
+      (package-require 'editorconfig)
+      (package-require 'jsonrpc)
+      (package-require 'quelpa)
+      (package-require 'gptel)
+
+  ;; Just get copilot working
+    (quelpa
+     '(quelpa-use-package
+       :fetcher git
+       :url "https://github.com/quelpa/quelpa-use-package.git"))
+  (require 'quelpa-use-package)
+  (use-package copilot
+    :quelpa (copilot :fetcher github
+                     :repo "copilot-emacs/copilot.el"
+                     :branch "main"
+                     :files ("*.el")))
 #+END_SRC
 
 * Microsoft Windows Settings
@@ -297,6 +313,97 @@ Special hacks for Windows
   (autoload 'ansi-color-for-comint-mode-on "ansi-color" nil t)
   (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on))
 #+END_SRC
+
+* Copilot & gptel
+
+** Setup Notes
+
+This is the one-time code needed to set up copilot on a new machine,
+other than the quelpa installation code above.
+
+Also need Node installed. If it doesn't work, set ='copilot-node-executable=
+
+#+begin_src
+(copilot-install-server)
+(copilot-login)
+(copilot-diagnose)
+#+end_src
+
+For GPTel, make sure to add the ChatGPT API key to ~/.authinfo
+
+#+begin_src
+machine api.openai.com login apikey password TOKEN
+#+end_src
+
+** Functions
+
+These are taken from the gptel documentation on Github.
+
+Function to quickly ask GPT a question
+
+#+begin_src emacs-lisp
+(defvar gptel-quick--history nil)
+(defun gptel-quick (prompt)
+  (interactive (list (read-string "Ask ChatGPT: " nil gptel-quick--history)))
+  (when (string= prompt "") (user-error "A prompt is required."))
+  (gptel-request
+   prompt
+   :callback
+   (lambda (response info)
+     (if (not response)
+         (message "gptel-quick failed with message: %s" (plist-get info :status))
+       (with-current-buffer (get-buffer-create "*gptel-quick*")
+         (let ((inhibit-read-only t))
+           (erase-buffer)
+           (insert response))
+         (special-mode)
+         (display-buffer (current-buffer)
+                         `((display-buffer-in-side-window)
+                           (side . bottom)
+                           (window-height . ,#'fit-window-to-buffer))))))))
+#+end_src
+
+Function to ask GPT to make changes to region. Edited to make the directive mandatory.
+
+#+begin_src emacs-lisp
+                (defun gptel-rewrite-and-replace (bounds &optional iterative)
+                  (interactive
+                   (list
+                    (cond
+                     ((use-region-p) (cons (region-beginning) (region-end)))
+                     ((derived-mode-p 'text-mode)
+                      (list (bounds-of-thing-at-point 'sentence)))
+                     (t (cons (line-beginning-position) (line-end-position))))
+                    (interactive "p")))
+                   (gptel-request
+                   (buffer-substring-no-properties (car bounds) (cdr bounds)) ;the prompt
+                   :system (concat
+                            (read-string "> ")
+                            "Make the changes I've described above. Reply only with the modified source code. Your response will be inserted directly into the source document, and it should contain nothing that would not be legal in the programming language. No spurious formatting, do not wrap it in markdown, etc.")
+                   :buffer (current-buffer)
+                   :context (cons (set-marker (make-marker) (car bounds))
+                                  (set-marker (make-marker) (cdr bounds)))
+                   :callback
+                   (lambda (response info)
+                     (if (not response)
+                         (message "ChatGPT response failed with: %s" (plist-get info :status))
+                       (let* ((bounds (plist-get info :context))
+                              (beg (car bounds))
+                              (end (cdr bounds))
+                              (buf (plist-get info :buffer)))
+                         (with-current-buffer buf
+                           (save-excursion
+                             (goto-char beg)
+                             (kill-region beg end)
+                             (insert response)
+                             ;; (set-marker beg nil)
+                             ;; (set-marker end nil)
+                             (message "Rewrote line. Original line saved to kill-ring."))
+                           (set-mark beg)
+                           (goto-char (+ beg (length response)))
+                           (activate-mark))))
+                         (gptel-rewrite-and-replace (cons (region-beginning) (region-end))))))
+#+end_src
 
 * Key Mappings
 
@@ -1104,7 +1211,14 @@ backends during experimentation.
 
       ;; "p" -> python
       "pp"                 'run-python
-      "pd"                 'my:simple-pdb)
+      "pd"                 'my:simple-pdb
+
+      ;; "g" -> GPT
+      "ga" 'gptel-quick               ; GPT Ask question, no context
+      "gi" 'gptel-insert              ; GPT Insert
+      "ge" 'gptel-rewrite-and-replace ; GPT Edit
+      "gc" 'gptel                     ; GPT Conversation
+      )
 
   (general-define-key
 
