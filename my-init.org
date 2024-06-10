@@ -126,8 +126,8 @@ Initialize the package system. Tell emacs to load the newest version of anything
     '("melpa" . "http://melpa.org/packages/") t)
 
 (customize-set-variable 'load-prefer-newer t)
-(package-initialize)
-(setq package-enable-at-startup nil)
+;(package-initialize)
+;(setq package-enable-at-startup nil)
 #+END_SRC
 
 Require a package, install it if it is not present. This is from
@@ -238,7 +238,8 @@ The actual package list.
       (package-require 'editorconfig)
       (package-require 'jsonrpc)
       (package-require 'quelpa)
-      (package-require 'gptel)
+      (package-require 'gptel)                 ; Support for GPT conversation buffers & API calls
+      (package-require 'org-ai)                ; Support for ChatGPT in #+BEGIN_AI blocks, and so much more
 
   ;; Just get copilot working
     (quelpa
@@ -314,7 +315,7 @@ Special hacks for Windows
   (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on))
 #+END_SRC
 
-* Copilot & gptel
+* Copilot, gptel, and org-ai
 
 ** Setup Notes
 
@@ -333,6 +334,21 @@ For GPTel, make sure to add the ChatGPT API key to ~/.authinfo
 
 #+begin_src
 machine api.openai.com login apikey password TOKEN
+#+end_src
+
+** Hooking and Config
+
+Enable processing of #+BEGIN_AI blocks.
+
+#+begin_src emacs-lisp
+  (add-hook 'org-mode-hook
+            #'org-ai-mode)
+#+end_src
+
+Use org-ai snippets
+
+#+begin_src emacs-lisp
+(org-ai-install-yasnippets)
 #+end_src
 
 ** Functions
@@ -4598,7 +4614,7 @@ Kill buffers when the shell exits.
 
 ** mu4e
 
-#+begin_src emacs-lisp
+#+begin_src
   (require 'mu4e)
   ;(require 'mu4e-views)
 
