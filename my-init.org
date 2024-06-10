@@ -5021,3 +5021,23 @@ set -Ux VISUAL "emacsclient -c -a emacs"
 #+END_SRC
 
 Substitute =-c= for =-t= if you like that sort of thing.
+
+** Setting up this repo for changes
+
+Add an SSH config file so that Github can get a different ID_RSA than whatever the machine is already configured for.
+
+At ~/.ssh/config
+
+#+begin_src sh
+Host github.com
+  User git
+  IdentityFile ~/.ssh/id_rsa_gh
+#+end_src
+
+Also remember to set the upstream URL to SSH if cloned as HTTPS:
+
+#+begin_src sh
+git remote set-url origin git@github.com:bgutter/dotemacs.git
+#+end_src
+
+The rest should be obvious. Get creds from github, etc.
