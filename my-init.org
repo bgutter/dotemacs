@@ -780,6 +780,13 @@ Use counsel for jedi autocompletions, thanks to [[https://oremacs.com/2015/08/26
         (backward-char 1)))))
 #+END_SRC
 
+Setup pyvenv-workon
+
+#+begin_src emacs-lisp
+(when-on-windows
+  (setenv "WORKON_HOME" "C:/virtual-environments"))
+#+end_src
+
 *** Navigation Stuff
 
 #+BEGIN_SRC emacs-lisp
