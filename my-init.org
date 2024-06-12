@@ -3159,6 +3159,31 @@ Use employer's preferred C format...
       (setq show-trailing-whitespace nil))))
 #+END_SRC
 
+#+begin_src emacs-lisp
+(defun my/vterm-execute-current-line ()
+  "Insert text of current line in vterm and execute. https://www.reddit.com/r/emacs/comments/op4fcm/send_command_to_vterm_and_execute_it/"
+  (interactive)
+  (require 'vterm)
+  (let ((command (buffer-substring
+                  (save-excursion
+                    (beginning-of-line)
+                    (point))
+                  (save-excursion
+                    (end-of-line)
+                    (point)))))
+    (let ((buf (current-buffer)))
+      (unless (get-buffer vterm-buffer-name)
+        (vterm))
+      (display-buffer vterm-buffer-name t)
+      (switch-to-buffer-other-window vterm-buffer-name)
+      (vterm--goto-line -1)
+      (message command)
+      (vterm-send-string command)
+      (vterm-send-return)
+      (switch-to-buffer-other-window buf)
+      )))
+#+end_src
+
 *** python-mode
 #+BEGIN_SRC emacs-lisp
 (defun my/python-interrupt()
