@@ -82,13 +82,17 @@ This is used to call a function interactively with given prefix argument.
 A more succinct way to gate Microsoft Windows only behavior.
 
 #+BEGIN_SRC emacs-lisp
-(defmacro when-on-windows (&rest body)
-  `(when (equal system-type 'windows-nt)
-    ,@body))
+  (defun on-windows-p ()
+    (equal system-type 'windows-nt))
 
-(defmacro unless-on-windows (&rest body)
-  `(unless (equal system-type 'windows-nt)
-    ,@body))
+  (defmacro when-on-windows (&rest body)
+    `(when (on-windows-p)
+      ,@body))
+
+  (defmacro unless-on-windows (&rest body)
+    `(unless (on-windows-p)
+      ,@body))
+
 #+END_SRC
 
 Work with unix-like paths.
@@ -240,6 +244,7 @@ The actual package list.
       (package-require 'quelpa)
       (package-require 'gptel)                 ; Support for GPT conversation buffers & API calls
       (package-require 'org-ai)                ; Support for ChatGPT in #+BEGIN_AI blocks, and so much more
+      (package-require 'pyvenv)                ; Python virtual environments
 
   ;; Just get copilot working
     (quelpa
@@ -798,11 +803,14 @@ Use counsel for jedi autocompletions, thanks to [[https://oremacs.com/2015/08/26
         (backward-char 1)))))
 #+END_SRC
 
-Setup pyvenv-workon
+Setup the WORKON directories for pyvenv
 
 #+begin_src emacs-lisp
-(when-on-windows
-  (setenv "WORKON_HOME" "C:/virtual-environments"))
+  (let
+      ((dirname (if (on-windows-p)
+                    "C:/virtual-environmentsenvironments"
+                   "~/python-envs/")))
+    (setenv "WORKON_HOME" dirname))
 #+end_src
 
 *** Navigation Stuff
