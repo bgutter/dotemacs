@@ -1109,7 +1109,7 @@ backends during experimentation.
   (defalias 'my:find-buffer             'ivy-switch-buffer)
   (defalias 'my:run-program             'counsel-linux-app)
   (defalias 'my:find-file               'counsel-find-file)
-  (defalias 'my:terminal-emulator       (if (equal system-type 'windows-nt) 'shell 'vterm))
+  (defalias 'my:terminal-emulator       (if (equal system-type 'windows-nt) 'eshell 'vterm))
 #+END_SRC
 
 ** Keys
@@ -4971,7 +4971,7 @@ switched to StumpWM for the time being.
     ;(setq exwm-manage-configurations '((t char-mode t))))
 #+END_SRC
 
-* Notes & Vestigial Code
+* Configuration Notes & Vestigial Code
 
 #+BEGIN_SRC emacs-lisp
   (message "SECTION: Notes & Vestigial Code")
@@ -5084,3 +5084,29 @@ git remote set-url origin git@github.com:bgutter/dotemacs.git
 #+end_src
 
 The rest should be obvious. Get creds from github, etc.
+
+* Other Code Snippets
+
+These notes aren't even actually related to Emacs. Just some notes
+that I frequently find that I need while using emacs to accomplish
+other tasks.
+
+** File Backups
+
+*** Windows
+
+Run these commands in eshell
+
+This command clones one filesystem to another on Windows.
+
+#+begin_src cmd
+robocopy C:/path/to/source D:/path/to/dest /e /copyall /mir /log+:robolog.txt
+#+end_src
+
+Do this if you don't have many persmissions -- it skips owner info, ACL, etc:
+
+#+begin_src cmd
+robocopy C:/path/to/source D:/path/to/dest /e /copy:DAT /mir /log+:robolog.txt
+#+end_src
+
+
