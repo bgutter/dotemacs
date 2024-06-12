@@ -1431,6 +1431,9 @@ backends during experimentation.
       "C-t"   'c-indent-line-or-region
       "C-r"   'align-current)
 
+  (general-define-key :keymap js-mode-map
+      "C-;" 'comment-or-uncomment-region)
+
   (general-define-key :keymaps 'emacs-lisp-mode-map
       "C-\\" 'eval-region)
 
@@ -1515,6 +1518,9 @@ backends during experimentation.
       "v" (ilambda () (call-process
                         "thunderbird" nil nil nil
                         (notmuch-show-get-filename))))
+
+  (general-define-key :keymaps 'copilot-mode-map
+                      "<tab>" 'copilot-accept-completion)
 
   (customize-set-variable 'exwm-input-global-keys
       `((,(kbd "H-<left>") .    windmove-left)
@@ -3070,12 +3076,14 @@ Add the ability to undo/redo window arrangement changes.
 The hook =prog-mode-hook= is triggered in all programming major-modes.
 
 #+BEGIN_SRC emacs-lisp
-(add-hook 'prog-mode-hook
-  '(lambda ()
-    (flyspell-prog-mode)
-    (display-line-numbers-mode 1)
-    (auto-highlight-symbol-mode)
-    (rainbow-delimiters-mode)))
+    (add-hook 'prog-mode-hook
+      '(lambda ()
+        (flyspell-prog-mode)
+        (display-line-numbers-mode 1)
+        (auto-highlight-symbol-mode)
+        (rainbow-delimiters-mode)
+        ;(copilot-mode) ;; more annoying than useful -- gptel is better
+        ))
 #+END_SRC
 
 *** text-mode
