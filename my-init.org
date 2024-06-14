@@ -134,26 +134,19 @@ Initialize the package system. Tell emacs to load the newest version of anything
 ;(setq package-enable-at-startup nil)
 #+END_SRC
 
-Require a package, install it if it is not present. This is from
-[[https://www.draketo.de/light/english/emacs/babcore][babcore]].
-
-TODO: Consider =use-package=. It can predicate package loads on system
-binaries (and install them too), and this solution doesn't work if the
-package name in (M)ELPA is different than provide statement in the
-package.
+Set up use-package, installing if missing.
 
 #+BEGIN_SRC emacs-lisp
-(defvar refreshed-packages nil)
-(defun package-require (package)
-  "Require package, install if needed."
-  (package-activate package '(0))
-  (condition-case nil (require package)
-    (progn
-      (if (not refreshed-packages)
-          (progn
-            (package-refresh-contents)
-            (setq refreshed-packages t))))
-      (error (package-install package))))
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
+(require 'use-package)
+#+END_SRC
+
+Always install if missing (implied :ensure t argument to all uses of use-package).
+
+#+BEGIN_SRC emacs-lisp
+(require 'use-package-ensure)
+(setq use-package-always-ensure t)
 #+END_SRC
 
 ** Package List
@@ -161,90 +154,90 @@ package.
 The actual package list.
 
 #+BEGIN_SRC emacs-lisp
-      (package-require 'buffer-move)           ; swap buffers between adjacent windows
-      (package-require 'diff-hl)               ; show changes from last commit with edge highlighting
-      (package-require 'uniquify)              ; rename buffers of same name intelligently
-      (package-require 'undo-tree)             ; incredible undo/redo support
-      (package-require 'auto-complete)         ; neat autocompletion
-      (package-require 'framemove)             ; jump between frames and windows
-      (package-require 'fuzzy)                 ; fuzzy completion
-      (package-require 'hi-lock)               ; arbitrary text hilighting
-      (package-require 'button-lock)           ; face attribute that makes links from text
-      (package-require 'bm)                    ; bookmark manager
-      (package-require 'yasnippet)             ; snippet pasting framework
-      (package-require 'anzu)                  ; show total/current matches in isearch
-      (package-require 'visual-regexp)         ; visualize regular expressions in real-time
-      (package-require 'expand-region)         ; Expand region
-      (package-require 'origami)               ; awesome code folding
-      (package-require 'general)               ; sane key mapping architecture
-      (package-require 'which-key)             ; Display options after prefix keys are entered
-      (package-require 'ivy)                   ; Awesome completion framework
-      (package-require 'swiper)                ; ivy's swoop
-      (package-require 'counsel)               ; too many ivy-based utilities to list
-      (package-require 'hy-mode)               ; Lisp on Python
-      (package-require 'org-autolist)          ; Automatically add bullets on return
-      (package-require 'pdf-tools)             ; excellent PDF viewer, replaces docview
-      (package-require 'emojify)               ; emoji support
-      (package-require 'unicode-fonts)         ; better unicode support
-      (package-require 'persistent-soft)       ; caching for unicode mappings
-      (package-require 'google-translate)      ; translations
-      (package-require 'auto-highlight-symbol) ; highlight the thing under cursor, jump between occurrences
-      (package-require 'org-bullets)           ; unicode, indented bullets for org-mode headings
-      (package-require 'calfw)                 ; emacs calendar framework
-      (package-require 'calfw-org)             ; org-mode calendar support for calfw
-      (package-require 'org-caldav)            ; caldav support for emacs
-      (package-require 'yequake)               ; quake-style dropdown emacs frame
-      (package-require 'flymd)                 ; markdown to html rendering in elisp
-      (package-require 'hy-mode)               ; lisp via python
-      (package-require 'all-the-icons)         ; icon set for emacs
-      (package-require 'all-the-icons-ivy)     ; use icons in buffer switching
-      (package-require 'poporg)                ; inside-out org-babel -- edit comments in source code as org-mode content
-      (package-require 'camcorder)             ; record frames to ogv or gif
-      (package-require 'slime)                 ; common lisp debugging and interaction
-      (package-require 'es-mode)               ; Elasticsearch support in emacs
-      (package-require 'battery)               ; Battery life info
-      (package-require 'emms)                  ; music player in emacs
-      (package-require 'hydra)                 ; persistent key submaps
-      (package-require 'ess)                   ; emacs speaks statistics -- R support
-      (package-require 'treemacs)              ; Advanced folder/file/content browser
-      (package-require 'notmuch)               ; reading emails
-      (package-require 'smtpmail)              ; sending emails
-      (package-require 'lsp-mode)              ; language server protocol support
-      (package-require 'ccls)                  ; C/C++/OBJC LSP backend
-      (package-require 'lsp-ui)                ; LSP UI parts
-    ;;  (package-require 'company-lsp)           ; LSP support in company completion
-      (package-require 'olivetti)              ; Center text with fill-columns, critical for large displays.
-      (package-require 'rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
-      (package-require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
-      (package-require 'helm-descbinds)        ; Extremely useful for learning new major modes.
-      (package-require 'magit)                 ; Incredible Git client interface in emacs
-      (package-require 'emmet-mode)            ; HTML editing mode which generates HTML from CSS-like expressions
-      (package-require 'smex)                  ; Maintain M-x history -- automatically used by counsel-M-x
-      (package-require 'csv-mode)              ; Display CSV files in proper columns
-      (package-require 'narrow-indirect)       ; Make indirect buffer in new window, then narrow to region
-      (package-require 'iedit)                 ; Highlight and edit all occurences of symbol under point
-      (package-require 'ac-slime)              ; autocompletion for SLIME
-      (package-require 'clhs)                  ; Lookup symbol in Common Lisp Hyper Spec
-      (package-require 'fence-edit)            ; Edit regions of one buffer in another buffer (usually with different major mode)
-      (package-require 'ivy-posframe)          ; Move minibuffer to child frame
-      (package-require 'counsel-notmuch)       ; Search notmuch emails with ivy
-      (package-require 'ts)                    ; Timestamp utility functions for org-mode
-      (package-require 'auto-yasnippet)        ; On the fly text templating
-      (package-require 'plantuml-mode)         ; Edit plantuml files; UML generation from plain text.
+      (use-package buffer-move)           ; swap buffers between adjacent windows
+      (use-package diff-hl)               ; show changes from last commit with edge highlighting
+      (use-package uniquify)              ; rename buffers of same name intelligently
+      (use-package undo-tree)             ; incredible undo/redo support
+      (use-package auto-complete)         ; neat autocompletion
+      (use-package framemove)             ; jump between frames and windows
+      (use-package fuzzy)                 ; fuzzy completion
+      (use-package hi-lock)               ; arbitrary text hilighting
+      (use-package button-lock)           ; face attribute that makes links from text
+      (use-package bm)                    ; bookmark manager
+      (use-package yasnippet)             ; snippet pasting framework
+      (use-package anzu)                  ; show total/current matches in isearch
+      (use-package visual-regexp)         ; visualize regular expressions in real-time
+      (use-package expand-region)         ; Expand region
+      (use-package origami)               ; awesome code folding
+      (use-package general)               ; sane key mapping architecture
+      (use-package which-key)             ; Display options after prefix keys are entered
+      (use-package ivy)                   ; Awesome completion framework
+      (use-package swiper)                ; ivy's swoop
+      (use-package counsel)               ; too many ivy-based utilities to list
+      (use-package hy-mode)               ; Lisp on Python
+      (use-package org-autolist)          ; Automatically add bullets on return
+      (use-package pdf-tools)             ; excellent PDF viewer, replaces docview
+      (use-package emojify)               ; emoji support
+      (use-package unicode-fonts)         ; better unicode support
+      (use-package persistent-soft)       ; caching for unicode mappings
+      (use-package google-translate)      ; translations
+      (use-package auto-highlight-symbol) ; highlight the thing under cursor, jump between occurrences
+      (use-package org-bullets)           ; unicode, indented bullets for org-mode headings
+      (use-package calfw)                 ; emacs calendar framework
+      (use-package calfw-org)             ; org-mode calendar support for calfw
+      (use-package org-caldav)            ; caldav support for emacs
+      (use-package yequake)               ; quake-style dropdown emacs frame
+      (use-package flymd)                 ; markdown to html rendering in elisp
+      (use-package hy-mode)               ; lisp via python
+      (use-package all-the-icons)         ; icon set for emacs
+      (use-package all-the-icons-ivy)     ; use icons in buffer switching
+      (use-package poporg)                ; inside-out org-babel -- edit comments in source code as org-mode content
+      (use-package camcorder)             ; record frames to ogv or gif
+      (use-package slime)                 ; common lisp debugging and interaction
+      (use-package es-mode)               ; Elasticsearch support in emacs
+      (use-package battery)               ; Battery life info
+      (use-package emms)                  ; music player in emacs
+      (use-package hydra)                 ; persistent key submaps
+      (use-package ess)                   ; emacs speaks statistics -- R support
+      (use-package treemacs)              ; Advanced folder/file/content browser
+      (use-package notmuch)               ; reading emails
+      (use-package smtpmail)              ; sending emails
+      (use-package lsp-mode)              ; language server protocol support
+      (use-package ccls)                  ; C/C++/OBJC LSP backend
+      (use-package lsp-ui)                ; LSP UI parts
+    ;;  (use-package company-lsp)           ; LSP support in company completion
+      (use-package olivetti)              ; Center text with fill-columns, critical for large displays.
+      (use-package rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
+      (use-package dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
+      (use-package helm-descbinds)        ; Extremely useful for learning new major modes.
+      (use-package magit)                 ; Incredible Git client interface in emacs
+      (use-package emmet-mode)            ; HTML editing mode which generates HTML from CSS-like expressions
+      (use-package smex)                  ; Maintain M-x history -- automatically used by counsel-M-x
+      (use-package csv-mode)              ; Display CSV files in proper columns
+      (use-package narrow-indirect)       ; Make indirect buffer in new window, then narrow to region
+      (use-package iedit)                 ; Highlight and edit all occurences of symbol under point
+      (use-package ac-slime)              ; autocompletion for SLIME
+      (use-package clhs)                  ; Lookup symbol in Common Lisp Hyper Spec
+      (use-package fence-edit)            ; Edit regions of one buffer in another buffer (usually with different major mode)
+      (use-package ivy-posframe)          ; Move minibuffer to child frame
+      (use-package counsel-notmuch)       ; Search notmuch emails with ivy
+      (use-package ts)                    ; Timestamp utility functions for org-mode
+      (use-package auto-yasnippet)        ; On the fly text templating
+      (use-package plantuml-mode)         ; Edit plantuml files; UML generation from plain text.
       (unless-on-windows                       ; A more compatible terminal emulator for emacs via libvterm
-        (package-require 'vterm))
-      (package-require 'org-ql)                ; A sane interface for finding things in Org
-      (package-require 'realgud)               ; Powerful generalized debugger interface
-      (package-require 'dired-subtree)         ; Better file trees in the directory editor
-      (package-require 'real-auto-save)        ; Actually save the buffer
-      (package-require 'wgrep-ag)              ; Edit an ag results buffer in-place (regex replace across all files)
-      (package-require 'ob-http)               ; Send HTTP requests in org-babel
-      (package-require 'editorconfig)
-      (package-require 'jsonrpc)
-      (package-require 'quelpa)
-      (package-require 'gptel)                 ; Support for GPT conversation buffers & API calls
-      (package-require 'org-ai)                ; Support for ChatGPT in #+BEGIN_AI blocks, and so much more
-      (package-require 'pyvenv)                ; Python virtual environments
+        (use-package vterm))
+      (use-package org-ql)                ; A sane interface for finding things in Org
+      (use-package realgud)               ; Powerful generalized debugger interface
+      (use-package dired-subtree)         ; Better file trees in the directory editor
+      (use-package real-auto-save)        ; Actually save the buffer
+      (use-package wgrep-ag)              ; Edit an ag results buffer in-place (regex replace across all files)
+      (use-package ob-http)               ; Send HTTP requests in org-babel
+      (use-package editorconfig)
+      (use-package jsonrpc)
+      (use-package quelpa)
+      (use-package gptel)                 ; Support for GPT conversation buffers & API calls
+      (use-package org-ai)                ; Support for ChatGPT in #+BEGIN_AI blocks, and so much more
+      (use-package pyvenv)                ; Python virtual environments
 
   ;; Just get copilot working
     (quelpa
@@ -4949,10 +4942,10 @@ switched to StumpWM for the time being.
 #+BEGIN_SRC emacs-lisp
 (defun my:launch-de()
     "Modified from code here: http://doc.rix.si/cce/cce-exwm.html"
-    (package-require 'exwm)
-    (package-require 'exwm-systemtray)
-    (package-require 'exwm-edit)
-    (package-require 'clipmon)
+    (use-package exwm)
+    (use-package exwm-systemtray)
+    (use-package exwm-edit)
+    (use-package clipmon)
     (clipmon-mode-start)
     (exwm-enable)
     (defun exwm-rename-buffer ()
