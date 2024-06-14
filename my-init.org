@@ -427,13 +427,16 @@ successive revising.
   (message "SECTION: Key Mappings")
 #+END_SRC
 
-** Background
+** Getting a Hyper Key
+
 Most of my custom key-bindings use the hyper key. The goal here is to
 prevent any reasonable possibility of collision between personal
 keybindings and package keybindings. By convention, C-<key> is already
 reserved for the user, but we have another modifier available anyway,
 so why not use it? In my case, the hyper modifier is bound to caps
 lock.
+
+*** ...on Linux + X.org, by mapping CAPS to Hyper with xmodmap
 
 To map caps lock to hyper under Xorg, you may do the following in ~/.Xmodmap:
 
@@ -444,6 +447,8 @@ add mod4 = Super_L Super_R
 clear lock
 add mod3 = Hyper_L
 #+END_SRC
+
+*** ...on Windows, by mapping CAPS to AppsKey in OS, then AppsKey to Hyper in emacs
 
 In windows, install AutoHotkey, and place the following in a startup
 script...
@@ -472,6 +477,40 @@ SetTitleMatchMode, 2
 Do note that this leaves the apps key unusable in emacs, except as a
 secondary hyper modifier. I have not yet found another way to do this
 which works well for me.
+
+*** ...on WSL2, by mapping CAPS to AppsKey in host registry, then AppsKey to Hyper in emacs
+
+Unfortunately, the w32-* variables defined in the previous example do not work on Linux. And therefore, they won't work on WSL.
+
+The hyperify function is borrowed from GNU:
+https://www.gnu.org/software/emacs/manual/html_node/elisp/Translation-Keymaps.html#Translation-Keymaps
+
+keyboard-translation-map is used to ensure that the key cannot be remapped by any major or minor modes.
+
+#+begin_src emacs-lisp-dontrun
+        (defun hyperify (prompt)
+          (interactive "p")
+          (let ((e (read-event)))
+            (vector (if (numberp e)
+                        (logior (ash 1 24) e)
+                      (if (memq 'hyper (event-modifiers e))
+                          e
+                        (add-event-modifier "H-" e))))))
+
+        (defun add-event-modifier (string e)
+          (let ((symbol (if (symbolp e) e (car e))))
+            (setq symbol (intern (concat string
+                                         (symbol-name symbol))))
+            (if (symbolp e)
+                symbol
+              (cons symbol (cdr e)))))
+
+  (define-key key-translation-map (kbd "<menu>") 'hyperify)
+#+end_src
+
+This strategy probably also would work on genuine Linux with Wayland, too.
+
+Limitation: This only works for single keys. You cannot hold down CAPS and continually hit other keys.
 
 ** Functions
 
