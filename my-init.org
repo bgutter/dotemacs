@@ -5123,9 +5123,9 @@ These notes aren't even actually related to Emacs. Just some notes
 that I frequently find that I need while using emacs to accomplish
 other tasks.
 
-** File Backups
+** File Operations
 
-*** Windows
+*** Cloning Directory Trees on Windows
 
 Run these commands in eshell
 
@@ -5141,4 +5141,16 @@ Do this if you don't have many persmissions -- it skips owner info, ACL, etc:
 robocopy C:/path/to/source D:/path/to/dest /e /copy:DAT /mir /log+:robolog.txt
 #+end_src
 
+** Programming
 
+*** Common Lisp
+
+**** Adding Projects to Qucklisp
+
+Run this to link a new project or repo into Quicklisp, making it quickload-able
+
+#+begin_src sh
+ln -s /path/to/folder/containing/my-project ~/quicklisp/local-projects/my-project
+#+end_src
+
+The directory should contain the ASD file, and that ASD file should just contain the project's defsystem.
