@@ -1947,15 +1947,23 @@ TODO: OCR?
       (when (and (y-or-n-p (concat "Scanning to \"" captured-path "\", continue? "))
                (or (not file-already-exists)
                    (yes-or-no-p (concat captured-path " already exists -- sure you want to overwrite? "))))
-        (shell-command-to-string
-          (concat
-           "tmpdir=$(mktemp -d)\n"
-           "mkdir -p \"$tmpdir/raws\"\n"
-           "mkdir -p `dirname \"" captured-path "\"`\n"
-           "scanimage -d \"" scanner "\" --format tiff --mode Color --resolution 300 --batch=\"$tmpdir/raws/p-%04d.tiff\" --source 'ADF Duplex'\n"
-           "convert \"$tmpdir/raws/p-*.tiff\" -fuzz 1% -trim -compress jpeg -quality 70 +repage \"$tmpdir/combined.pdf\"\n"
-           "cp \"$tmpdir/combined.pdf\" \"" captured-path "\"\n"
-            ))
+        (let*
+            ((temp-dir (concat (string-trim (shell-command-to-string "mktemp -d")) "/"))
+             (script-path (concat temp-dir "scan-cmds.sh"))
+             (script-body (concat
+                           "tmpdir=\"" temp-dir "\"\n"
+                           "mkdir -p \"$tmpdir/raws\"\n"
+                           "mkdir -p `dirname \"" captured-path "\"`\n"
+                           "sudo scanimage -d \"" scanner "\" --format tiff --mode Color --resolution 300 --batch=\"$tmpdir/raws/p-%04d.tiff\" --source 'ADF Duplex'\n"
+                           "magick convert \"$tmpdir/raws/p-*.tiff\" -fuzz 1% -trim -compress jpeg -quality 70 +repage \"$tmpdir/combined.pdf\"\n"
+                           "cp \"$tmpdir/combined.pdf\" \"" captured-path "\"\n"
+                           ))
+             (cmd (concat "bash \"" script-path "\" && rm -r \"" temp-dir "\"")))
+          (message "Using temp diectory at %s" temp-dir)
+          (with-temp-file script-path
+            (insert script-body))
+          (message "%s" cmd)
+          (message "%s" (shell-command-to-string cmd)))
         (find-file-other-window captured-path))))
 
   (defun my:org-insert-link-to-scanned-document (&optional prefix)
