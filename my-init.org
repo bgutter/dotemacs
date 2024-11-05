@@ -238,6 +238,8 @@ The actual package list.
       (use-package gptel)                 ; Support for GPT conversation buffers & API calls
       (use-package org-ai)                ; Support for ChatGPT in #+BEGIN_AI blocks, and so much more
       (use-package pyvenv)                ; Python virtual environments
+      (use-package clojure-mode)          ; Develop Clojure in emacs
+      (use-package cider)                 ; Develop Clojure in emacs
 
   ;; Just get copilot working
     (quelpa
@@ -3278,12 +3280,18 @@ Use employer's preferred C format...
 *** emacs-lisp-mode
 
 #+BEGIN_SRC emacs-lisp
-(add-hook 'emacs-lisp-mode-hook
-  (lambda ()
-    (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
-    (local-set-key (kbd "TAB")   'generic-smart-tab-key)
-    (local-set-key (kbd "C-t")   'indent-for-tab-command)))
+  (add-hook 'emacs-lisp-mode-hook
+            (lambda ()
+              (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
+              (local-set-key (kbd "TAB")   'generic-smart-tab-key)
+              (local-set-key (kbd "C-t")   'indent-for-tab-command)))
 #+END_SRC
+
+*** clojure-mode
+
+#+begin_src emacs-lisp
+(customize-set-variable 'cider-clojure-cli-global-aliases "-A:fig")
+#+end_src
 
 *** term-mode
 
