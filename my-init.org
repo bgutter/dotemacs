@@ -5212,3 +5212,149 @@ ln -s /path/to/folder/containing/my-project ~/quicklisp/local-projects/my-projec
 #+end_src
 
 The directory should contain the ASD file, and that ASD file should just contain the project's defsystem.
+
+*** Clojure
+
+**** Installation
+
+Follow these instructions -- don't bother trying to use pacman or aptitude.
+
+[[https://clojure.org/guides/install_clojure][Clojure install guide]]
+
+**** Creating a Barebones Project
+
+Summarized from [[https://clojure.org/guides/deps_and_cli][Clojure Deps and CLI]]...
+
+A minimal modern Clojure project is structured like this:
+- Project folder like =my-project=
+- Dependencies file at =my-project/deps.edn=
+- Code in =my-project/src/app.clj=
+
+Here's an example =deps.edn= with a single dependency from the reference page.
+
+#+begin_src clojure
+{:deps
+ {clojure.java-time/clojure.java-time {:mvn/version "1.1.0"}}}
+#+end_src
+
+Here's an example =hello.clj=, also from the reference site.
+
+#+begin_src clojure
+(ns hello
+  (:require [java-time.api :as t]))
+
+(defn time-str
+  "Returns a string representation of a datetime in the local time zone."
+  [instant]
+  (t/format
+    (t/with-zone (t/formatter "hh:mm a") (t/zone-id))
+    instant))
+
+(defn run [opts]
+  (println "Hello world, the time is" (time-str (t/instant))))
+#+end_src
+
+You would run it like this:
+
+#+begin_src sh
+  cd my-project
+  clj -X hello/run
+#+end_src
+
+**** Developing Clojure in Emacs
+
+Open a file in a project, then run =cider-jack-in=.
+*** ClojureScript
+**** Creating a Barebones Project
+
+This is different from creating a normal Clojure project because you
+need to use a namespace folder, and it needs to use underscores.
+
+From [[https://clojurescript.org/guides/quick-start][the ClojureScript guide]]:
+
+#+begin_src fundamental
+hello-world        # Our project folder
+├─ src             # The CLJS source code for our project
+│  └─ hello_world  # Our hello_world namespace folder
+│     └─ core.cljs # Our main file
+├─ cljs.jar        # (Windows only) The standalone Jar you downloaded earlier
+└─ deps.edn        # (macOS/Linux only) A file for listing our dependencies
+#+end_src
+
+Content of =deps.edn=:
+
+#+begin_src clojure
+{:deps {org.clojure/clojurescript {:mvn/version "1.11.54"}}}
+#+end_src
+
+Content of =core.cljs=:
+
+#+begin_src clojure
+(ns hello-world.core)
+(println "Hello world!")
+#+end_src
+
+And run it like this:
+
+#+begin_src sh
+clj -M --main cljs.main --compile hello-world.core --repl
+#+end_src
+
+This will open the site in a browser window.
+
+**** Adding React
+
+Continuing from [[https://clojurescript.org/guides/quick-start][the ClojureScript guide]]:
+
+Add a dependency on React to =deps.edn=:
+
+#+begin_src clojure
+{:deps {org.clojure/clojurescript {:mvn/version "1.11.54"}
+        cljsjs/react-dom {:mvn/version "16.2.0-3"}}}
+#+end_src
+
+Require it in your =core.cljs= file, and, use the APIs:
+
+#+begin_src clojure
+(ns hello-world.core
+  (:require react-dom))
+
+(.render js/ReactDOM
+  (.createElement js/React "h2" nil "Hello, React!")
+  (.getElementById js/document "app"))
+#+end_src
+
+You can run the app with the same command as before.
+
+*** Adding Reagent
+
+This is from the [[https://github.com/reagent-project/reagent][Reagent Github]]:
+
+Add both react and reagent dependencies to =deps.edn=:
+
+#+begin_src clojure
+  {:deps {org.clojure/clojurescript {:mvn/version "1.11.54"}
+          cljsjs/react {:mvn/version "16.2.0-3"}
+          cljsjs/react-dom {:mvn/version "16.2.0-3"}
+          reagent/reagent {:mvn/version "1.2.0"}}}
+#+end_src
+
+Do something like this in your main clojure file:
+
+#+begin_src clojure
+  (ns hello-world.core
+  (:require react-dom
+            [reagent.core :as r]
+            [reagent.dom :as rd]))
+
+(defn child [name]
+    [:p "Hi, I am " name])
+
+(defn childcaller []
+  [child "Foo Bar"])
+
+(rd/render [childcaller]
+           (.-body js/document))
+#+end_src
+
+Run the app as usual
