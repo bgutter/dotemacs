@@ -4987,10 +4987,11 @@ Support for using EXWM (Emacs X-Window Manager). :) Though, I've
 switched to StumpWM for the time being.
 
 #+BEGIN_SRC emacs-lisp
-(defun my:launch-de()
+  (defun my:launch-de()
     "Modified from code here: http://doc.rix.si/cce/cce-exwm.html"
     (use-package exwm)
-    (use-package exwm-systemtray)
+    (use-package exwm-config)
+    ;; (use-package exwm-systemtray)
     (use-package exwm-edit)
     (use-package clipmon)
     (clipmon-mode-start)
@@ -5006,10 +5007,17 @@ switched to StumpWM for the time being.
     (add-hook 'exwm-update-class-hook 'exwm-rename-buffer)
     (add-hook 'exwm-update-title-hook 'exwm-rename-buffer)
     (setq window-divider-default-right-width 4)
-    (window-divider-mode t)
-    (exwm-systemtray-enable))
-    ;(setq exwm-manage-configurations '((t char-mode t))))
+    (window-divider-mode t))
+  ;; (exwm-systemtray-enable))
+                                          ;(setq exwm-manage-configurations '((t char-mode t))))
 #+END_SRC
+
+#+begin_src emacs-lisp
+  (unless-on-windows
+     (use-package exwm)
+     (use-package exwm-config)
+     (exwm-config-example))
+#+end_src
 
 * Configuration Notes & Vestigial Code
 
