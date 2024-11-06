@@ -5181,6 +5181,14 @@ These notes aren't even actually related to Emacs. Just some notes
 that I frequently find that I need while using emacs to accomplish
 other tasks.
 
+** Process Management
+
+Find all processes listening on a specific port
+
+#+begin_src sh
+sudo ss -lptn 'sport = :9000'
+#+end_src
+
 ** File Operations
 
 *** Cloning Directory Trees on Windows
@@ -5326,7 +5334,7 @@ Require it in your =core.cljs= file, and, use the APIs:
 
 You can run the app with the same command as before.
 
-*** Adding Reagent
+**** Adding Reagent
 
 This is from the [[https://github.com/reagent-project/reagent][Reagent Github]]:
 
@@ -5358,3 +5366,129 @@ Do something like this in your main clojure file:
 #+end_src
 
 Run the app as usual
+
+**** Developing and Building with Figwheel
+
+Summarized from [[https://figwheel.org/tutorial][the Figwheel tutorial]].
+
+Inside of =deps.edn=, place a dependency on =figwheel-main=, and also
+specify your source and target paths.
+
+#+begin_src clojure
+  {:deps {com.bhauman/figwheel-main {:mvn/version "0.2.18"}}
+   :paths ["src" "target"]}
+#+end_src
+
+Assuming your code is in =src/hello/cruel_world.cljs=, and it looks something like this:
+
+#+begin_src clojure
+  (ns hello.cruel-world)
+
+  (defn what-kind? []
+    "Cruel")
+
+  (js/console.log (what-kind?))
+#+end_src
+
+...you can then run your app under Figwheel with the following command:
+
+#+begin_src sh
+clojure -M -m figwheel.main --compile hello.cruel-world --repl
+#+end_src
+
+This means to run the Figwheel main function, compiling your app's namespace, and also open a REPL for us to work in.
+
+Compiled assets will be placed into =/target=.
+
+***** Organizing Builds
+
+Still working from [[https://figwheel.org/tutorial#the-build][the Figwheel tutorial]]...
+
+Builds are defined in *.cljs.edn files in the project root folder, next to =deps.edn=
+
+Put a file like =cruel.cljs.edn= with the following content:
+
+#+begin_src clojure
+{:main hello.cruel-world}
+#+end_src
+
+Into your project like this:
+
+#+begin_src fundamental
+hello-cljs/
+├── cruel.cljs.edn
+├── deps.edn
+└── src
+    └── hello
+        └── cruel_world.cljs
+#+end_src
+
+Now, you want to run it like this instead:
+
+#+begin_src sh
+clojure -M -m figwheel.main --build cruel --repl
+#+end_src
+
+***** Making a production build
+
+#+begin_src sh
+  rm -rf target/public
+  clojure -M -m figwheel.main --optimizations advanced  --build-once cruel
+#+end_src
+
+***** Using a custom index.html and CSS
+
+First, make sure you are using a build file.
+
+Then, add a =resources/= directory to =:paths= in =deps.edn=:
+
+#+begin_src clojure
+{:deps {com.bhauman/figwheel-main {:mvn/version "0.2.18"}
+        com.bhauman/rebel-readline-cljs {:mvn/version "0.1.4"}}
+ :paths ["src" "target" "resources"]}
+#+end_src
+
+Inside the resources folder, make a dedicated subfolder for css. Then add this CSS resource path to the build's metadata in your build.edn (for example, =cruel.cljs.edn=):
+
+#+begin_src clojure
+  ^{:css-dirs ["resources/public/css"]}
+  {:main hello.cruel-world}
+#+end_src
+
+Add your =index.html= and =style.css= into the project structure like this:
+
+#+begin_src fundamental
+  hello-cljs/
+  ├── cruel.cljs.edn
+  ├── deps.edn
+  ├── resources/
+  |   └── public/
+  |       ├── index.html
+  |       └── css/
+  |           └── style.css
+  └── src/
+      └── hello/
+          └── cruel_world.cljs
+#+end_src
+
+=style.css= can contain whatever you want. =index.html= should look like this:
+
+#+begin_src html
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- this refers to resources/public/css/style.css -->
+    <link href="css/style.css" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+    <div id="app"></div>
+    <!-- this refers to target/public/cljs-out/cruel-main.js -->
+    <script src="cljs-out/cruel-main.js"></script>
+  </body>
+</html>
+#+end_src
+
+**** Developing ClojureScript in Emacs
+
+Call =cider-jack-in-cljs= from a buffer in the project.
+
