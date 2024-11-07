@@ -5488,6 +5488,58 @@ Add your =index.html= and =style.css= into the project structure like this:
 </html>
 #+end_src
 
+***** Start adding a Clojure backend
+
+Figwheel lets you define a Ring handler function so you can start on a Clojure backend for your Clojurescript application.
+
+From [[https://figwheel.org/docs/ring-handler.html][the figwheel docs]]:
+
+Create a new clojure file in your source directory which will include backend (Clojure, not Clojurescript) code. Here's a minimal example:
+
+#+begin_src clojure
+(ns hello-world.app-server)
+
+(defn handler [req]
+  {:status 404
+   :headers {"Content-Type" "text/html"}
+   :body "Yep the server failed to find it."})
+#+end_src
+
+Here's an example using a framework -- compojure:
+
+#+begin_src clojure
+(ns hello-world.app-server
+  (:require
+    [compojure.core :refer [defroutes GET]]
+    [compojure.route :as route]
+    [hiccup.page :refer [html5 include-js include-css]]))
+
+(defn index-html []
+  (html5
+   [:head
+    [:meta {:charset "UTF-8"}]
+    [:meta {:name "viewport"
+            :content "width=device-width, initial-scale=1"}]
+    (include-css "/css/style.css")]
+   [:body
+    [:div {:id "app"}]
+    (include-js "/cljs-out/dev-main.js")]))
+
+(defroutes handler
+  (GET "/" [] (index-html))
+  (route/not-found "<h1>Page not found</h1>"))
+#+end_src
+
+Whatever you do, save that to =src/hello_world/app_server.clj=, then make sure to point to it in the build file (like the =cruel.cljs.edn= from earlier):
+
+#+begin_src clojure
+    ^{:css-dirs ["resources/public/css"]
+      :ring-handler hello-world.app-server/handler}
+    {:main hello.cruel-world}
+#+end_src
+
+Figwheel will hot reload your backend just like your frontend.
+
 **** Developing ClojureScript in Emacs
 
 Call =cider-jack-in-cljs= from a buffer in the project.
