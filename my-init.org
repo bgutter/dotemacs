@@ -4751,6 +4751,19 @@ Kill buffers when the shell exits.
 
 #+end_src
 
+** gptel
+
+Jump to end of buffer after every chunk is inserted.
+
+#+begin_src emacs-lisp
+  (add-hook 'gptel-post-stream-hook ;; never runs for some reason?
+            (lambda ()
+              (end-of-buffer)))
+  (add-hook 'gptel-post-response-hook
+            (lambda (a b)
+              (end-of-buffer)))
+#+end_src
+
 * Monkey Patching
 
 #+BEGIN_SRC emacs-lisp
