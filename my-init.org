@@ -1570,6 +1570,9 @@ backends during experimentation.
   (general-define-key :keymaps 'copilot-mode-map
                       "<tab>" 'copilot-accept-completion)
 
+  (general-define-key :keymaps 'gptel-mode-map
+                      "C-k" 'erase-buffer)
+
   (customize-set-variable 'exwm-input-global-keys
                           `((,(kbd "H-<left>") .    windmove-left)
                             (,(kbd "H-s <up>") .    split-window-below)
