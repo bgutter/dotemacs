@@ -1122,6 +1122,18 @@ Describe symbol with completing read; ivy in my case. This code is from xiongtx 
       (slime-eval-last-expression)))
 #+END_SRC
 
+*** Clojure
+
+A function to eval and run the deftest at point.
+
+#+begin_src emacs-lisp
+(defun my:cider-eval-and-run-test-at-point ()
+  "Evaluate the current defun (should be a test) and run it."
+  (interactive)
+  (cider-eval-defun-at-point)
+  (cider-test-run-test))
+#+end_src
+
 *** Emails
 
 Function to quickly check my emails.
@@ -1572,6 +1584,9 @@ backends during experimentation.
 
   (general-define-key :keymaps 'gptel-mode-map
                       "C-k" 'erase-buffer)
+
+  (general-define-key :keymaps 'cider-mode-map
+                      "C-c C-t t" 'my:cider-eval-and-run-test-at-point)
 
   (customize-set-variable 'exwm-input-global-keys
                           `((,(kbd "H-<left>") .    windmove-left)
