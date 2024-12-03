@@ -86,12 +86,12 @@ A more succinct way to gate Microsoft Windows only behavior.
     (equal system-type 'windows-nt))
 
   (defmacro when-on-windows (&rest body)
-    `(when (on-windows-p)
-       ,@body))
+    (when (on-windows-p)
+       `(progn ,@body)))
 
   (defmacro unless-on-windows (&rest body)
-    `(unless (on-windows-p)
-       ,@body))
+    (unless (on-windows-p)
+       `(progn ,@body)))
 
 #+END_SRC
 
