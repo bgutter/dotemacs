@@ -293,7 +293,11 @@ Use MSYS2 bash as the shell, and clean up PS1 a bit to remove some
 shell markup which Emacs can't cope with. Modified from [[https://www.masteringemacs.org/article/running-shells-in-emacs-overview][Mastering
 Emacs]].
 
-#+BEGIN_SRC emacs-lisp
+*update* Disabled for now. Not using this due to switch to eshell for
+the most part on Windows, and it was breaking Tramp connections
+(likely the ctrl-m stripping if I had to guess).
+
+#+BEGIN_SRC
   (when-on-windows
    (setq explicit-shell-file-name (msys2-path "usr/bin/bash.exe")
          shell-file-name "bash"
