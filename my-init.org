@@ -153,13 +153,25 @@ Always install if missing (implied :ensure t argument to all uses of use-package
 
 The actual package list.
 
+*** Packages included in config repo or in emacs
+
+These just need to be required.
+
+#+begin_src emacs-lisp
+  (require 'framemove)             ; jump between frames and windows
+  (require 'narrow-indirect)       ; Make indirect buffer in new window, then narrow to region
+  (require 'fence-edit)            ; Edit regions of one buffer in another buffer (usually with different major mode)
+  (require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
+#+end_src
+
+*** Packages from Servers
+
 #+BEGIN_SRC emacs-lisp
   (use-package buffer-move)           ; swap buffers between adjacent windows
   (use-package diff-hl)               ; show changes from last commit with edge highlighting
   (use-package uniquify)              ; rename buffers of same name intelligently
   (use-package undo-tree)             ; incredible undo/redo support
   (use-package auto-complete)         ; neat autocompletion
-  (use-package framemove)             ; jump between frames and windows
   (use-package fuzzy)                 ; fuzzy completion
   (use-package hi-lock)               ; arbitrary text hilighting
   (use-package button-lock)           ; face attribute that makes links from text
@@ -208,17 +220,14 @@ The actual package list.
   ;;  (use-package company-lsp)           ; LSP support in company completion
   (use-package olivetti)              ; Center text with fill-columns, critical for large displays.
   (use-package rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
-  (use-package dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
   (use-package helm-descbinds)        ; Extremely useful for learning new major modes.
   (use-package magit)                 ; Incredible Git client interface in emacs
   (use-package emmet-mode)            ; HTML editing mode which generates HTML from CSS-like expressions
   (use-package smex)                  ; Maintain M-x history -- automatically used by counsel-M-x
   (use-package csv-mode)              ; Display CSV files in proper columns
-  (use-package narrow-indirect)       ; Make indirect buffer in new window, then narrow to region
   (use-package iedit)                 ; Highlight and edit all occurences of symbol under point
   (use-package ac-slime)              ; autocompletion for SLIME
   (use-package clhs)                  ; Lookup symbol in Common Lisp Hyper Spec
-  (use-package fence-edit)            ; Edit regions of one buffer in another buffer (usually with different major mode)
   (use-package ivy-posframe)          ; Move minibuffer to child frame
   (use-package counsel-notmuch)       ; Search notmuch emails with ivy
   (use-package ts)                    ; Timestamp utility functions for org-mode
