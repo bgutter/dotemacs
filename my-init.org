@@ -162,6 +162,7 @@ These just need to be required.
   (require 'narrow-indirect)       ; Make indirect buffer in new window, then narrow to region
   (require 'fence-edit)            ; Edit regions of one buffer in another buffer (usually with different major mode)
   (require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
+  (require 'uniquify)              ; rename buffers of same name intelligently
 #+end_src
 
 *** Packages from Servers
@@ -169,7 +170,6 @@ These just need to be required.
 #+BEGIN_SRC emacs-lisp
   (use-package buffer-move)           ; swap buffers between adjacent windows
   (use-package diff-hl)               ; show changes from last commit with edge highlighting
-  (use-package uniquify)              ; rename buffers of same name intelligently
   (use-package undo-tree)             ; incredible undo/redo support
   (use-package auto-complete)         ; neat autocompletion
   (use-package fuzzy)                 ; fuzzy completion
@@ -868,7 +868,7 @@ EDIT: Disabled because this doesn't seem to work, keeping commented
 code because I suspect I'll run into the bug again and don't want to
 spend 30 minutes finding the Github comment back with this fix.
 
-#+begin_src emacs-lisp
+#+begin_src
 (org-babel-jupyter-aliases-from-kernelspecs)
 #+end_src
 
