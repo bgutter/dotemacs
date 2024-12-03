@@ -240,18 +240,20 @@ The actual package list.
   (use-package pyvenv)                ; Python virtual environments
   (use-package clojure-mode)          ; Develop Clojure in emacs
   (use-package cider)                 ; Develop Clojure in emacs
+  (use-package jupyter)               ; ipython in org-babel
 
-  ;; Just get copilot working
-  (quelpa
-   '(quelpa-use-package
-     :fetcher git
+  ;; Just get copilot working -- but not on windows
+  (unless-on-windows
+   (quelpa
+    '(quelpa-use-package
+      :fetcher git
      :url "https://github.com/quelpa/quelpa-use-package.git"))
-  (require 'quelpa-use-package)
-  (use-package copilot
-    :quelpa (copilot :fetcher github
-                     :repo "copilot-emacs/copilot.el"
-                     :branch "main"
-                     :files ("*.el")))
+   (require 'quelpa-use-package)
+   (use-package copilot
+     :quelpa (copilot :fetcher github
+                      :repo "copilot-emacs/copilot.el"
+                      :branch "main"
+                      :files ("*.el"))))
 #+END_SRC
 
 * Microsoft Windows Settings
@@ -842,10 +844,23 @@ Setup the WORKON directories for pyvenv
 #+begin_src emacs-lisp
   (let
       ((dirname (if (on-windows-p)
-                    "C:/virtual-environmentsenvironments"
+                    "C:/virtual-environments"
                   "~/python-envs/")))
     (setenv "WORKON_HOME" dirname))
 #+end_src
+
+This needs to run due to a bug in emacs-jupyter.
+
+EDIT: Disabled because this doesn't seem to work, keeping commented
+code because I suspect I'll run into the bug again and don't want to
+spend 30 minutes finding the Github comment back with this fix.
+
+#+begin_src emacs-lisp
+(org-babel-jupyter-aliases-from-kernelspecs)
+#+end_src
+
+Remember to set the virtual environment before doing =jupyter-python=
+language blocks in org-babel! This can be done with =pyvenv-workon=.
 
 *** Navigation Stuff
 
@@ -3770,7 +3785,8 @@ Enable many different languages in org-babel. Remember to reload org whenever th
          (http . t)
          (ruby . t)
          (sqlite . t)
-         (plantuml . t)))))
+         (plantuml . t)
+         (jupyter . t)))))
 #+END_SRC
 
 Plantuml blocks also need some special attention to get working. Hope this is consistent across distros; this is the correct value for Ubuntu/WSL Xenial.
