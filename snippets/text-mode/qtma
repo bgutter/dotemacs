@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: Quickly Tell Me About
+# key: =qtma
+# mode: gptel-mode
+# expand-env: ((yas-after-exit-snippet-hook #'gptel-send))
+# --
+
+Please quickly tell me about $1. Be terse. I just want to know what it is.
