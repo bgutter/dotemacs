@@ -1611,7 +1611,7 @@ backends during experimentation.
                       "<tab>" 'copilot-accept-completion)
 
   (general-define-key :keymaps 'gptel-mode-map
-                      "C-k" 'erase-buffer)
+                      "C-k" my:gptel-reset-conversation)
 
   (general-define-key :keymaps 'cider-mode-map
                       "C-c C-t t" 'my:cider-eval-and-run-test-at-point)
@@ -4810,6 +4810,15 @@ Jump to end of buffer after every chunk is inserted.
   (add-hook 'gptel-post-response-hook
             (lambda (a b)
               (end-of-buffer)))
+#+end_src
+
+Function to clear conversation and reset.
+
+#+begin_src emacs-lisp
+  (defun my:gptel-reset-conversation
+    (interactive)
+    (erase-buffer)
+    (insert "### "))
 #+end_src
 
 * Monkey Patching
