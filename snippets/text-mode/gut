@@ -1,0 +1,14 @@
+# -*- mode: snippet -*-
+# name: Generate Unit Tests
+# key: =gut
+# mode: gptel-mode
+# expand-env: ((yas-after-exit-snippet-hook #'gptel-send))
+# --
+
+Here is some code I wrote. Please suggest some unit tests for it. Show me code. Try to be very thorough.
+
+Here is the code:
+
+\`\`\`
+`(insert (substring-no-properties (car kill-ring)))`
+\`\`\`

@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: Do X in Y
+# key: =dxiy
+# mode: gptel-mode
+# expand-env: ((yas-after-exit-snippet-hook #'gptel-send))
+# --
+
+How do I $1 in $2? Include a trivial example.

@@ -368,31 +368,16 @@ Use org-ai snippets
 
 ** Functions
 
-These are taken from the gptel documentation on Github.
-
-Function to quickly ask GPT a question
+Function to clear conversation and reset.
 
 #+begin_src emacs-lisp
-  (defvar gptel-quick--history nil)
-  (defun gptel-quick (prompt)
-    (interactive (list (read-string "Ask ChatGPT: " nil gptel-quick--history)))
-    (when (string= prompt "") (user-error "A prompt is required."))
-    (gptel-request
-        prompt
-      :callback
-      (lambda (response info)
-        (if (not response)
-            (message "gptel-quick failed with message: %s" (plist-get info :status))
-          (with-current-buffer (get-buffer-create "*gptel-quick*")
-            (let ((inhibit-read-only t))
-              (erase-buffer)
-              (insert response))
-            (special-mode)
-            (display-buffer (current-buffer)
-                            `((display-buffer-in-side-window)
-                              (side . bottom)
-                              (window-height . ,#'fit-window-to-buffer))))))))
+  (defun my:gptel-reset-conversation ()
+    (interactive)
+    (erase-buffer)
+    (insert "### "))
 #+end_src
+
+The rest of these are taken from the gptel documentation on Github.
 
 Function to ask GPT to make changes to region. Edited to make the
 directive mandatory, and to keep the region active after editing for
@@ -1611,7 +1596,7 @@ backends during experimentation.
                       "<tab>" 'copilot-accept-completion)
 
   (general-define-key :keymaps 'gptel-mode-map
-                      "C-k" my:gptel-reset-conversation)
+                      "C-k" 'my:gptel-reset-conversation)
 
   (general-define-key :keymaps 'cider-mode-map
                       "C-c C-t t" 'my:cider-eval-and-run-test-at-point)
@@ -4810,15 +4795,6 @@ Jump to end of buffer after every chunk is inserted.
   (add-hook 'gptel-post-response-hook
             (lambda (a b)
               (end-of-buffer)))
-#+end_src
-
-Function to clear conversation and reset.
-
-#+begin_src emacs-lisp
-  (defun my:gptel-reset-conversation
-    (interactive)
-    (erase-buffer)
-    (insert "### "))
 #+end_src
 
 * Monkey Patching

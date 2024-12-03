@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: Tell Me About
+# key: =tma
+# mode: gptel-mode
+# expand-env: ((yas-after-exit-snippet-hook #'gptel-send))
+# --
+
+Please tell me about $1. I'd like to understand its theory and practical applications. Include a simple example if possible.

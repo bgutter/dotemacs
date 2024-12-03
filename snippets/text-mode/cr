@@ -1,0 +1,14 @@
+# -*- mode: snippet -*-
+# name: Code Review
+# key: =cr
+# mode: gptel-mode
+# expand-env: ((yas-after-exit-snippet-hook #'gptel-send))
+# --
+
+I would like a code review. Please let me know about any errors (logic or syntax), pitfalls, or ways it can be improved.
+
+Here is the code:
+
+\`\`\`
+`(insert (substring-no-properties (car kill-ring)))`
+\`\`\`
