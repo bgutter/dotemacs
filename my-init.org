@@ -5238,8 +5238,23 @@ Do this if you don't have many persmissions -- it skips owner info, ACL, etc:
 robocopy C:/path/to/source D:/path/to/dest /e /copy:DAT /mir /log+:robolog.txt
 #+end_src
 
-** Programming
+** Git
 
+*** Creating virtual environments with virtualenv
+
+Make sure to install virtualenv first
+
+#+begin_src shell
+pip install virtualenv
+#+end_src
+
+Replace python3.8 with whichever installed version you prefer to use
+
+#+begin_src python
+python -m virtualenv --python=python3.8 /path/to/env
+#+end_src
+
+** Programming
 *** Common Lisp
 
 **** Adding Projects to Qucklisp
