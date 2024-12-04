@@ -3549,7 +3549,9 @@ Current Tags:
 |-----------+--------------------------------------------------------------------------------------------------|
 | tag       | Use                                                                                              |
 |-----------+--------------------------------------------------------------------------------------------------|
-| TODO      | Items which are queued to be completed.                                                          |
+| TODO      | Items which are queued to be completed by me.                                                    |
+| BACKLOG   | Items which are queued to be completed, by someone -- maybe me.                                  |
+| ASSIGNED  | Items which are queued to be completed by someone else.                                          |
 | NEXT      | Items which are considered to be in-progress. Max 3-5 items at any point in time.                |
 | WAIT      | Items which are blocked by an external party.                                                    |
 | DONE      | Items which have been completed as described.                                                    |
@@ -3568,7 +3570,7 @@ Deprecated Tags:
 
 #+BEGIN_SRC emacs-lisp
   (setq-default org-todo-keywords
-                '((sequence "TODO(t!)" "IN_PROGRESS(i!)" "NEXT(n!)" "PENDING(p!)" "WAIT(w!)" "|" "DONE(d!)" "CANCELLED(c!)" "HIATUS(h!)" "MIGRATED(m!)")))
+                '((sequence "TODO(t!)" "ASSIGNED(a!)" "BACKLOG(b!)" "IN_PROGRESS(i!)" "NEXT(n!)" "PENDING(p!)" "WAIT(w!)" "|" "DONE(d!)" "CANCELLED(c!)" "HIATUS(h!)" "MIGRATED(m!)")))
 #+END_SRC
 
 And their faces.
@@ -3576,6 +3578,8 @@ And their faces.
 #+BEGIN_SRC emacs-lisp
   (setq-default org-todo-keyword-faces
                 '(( "TODO" .        (:foreground "white"      :background "darkorchid4"  :weight bold              ))
+                  ( "ASSIGNED" .    (:foreground "white"      :background "blue"         :weight bold              ))
+                  ( "BACKLOG" .     (:foreground "white"      :background "darkorchid4"  :weight bold              ))
                   ( "IN_PROGRESS" . (                         :background "deeppink3"    :weight bold              ))
                   ( "NEXT" .        (                         :background "deeppink3"    :weight bold              ))
                   ( "HIATUS" .      (:foreground "white"                                              :slant italic))
@@ -3738,11 +3742,19 @@ Add custom agenda command, use some awesome code from [[https://blog.aaronbieber
                    (org-agenda-overriding-header "Blocked Tasks:")))
 
             (alltodo ""
-                     ((org-agenda-skip-function '(or (org-agenda-skip-entry-if 'todo '("WAIT"))
+                     ((org-agenda-skip-function '(or (org-agenda-skip-entry-if 'todo '("WAIT" "ASSIGNED" "BACKLOG"))
                                                      (zin/org-agenda-skip-tag "NOAGENDA")
                                                      (zin/org-agenda-skip-tag "UNFILED")))
                                                      ;;(org-agenda-skip-if nil '(scheduled deadline))))
                       (org-agenda-overriding-header "Current and Unscheduled Tasks:")))
+
+            (todo "ASSIGNED"
+                  ((org-agenda-skip-function '(zin/org-agenda-skip-tag "NOAGENDA"))
+                   (org-agenda-overriding-header "Delegated Tasks:")))
+
+            (todo "BACKLOG"
+                  ((org-agenda-skip-function '(zin/org-agenda-skip-tag "NOAGENDA"))
+                   (org-agenda-overriding-header "Tasks To Delegate:")))
 
             (tags "UNFILED"
                   ((org-agenda-overriding-header "Unfiled Captures:")))))))
