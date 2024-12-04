@@ -4238,7 +4238,9 @@ Define org-capture templates.
            "journal"
            entry
            (file+headline my-org-journal-make-if-missing "Thoughts")
-           "** %U %?"
+
+         "** %U
+  %?"
            :empty-lines 1)
 
           ("i"
