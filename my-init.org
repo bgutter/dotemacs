@@ -1237,6 +1237,7 @@ backends during experimentation.
                       "ot"               'org-todo-list
                       "oc"               'my:org-concept-open
                       "os"               'my:org-search-concept
+                      "oo"               'my:org-occur-in-agenda-files
                       "ov"               'my:voice-notes
                       "or"               'my:org-refile-transient
                       "o SPC"            'my:org-toggle-wrap
@@ -4058,6 +4059,16 @@ Add function to search existing concepts, journals, etc.
     (interactive)
     (counsel-ag "" my:org-file-tree-base-path))
 #+END_SRC
+
+Add function to run org-occur-in-agenda-files on thing at point without prefix, or, interactively without prefix.
+
+#+begin_src emacs-lisp
+  (defun my:org-occur-in-agenda-files (prefix-arg)
+    (interactive "P")
+    (if prefix-arg
+        (call-interactively 'org-occur-in-agenda-files)
+      (org-occur-in-agenda-files (thing-at-point 'word))))
+#+end_src
 
 Functions for creating and opening daily journal pages.
 
