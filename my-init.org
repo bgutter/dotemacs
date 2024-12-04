@@ -163,6 +163,7 @@ These just need to be required.
   (require 'fence-edit)            ; Edit regions of one buffer in another buffer (usually with different major mode)
   (require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
   (require 'uniquify)              ; rename buffers of same name intelligently
+  (require 'org-inlinetask)        ; support for tasks which are not structural to the document's format
 #+end_src
 
 *** Packages from Servers
