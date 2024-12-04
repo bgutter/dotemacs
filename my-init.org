@@ -5266,6 +5266,14 @@ robocopy C:/path/to/source D:/path/to/dest /e /copy:DAT /mir /log+:robolog.txt
 
 ** Git
 
+Commit skipping hooks
+
+#+begin_src bash
+git commit --no-verify
+#+end_src
+
+** Python
+
 *** Creating virtual environments with virtualenv
 
 Make sure to install virtualenv first
