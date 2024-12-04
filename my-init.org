@@ -3740,8 +3740,8 @@ Add custom agenda command, use some awesome code from [[https://blog.aaronbieber
             (alltodo ""
                      ((org-agenda-skip-function '(or (org-agenda-skip-entry-if 'todo '("WAIT"))
                                                      (zin/org-agenda-skip-tag "NOAGENDA")
-                                                     (zin/org-agenda-skip-tag "UNFILED")
-                                                     (org-agenda-skip-if nil '(scheduled deadline))))
+                                                     (zin/org-agenda-skip-tag "UNFILED")))
+                                                     ;;(org-agenda-skip-if nil '(scheduled deadline))))
                       (org-agenda-overriding-header "Current and Unscheduled Tasks:")))
 
             (tags "UNFILED"
@@ -3754,6 +3754,12 @@ Don't show blocked tasks (ORDERED property set to t)
   (setq org-enforce-todo-dependencies t
         org-agenda-dim-blocked-tasks 'invisible)
 #+END_SRC
+
+Hide tags in agenda
+
+#+begin_src emacs-lisp
+(customize-set-variable 'org-agenda-remove-tags t)
+#+end_src
 
 Show past week and next two in agenda view.
 
