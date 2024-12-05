@@ -12,6 +12,21 @@ find missing or incorrect attributions!
   (message "Start processing of user-init ORG file.")
 #+END_SRC
 
+* Prerequisites
+
+List of software that is used by this config for various features.
+
+** ImageMagick
+
+Needed for org-download.
+
+Can be installed [[https://imagemagick.ogr/script/download.php][here]] on Windows. Use package manager on whichever
+Linux or WSL.
+
+** scanimage
+
+** ag (The Silver Searcher)
+
 * Localization (pre-package)
 
 Set config variables on a per-system basis.
@@ -251,6 +266,7 @@ These just need to be required.
   (use-package clojure-mode)          ; Develop Clojure in emacs
   (use-package cider)                 ; Develop Clojure in emacs
   (use-package jupyter)               ; ipython in org-babel
+  (use-package org-download)          ; attach images on system clipboard to org files
 
   ;; Just get copilot working -- but not on windows
   (unless-on-windows
@@ -1581,6 +1597,7 @@ backends during experimentation.
                                                     (newline)))
                       "<H-M-return>"  'org-babel-demarcate-block
                       "<print>"       'ros
+                      "S-<insert>"    'org-download-clipboard
                       "H-;"           'my:comment-region-or-line)
 
   (general-define-key :keymaps 'dired-mode-map
@@ -1872,6 +1889,8 @@ Working with Seafile conflicts.
 
 ** Screenshots
 
+*** ros
+
 [[https://github.com/LionyxML/ros/blob/master/ros.el][ros]] from LionxyML.
 
 #+BEGIN_SRC emacs-lisp
@@ -1888,6 +1907,20 @@ Working with Seafile conflicts.
         (insert (concat "#+ATTR_ORG: :width 400\n[[" filename "]]")))
       (org-display-inline-images t t)))
 #+END_SRC
+
+*** org-download
+
+Let it hook into dired-mode
+
+#+begin_src emacs-lisp
+(add-hook 'dired-mode-hook 'org-download-enable)
+#+end_src
+
+Attach the 'normal' org way
+
+#+begin_src emacs-lisp
+(customize-set-variable 'org-download-method 'attach)
+#+end_src
 
 ** Drawings
 
