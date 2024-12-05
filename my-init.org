@@ -3692,10 +3692,16 @@ Unclutter the agenda display.
 #+BEGIN_SRC emacs-lisp
   (customize-set-variable 'org-agenda-prefix-format
                           '((agenda . " %i %?-12t% s")
-                            (todo . " ")
+                            (todo . " %i %-12:c")
                             (tags . " ")
                             (search . " %i %-12:c")))
 #+END_SRC
+
+Set a default category name, don't use filename.
+
+#+begin_src emacs-lisp
+(setq-default org-category "_")
+#+end_src
 
 I want to be able to have multiple agenda windows.
 
