@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: Inline Task
+# key: =itask
+# --
+
+************ `(ivy-read "Status:" '("TODO" "BACKLOG" "ASSIGNED"))` [#`(ivy-read "Priority:" '("A" "B" "C" "D" "E" "F"))`] $0
+:LOGBOOK:
+- State "TODO" from `(format-time-string "[%Y-%m-%d %a %H:%M]")`
+:END:
+************ END
