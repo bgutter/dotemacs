@@ -1102,6 +1102,22 @@ Be smart about home/end on headings.
   (customize-set-variable 'org-special-ctrl-a/e t)
 #+END_SRC
 
+Add a function to quickly insert TODO items as subheadings at the bottom of the current heading.
+
+#+begin_src emacs-lisp
+  (defun my:org-insert-todo-bottom-current-heading ()
+    (interactive)
+    (save-excursion
+      (org-insert-heading-respect-content t) ; new heading immediately after this one as a sibling
+      (org-demote) ; demote it -- it becomes the last child of original
+      (let
+          ((priority  (ivy-read "Priority: " '("A" "B" "C" "D" "E")))
+           (summary   (read-string "Task Description: "))
+           (timestamp (format-time-string "[%Y-%m-%d %a %H:%M]")))
+        (insert "TODO [#" priority "] " summary)
+        (insert "\n:LOGBOOK:\n- State \"TODO\" from " timestamp "\n:END:"))))
+#+end_src
+
 *** counsel, ivy & swiper
 
 Make sure Swiper query replace tries to replace all occurrences.
@@ -1598,7 +1614,8 @@ backends during experimentation.
                       "<H-M-return>"  'org-babel-demarcate-block
                       "<print>"       'ros
                       "S-<insert>"    'org-download-clipboard
-                      "H-;"           'my:comment-region-or-line)
+                      "H-;"           'my:comment-region-or-line
+                      "H-t"           'my:org-insert-todo-bottom-current-heading)
 
   (general-define-key :keymaps 'dired-mode-map
                       "o" 'dired-omit-mode
