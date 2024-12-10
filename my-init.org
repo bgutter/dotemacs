@@ -3453,6 +3453,47 @@ Mode hooks
               (org-bullets-mode 1)))
 #+END_SRC
 
+If this is a journal or concept file in my org files directory, rename
+the buffer using some special rules.
+- journal.org in journal dir gets renamed like "journal [2024-1-12]"
+- concept.org in concept dir gets renamed like "concept [relative/concept/path]"
+
+#+begin_src emacs-lisp
+  (defun my:extract-date-from-journal-path (path)
+    "Extracts date in the form of year, month, day from journal.org path"
+    (when (string-match ".*/\\s-*\\([[:digit:]]+\\)\\s-*/\\s-*\\([[:digit:]]+\\)\\s-*/\\s-*\\([[:digit:]]+\\)\\s-*/.*" path)
+      `((year  . ,(match-string 1 path))
+        (month . ,(match-string 2 path))
+        (day   . ,(match-string 3 path)))))
+
+  (defun my:rename-org-buffer-name-in-org-dir-as-needed ()
+    (let ((filename (buffer-file-name)))
+      (if (and filename my:org-file-tree-base-path)
+          (cond
+
+           ;; Handle journal files
+           ((file-in-directory-p filename (concat my:org-file-tree-base-path "/journal/"))
+            (let ((date-fields (my:extract-date-from-journal-path filename)))
+              (rename-buffer (concat "journal ["
+                                     (alist-get 'year date-fields) "-"
+                                     (alist-get 'month date-fields) "-"
+                                     (alist-get 'day date-fields)
+                                     "]")
+                             t)))
+
+           ;; Handle concept files
+           ((file-in-directory-p filename (concat my:org-file-tree-base-path "/concepts/"))
+            (let*
+                ((concept-relpath (file-relative-name filename (concat my:org-file-tree-base-path "/concepts/")))
+                 (concept-clean-relpath (replace-regexp-in-string "/concept\\.org\\'" "" concept-relpath)))
+              (rename-buffer (concat "concept ["
+                                     concept-clean-relpath
+                                     "]")
+                             t)))))))
+
+  (add-hook 'org-mode-hook 'my:rename-org-buffer-name-in-org-dir-as-needed)
+#+end_src
+
 Unhide areas when they're edited.
 
 #+BEGIN_SRC emacs-lisp
