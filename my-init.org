@@ -1002,6 +1002,21 @@ Add a =write-file= wrapper which disables Ivy's automagic directory completion.
       (call-interactively 'write-file)))
 #+end_src
 
+Evaluate the trailing sexp and replace it with results of
+evaluation. Handy for inline math.
+
+#+begin_src emacs-lisp
+  (defun my:eval-and-replace-sexp ()
+    "Evaluate the previous sexp and replace it with result."
+    (interactive)
+    (backward-kill-sexp)
+    (condition-case nil
+        (prin1 (eval (read (current-kill 0)))
+               (current-buffer))
+      (error (message "Invalid expression")
+             (insert (current-kill 0)))))
+#+end_src
+
 *** org-mode
 
 Refresh agenda after TODO change. This let's queued entries to be
@@ -1448,6 +1463,7 @@ backends during experimentation.
    "C-c a"        'mark-whole-buffer
    "M-Q"          'unfill-paragraph
    "H-q"          'iedit-mode
+   "H-\\"         'my:eval-and-replace-sexp
 
    ;; Bookmarks
    "H-SPC"                   'bm-toggle
