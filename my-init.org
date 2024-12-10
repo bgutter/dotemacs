@@ -394,52 +394,6 @@ Function to clear conversation and reset.
     (insert "### "))
 #+end_src
 
-The rest of these are taken from the gptel documentation on Github.
-
-Function to ask GPT to make changes to region. Edited to make the
-directive mandatory, and to keep the region active after editing for
-successive revising.
-
-#+begin_src emacs-lisp
-  (defun my/gptel-rewrite-and-replace (bounds &optional iterative)
-    (interactive
-     (list
-      (cond
-       ((use-region-p) (cons (region-beginning) (region-end)))
-       ((derived-mode-p 'text-mode)
-        (list (bounds-of-thing-at-point 'sentence)))
-       (t (cons (line-beginning-position) (line-end-position))))
-      (interactive "p")))
-    (gptel-request
-        (buffer-substring-no-properties (car bounds) (cdr bounds)) ;the prompt
-      :system (concat
-               (read-string "> ")
-               "Make the changes I've described above. Reply only with the modified source code. Your response will be inserted directly into the source document, and it should contain nothing that would not be legal in the programming language. No spurious formatting, do not wrap it in markdown, etc.")
-      :buffer (current-buffer)
-      :context (cons (set-marker (make-marker) (car bounds))
-                     (set-marker (make-marker) (cdr bounds)))
-      :callback
-      (lambda (response info)
-        (if (not response)
-            (message "ChatGPT response failed with: %s" (plist-get info :status))
-          (let* ((bounds (plist-get info :context))
-                 (beg (car bounds))
-                 (end (cdr bounds))
-                 (buf (plist-get info :buffer)))
-            (with-current-buffer buf
-              (save-excursion
-                (goto-char beg)
-                (kill-region beg end)
-                (insert response)
-                ;; (set-marker beg nil)
-                ;; (set-marker end nil)
-                (message "Rewrote line. Original line saved to kill-ring."))
-              (set-mark beg)
-              (goto-char (+ beg (length response)))
-              (activate-mark))))
-        (my/gptel-rewrite-and-replace (cons (region-beginning) (region-end))))))
-#+end_src
-
 * Key Mappings
 
 #+BEGIN_SRC emacs-lisp
@@ -1355,10 +1309,10 @@ backends during experimentation.
                       "pd"                 'my:simple-pdb
 
                       ;; "g" -> GPT
-                      "ga" 'gptel-quick               ; GPT Ask question, no context
-                      "gi" 'gptel-insert              ; GPT Insert
-                      "ge" 'my/gptel-rewrite-and-replace ; GPT Edit
-                      "gc" 'gptel                     ; GPT Conversation
+                      "ga" 'gptel-quick   ; GPT Ask question, no context
+                      "gi" 'gptel-insert  ; GPT Insert
+                      "ge" 'gptel-rewrite ; GPT Edit
+                      "gc" 'gptel         ; GPT Conversation
                       )
 
   (general-define-key
