@@ -196,7 +196,6 @@ These just need to be required.
   (use-package anzu)                  ; show total/current matches in isearch
   (use-package visual-regexp)         ; visualize regular expressions in real-time
   (use-package expand-region)         ; Expand region
-  (use-package origami)               ; awesome code folding
   (use-package general)               ; sane key mapping architecture
   (use-package which-key)             ; Display options after prefix keys are entered
   (use-package ivy)                   ; Awesome completion framework
@@ -1159,6 +1158,18 @@ Function to quickly check my emails.
     (notmuch-search "date:3M.."))
 #+END_SRC
 
+*** Code Folding
+
+Function to toggle hide/show for all nodes in buffer
+
+#+begin_src emacs-lisp
+(defun my:hs-toggle-hiding-all ()
+  (interactive)
+  (if (hs-already-hidden-p)
+      (hs-show-all)
+    (hs-hide-all)))
+#+end_src
+
 ** Aliases
 
 Alias some basic functionality to names that may have different
@@ -1446,9 +1457,6 @@ backends during experimentation.
    ;; Quick access to toggle play/pause
    "<pause>"          (ilambda () (my:emms-do-then-show 'emms-pause))
 
-   ;; hide/show blocks
-   "H-/" 'origami-toggle-node
-
    ;; Other
    "H-=" (ilambda () (text-scale-increase 1))
    "H--" (ilambda () (text-scale-decrease 1))
@@ -1541,7 +1549,9 @@ backends during experimentation.
                       "H-;"   'my:comment-region-or-line
                       "H-:"   'my:comment-region-or-line-keep-clone
                       "H-e o" 'poporg-dwim
-                      "H-e s" 'my:edit-as-source)
+                      "H-e s" 'my:edit-as-source
+                      "<backtab>" 'my:hs-toggle-hiding-all
+                      "<tab>"  'hs-toggle-hiding)
 
   (general-define-key :keymaps 'auto-highlight-symbol-mode-map
                       "s-<up>"   'ahs-backward
@@ -3191,9 +3201,9 @@ The hook =prog-mode-hook= is triggered in all programming major-modes.
                (flyspell-prog-mode)
                (display-line-numbers-mode 1)
                (auto-highlight-symbol-mode)
-               (rainbow-delimiters-mode)
-                                          ;(copilot-mode) ;; more annoying than useful -- gptel is better
-               ))
+               (hs-minor-mode)
+               (hs-hide-all)
+               (rainbow-delimiters-mode)))
 #+END_SRC
 
 *** text-mode
