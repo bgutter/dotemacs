@@ -1612,7 +1612,8 @@ backends during experimentation.
                       "<tab>" 'copilot-accept-completion)
 
   (general-define-key :keymaps 'gptel-mode-map
-                      "C-k" 'my:gptel-reset-conversation)
+                      "C-k"   'my:gptel-reset-conversation
+                      "C-x C-s" (ilambda () (if (buffer-file-name) (call-interactively 'save-buffer) (save-excursion (write-file (my:generate-gpt-conversation-file-name)) (gptel-mode) (call-interactively 'save-buffer)))))
 
   (general-define-key :keymaps 'cider-mode-map
                       "C-c C-t t" 'my:cider-eval-and-run-test-at-point)
@@ -4101,6 +4102,8 @@ Defcustoms for various personal definitions.
     (concat my:org-file-tree-base-path "/voice-notes/incomprehensible.org"))
   (defun my:unfiled-notes-path ()
     (concat my:org-file-tree-base-path "/voice-notes/unfiled-notes.org"))
+  (defun my:generate-gpt-conversation-file-name ()
+    (concat my:org-file-tree-base-path "/llm-history/" (format-time-string "%Y/%m/%d/%I-%M-%S-%p.org")))
 #+END_SRC
 
 Add function to rebuild org file list. Call it once.
