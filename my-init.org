@@ -1919,7 +1919,7 @@ Working with Seafile conflicts.
     (my:seafile-merge-conflicts my:org-file-tree-base-path))
 #+END_SRC
 
-** Screenshots
+** Screenshots & Attachments
 
 *** ros
 
@@ -3944,7 +3944,9 @@ uses this when following file links.
 
 #+BEGIN_SRC emacs-lisp
   (setq org-file-apps
-        '((auto-mode . emacs)
+        `((auto-mode . ,(if (on-windows-p) "%s" 'emacs))
+          ("\\.pdf" . ,(if (on-windows-p) "%s" 'emacs))
+          ("\\.xlsx" . ,(if (on-windows-p) "%s" 'emacs))
           ("\\.ods" . "libreoffice %s")))
 #+END_SRC
 
