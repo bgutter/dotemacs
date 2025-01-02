@@ -1100,6 +1100,20 @@ Add a function to quickly insert TODO items as subheadings at the bottom of the 
         (insert "\n:LOGBOOK:\n- State \"TODO\" from " timestamp "\n:END:"))))
 #+end_src
 
+Function to open the directory for attachments of the current heading
+
+#+begin_src emacs-lisp
+  (defun my:open-org-attach-dir (&optional arg)
+    "Browse attachment dir at point in dired. With prefix, open in system file browser."
+    (interactive "P")
+    (let ((dir (org-attach-dir)))
+      (if arg
+          (if (on-windows-p)
+              (w32-shell-execute "open " dir)
+            (shell-command (concat "xdg-open '" dir "'")))
+        (dired dir))))
+#+end_src
+
 *** counsel, ivy & swiper
 
 Make sure Swiper query replace tries to replace all occurrences.
@@ -1627,7 +1641,13 @@ backends during experimentation.
 
   (general-define-key :keymaps 'gptel-mode-map
                       "C-k"   'my:gptel-reset-conversation
-                      "C-x C-s" (ilambda () (if (buffer-file-name) (call-interactively 'save-buffer) (save-excursion (write-file (my:generate-gpt-conversation-file-name)) (gptel-mode) (call-interactively 'save-buffer)))))
+                      "C-x C-s" (ilambda ()
+                                         (if (buffer-file-name)
+                                             (call-interactively 'save-buffer)
+                                           (save-excursion
+                                             (write-file (my:generate-gpt-conversation-file-name))
+                                             (gptel-mode)
+                                             (call-interactively 'save-buffer)))))
 
   (general-define-key :keymaps 'cider-mode-map
                       "C-c C-t t" 'my:cider-eval-and-run-test-at-point)
