@@ -3690,7 +3690,7 @@ And their faces.
                   ( "IN_PROGRESS" . (                         :background "deeppink3"    :weight bold              ))
                   ( "NEXT" .        (                         :background "deeppink3"    :weight bold              ))
                   ( "HIATUS" .      (:foreground "white"                                              :slant italic))
-                  ( "DONE" .        (:foreground "white"      :background "forest green" :weight bold              ))
+                  ( "DONE" .        (:foreground "forst green"                           :weight bold              ))
                   ( "CANCELLED" .   (:foreground "light gray"                                         :slant italic))
                   ( "FAILED" .      (:foreground "white"      :background "red"          :weight bold              ))
                   ( "MIGRATED"      (:foreground "light gray"                                         :slant italic))
