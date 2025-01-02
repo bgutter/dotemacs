@@ -4127,7 +4127,12 @@ Customize the habit display a bit.
 Defcustoms for various personal definitions.
 
 #+BEGIN_SRC emacs-lisp
-  (defcustom my:org-file-tree-base-path nil "Base directory of my org directory structure")
+  (defconst my:org-file-tree-base-path
+    (expand-file-name "org"
+                      (if (on-windows-p)
+                          (getenv "USERPROFILE")
+                        "/sync/documents"))
+    "Base directory of my org directory structure.")
   (defun my:org-scraps-path ()
     (concat my:org-file-tree-base-path "/scraps/scraps.org"))
   (defun my:org-dream-journal-path ()
@@ -4139,6 +4144,12 @@ Defcustoms for various personal definitions.
   (defun my:generate-gpt-conversation-file-name ()
     (concat my:org-file-tree-base-path "/llm-history/" (format-time-string "%Y/%m/%d/%I-%M-%S-%p.org")))
 #+END_SRC
+
+Make sure org-attach places files in the org-attachments directory
+
+#+begin_src emacs-lisp
+  (customize-set-variable 'org-attach-id-dir (concat my:org-file-tree-base-path "/attachments/"))
+#+end_src
 
 Add function to rebuild org file list. Call it once.
 
