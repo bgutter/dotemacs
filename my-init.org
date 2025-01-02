@@ -382,6 +382,20 @@ Use org-ai snippets
   (org-ai-install-yasnippets)
 #+end_src
 
+Use org-mode in gptel buffers.
+
+#+begin_src emacs-lisp
+  (customize-set-variable 'gptel-default-mode 'org-mode)
+#+end_src
+
+Don't indent so much.
+
+#+begin_src emacs-lisp
+  (customize-set-variable 'gptel-prompt-prefix-alist '((markdown-mode . "### ")
+                                                       (org-mode . "* ")
+                                                       (text-mode . "### ")))
+#+end_src
+
 ** Functions
 
 Function to clear conversation and reset.
@@ -390,7 +404,7 @@ Function to clear conversation and reset.
   (defun my:gptel-reset-conversation ()
     (interactive)
     (erase-buffer)
-    (insert "### "))
+    (insert (alist-get 'org-mode gptel-prompt-prefix-alist)))
 #+end_src
 
 * Key Mappings
