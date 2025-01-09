@@ -407,6 +407,22 @@ Function to clear conversation and reset.
     (insert (alist-get 'org-mode gptel-prompt-prefix-alist)))
 #+end_src
 
+Function to generate a new conversation and store it in the LLM history folder.
+
+#+begin_src emacs-lisp
+  (defun my:gptel-new-conversation ()
+    (interactive)
+    (let ((file-name (my:generate-gpt-conversation-file-name)))
+      (let ((directory (file-name-directory file-name)))
+        (unless (file-exists-p directory)
+          (make-directory directory t)))
+      (switch-to-buffer (gptel "*ChatGPT*"))
+      (write-file file-name)
+      (gptel-mode)
+      (call-interactively 'save-buffer)))
+
+#+end_src
+
 * Key Mappings
 
 #+BEGIN_SRC emacs-lisp
@@ -1351,7 +1367,7 @@ backends during experimentation.
                       "ga" 'gptel-quick   ; GPT Ask question, no context
                       "gi" 'gptel-insert  ; GPT Insert
                       "ge" 'gptel-rewrite ; GPT Edit
-                      "gc" 'gptel         ; GPT Conversation
+                      "gc" 'my:gptel-new-conversation ; GPT Conversation
                       )
 
   (general-define-key
@@ -1640,14 +1656,7 @@ backends during experimentation.
                       "<tab>" 'copilot-accept-completion)
 
   (general-define-key :keymaps 'gptel-mode-map
-                      "C-k"   'my:gptel-reset-conversation
-                      "C-x C-s" (ilambda ()
-                                         (if (buffer-file-name)
-                                             (call-interactively 'save-buffer)
-                                           (save-excursion
-                                             (write-file (my:generate-gpt-conversation-file-name))
-                                             (gptel-mode)
-                                             (call-interactively 'save-buffer)))))
+                      "C-k"   'my:gptel-reset-conversation)
 
   (general-define-key :keymaps 'cider-mode-map
                       "C-c C-t t" 'my:cider-eval-and-run-test-at-point)
@@ -3947,6 +3956,7 @@ uses this when following file links.
         `((auto-mode . ,(if (on-windows-p) "%s" 'emacs))
           ("\\.pdf" . ,(if (on-windows-p) "%s" 'emacs))
           ("\\.xlsx" . ,(if (on-windows-p) "%s" 'emacs))
+          ("\\.docx" . ,(if (on-windows-p) "%s" 'emacs))
           ("\\.ods" . "libreoffice %s")))
 #+END_SRC
 
@@ -4144,7 +4154,7 @@ Defcustoms for various personal definitions.
   (defun my:unfiled-notes-path ()
     (concat my:org-file-tree-base-path "/voice-notes/unfiled-notes.org"))
   (defun my:generate-gpt-conversation-file-name ()
-    (concat my:org-file-tree-base-path "/llm-history/" (format-time-string "%Y/%m/%d/%I-%M-%S-%p.org")))
+    (concat my:org-file-tree-base-path "/llm-history/" (format-time-string "%Y/%m/%d/%I-%M-%S-%p") "/chat.org"))
 #+END_SRC
 
 Make sure org-attach places files in the org-attachments directory
