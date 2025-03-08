@@ -266,6 +266,7 @@ These just need to be required.
   (use-package cider)                 ; Develop Clojure in emacs
   (use-package jupyter)               ; ipython in org-babel
   (use-package org-download)          ; attach images on system clipboard to org files
+  (use-package nix-mode)              ; edit system configs in nix
 
   ;; Just get copilot working -- but not on windows
   (unless-on-windows
