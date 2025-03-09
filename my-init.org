@@ -4785,7 +4785,7 @@ Set delay for AHS highlighting.
 Newest emails first.
 
 #+BEGIN_SRC emacs-lisp
-  (setq notmuch-search-oldest-first nil)
+  (customize-set-variable 'notmuch-search-oldest-first nil)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
