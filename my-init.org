@@ -1672,9 +1672,9 @@ backends during experimentation.
                             (,(kbd "S-<F8>") .      delete-window)
                             (,(kbd "S-<F8>") .      delete-window)
                             (,(kbd "H-b") .         my:find-buffer)
-                            (,(kbd "H-S-<up>") .    (ilambda () (enlarge-window ,(if (e27-p) 1 5)))) ;; Emacs 27 is fast at this
+                            (,(kbd "H-S-<up>") .    ,(ilambda () (enlarge-window (if (e27-p) 1 5)))) ;; Emacs 27 is fast at this
                             (,(kbd "H-S-<right>") . enlarge-window-horizontally)
-                            (,(kbd "H-S-<down>") .  (ilambda () (shrink-window ,(if (e27-p) 1 5)))) ;; Emacs 27 is fast at this
+                            (,(kbd "H-S-<down>") .  ,(ilambda () (shrink-window (if (e27-p) 1 5)))) ;; Emacs 27 is fast at this
                             (,(kbd "H-S-<left>") .  shrink-window-horizontally)
                             (,(kbd "H-s <down>") .  split-window-above)
                             (,(kbd "H-s <left>") .  split-window-right)
