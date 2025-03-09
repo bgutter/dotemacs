@@ -80,8 +80,8 @@ This is used to create unnamed commands (no interactive arguments).
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (defmacro ilambda (name arg-list &rest body)
-    `(lambda ,name ,arg-list
+  (defmacro ilambda (arg-list &rest body)
+    `(lambda ,arg-list
        (interactive)
        ,@body))
 #+END_SRC
