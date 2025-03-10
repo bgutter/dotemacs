@@ -1653,6 +1653,10 @@ backends during experimentation.
                                        "thunderbird" nil nil nil
                                        (notmuch-show-get-filename))))
 
+  (general-define-key :keymaps 'notmuch-search-mode-map
+                      "r" (ilambda ()
+                                   (notmuch-search-tag '("-unread"))))
+
   (general-define-key :keymaps 'copilot-mode-map
                       "<tab>" 'copilot-accept-completion)
 
