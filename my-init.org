@@ -4796,6 +4796,13 @@ Newest emails first.
   (setq send-mail-function 'smtpmail-send-it)
 #+END_SRC
 
+#+begin_src emacs-lisp
+  (customize-set-variable 'notmuch-search-hook nil) ;; stop it from starting hl-line-mode
+  (add-hook 'notmuch-search-hook
+            (lambda ()
+              (hl-line-mode -1)))
+#+end_src
+
 ** proced
 
 Auto-update =proced= buffers.
