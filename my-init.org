@@ -1661,7 +1661,8 @@ backends during experimentation.
                       "<tab>" 'copilot-accept-completion)
 
   (general-define-key :keymaps 'gptel-mode-map
-                      "C-k"   'my:gptel-reset-conversation)
+                      "C-k"   'my:gptel-reset-conversation
+                      "C-c m" 'gptel-menu)
 
   (general-define-key :keymaps 'cider-mode-map
                       "C-c C-t t" 'my:cider-eval-and-run-test-at-point)
