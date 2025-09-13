@@ -3414,6 +3414,12 @@ Use employer's preferred C format...
   (customize-set-variable 'cider-clojure-cli-global-aliases "-A:fig")
 #+end_src
 
+Don't show me the REPL on connect, I don't care and I need to see my code!
+
+#+begin_src emacs-lisp
+  (customize-set-variable 'cider-repl-pop-to-buffer-on-connect nil)
+#+end_src
+
 *** term-mode
 
 #+BEGIN_SRC emacs-lisp
