@@ -1154,6 +1154,20 @@ Function to open the directory for attachments of the current heading
         (dired dir))))
 #+end_src
 
+Function to save code block under point to a file.
+
+#+begin_src emacs-lisp
+  (defun my:org-babel-save-src-block-to-file (filename)
+    "Save the Org Babel source block at point to filename"
+    (interactive "FSave source block to file: ")
+    (let ((info (org-babel-get-src-block-info)))
+      (when info
+        (let* ((body (nth 1 info)))
+          (with-temp-file filename
+            (insert body))
+          (message "Code block saved to %s" filename)))))
+#+end_src
+
 *** counsel, ivy & swiper
 
 Make sure Swiper query replace tries to replace all occurrences.
