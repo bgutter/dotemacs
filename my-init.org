@@ -184,6 +184,7 @@ These just need to be required.
 *** Packages from Servers
 
 #+BEGIN_SRC emacs-lisp
+  (use-package ag)                    ; simple silver searcher tool
   (use-package buffer-move)           ; swap buffers between adjacent windows
   (use-package diff-hl)               ; show changes from last commit with edge highlighting
   (use-package undo-tree)             ; incredible undo/redo support
@@ -1470,8 +1471,9 @@ backends during experimentation.
    "S-<f6>" (ilambda () (call-with-prefix-arg 4 'save-some-buffers))
 
    ;; OS Utilities
-   "H-f"  'counsel-ag
-   "H-F"  (ilambda () (call-with-prefix-arg 'counsel-ag))
+   ;; counsel-ag not stable on Microsoft Windows, locks up emacs every time
+   "H-f"  (if (on-windows-p) 'ag 'counsel-ag)
+   "H-F"  (if (on-windows-p) 'ag (ilambda () (call-with-prefix-arg 'counsel-ag)))
    "<f9>" 'my:terminal-emulator
 
    ;; Text navigation
