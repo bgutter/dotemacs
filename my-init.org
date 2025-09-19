@@ -4964,6 +4964,20 @@ Jump to end of buffer after every chunk is inserted.
               (backward-char)))
 #+end_src
 
+Use branching context in chat buffers, per README.
+
+#+begin_src emacs-lisp
+  (customize-set-variable 'gptel-org-branching-context t)
+  (setf (alist-get 'org-mode gptel-prompt-prefix-alist) "@user\n")
+  (setf (alist-get 'org-mode gptel-response-prefix-alist) "@assistant\n")
+  (defun my-gptel-custom-font-lock ()
+   (font-lock-add-keywords
+   nil
+   '(("@user" 0 (quote (:weight bold :background "dark blue" :foreground "white")))
+     ("@assistant" 0 (quote (:weight bold :background "dark blue" :foreground "white"))))))
+  (add-hook 'gptel-mode-hook 'my-gptel-custom-font-lock)
+#+end_src
+
 * Monkey Patching
 
 #+BEGIN_SRC emacs-lisp
