@@ -4954,14 +4954,8 @@ Kill buffers when the shell exits.
 Jump to end of buffer after every chunk is inserted.
 
 #+begin_src emacs-lisp
-  (add-hook 'gptel-post-stream-hook
-            (lambda ()
-              (end-of-buffer)
-              (backward-char)))
-  (add-hook 'gptel-post-response-hook
-            (lambda (a b)
-              (end-of-buffer)
-              (backward-char)))
+  (add-hook 'gptel-post-response-functions 'gptel-end-of-response)
+  (add-hook 'gptel-post-stream-hook 'gptel-auto-scroll)
 #+end_src
 
 Use branching context in chat buffers, per README.
