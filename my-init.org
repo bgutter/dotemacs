@@ -4991,6 +4991,126 @@ Load the gptel-magit prompt from gptel-prompts
     (my:reload-gptel-magit-prompt))
 #+end_src
 
+There's an open issue with sending images in org attachment links. Monkeypatch around it for now.
+
+#+begin_src emacs-lisp
+
+;; Handle media links in the buffer
+(cl-defmethod gptel--parse-media-links ((_mode (eql 'org-mode)) beg end)
+  "Parse text and actionable links between BEG and END.
+
+Return a list of the form
+ ((:text \"some text\")
+  (:media \"/path/to/media.png\" :mime \"image/png\")
+  (:text \"More text\"))
+for inclusion into the user prompt for the gptel request."
+  (require 'mailcap)                    ;FIXME Avoid this somehow
+  (let ((parts) (from-pt) (mime)
+        (link-regex (concat "\\(?:" org-link-bracket-re "\\|"
+                            org-link-angle-re "\\)")))
+    (save-excursion
+      (setq from-pt (goto-char beg))
+      (while (re-search-forward link-regex end t)
+        (setq mime nil)
+        (when-let* ((link (org-element-context))
+                    ((gptel-org--link-standalone-p link))
+                    (raw-link (org-element-property :raw-link link))
+                    (raw-path (org-element-property :path link))
+                    (type (org-element-property :type link))
+                    (path (if (string= type "attachment")
+                              (org-attach-expand raw-path)
+                            raw-path))
+                    ;; FIXME This is not a good place to check for url capability!
+                    ((member type `("attachment" "file"
+                                    ,@(and (gptel--model-capable-p 'url)
+                                       '("http" "https" "ftp"))))))
+          (cond
+           ((member type '("file" "attachment"))
+            (if (file-readable-p path)
+              (if (or (not (gptel--file-binary-p path))
+                      (and (setq mime (mailcap-file-name-to-mime-type path))
+                           (gptel--model-mime-capable-p mime)))
+                  (progn                ; text file or supported binary file
+                    ;; collect text up to link
+                    (when-let* ((text (buffer-substring-no-properties
+                                       from-pt (gptel-org--element-begin link))))
+                      (unless (string-blank-p text) (push (list :text text) parts)))
+                    ;; collect link
+                    (push (if mime (list :media path :mime mime) (list :textfile path)) parts)
+                    (setq from-pt (point)))
+                (message "Ignoring unsupported binary file \"%s\"." path))
+              (message "Ignoring inaccessible file \"%s\"." path)))
+           ((and (member type '("http" "https" "ftp"))
+                 (setq mime (mailcap-file-name-to-mime-type path))
+                 (gptel--model-capable-p mime))
+            ;; Collect text up to this image, and collect this image url
+            (when-let* ((text (buffer-substring-no-properties
+                               from-pt (gptel-org--element-begin link))))
+              (unless (string-blank-p text) (push (list :text text) parts)))
+            (push (list :url raw-link :mime mime) parts)
+            (setq from-pt (point))))))
+      (unless (= from-pt end)
+        (push (list :text (buffer-substring-no-properties from-pt end)) parts)))
+    (nreverse parts)))
+
+  (defun gptel--realize-query (fsm)
+    "Realize the query payload for FSM from its prompt buffer.
+
+  Initiate the request when done."
+    (let ((info (gptel-fsm-info fsm)))
+      (with-current-buffer (plist-get info :data)
+        (let* ((directive (gptel--parse-directive gptel--system-message 'raw))
+               ;; DIRECTIVE contains both the system message and the template prompts
+               (gptel--system-message
+                (unless (gptel--model-capable-p 'nosystem) (car directive)))
+               ;; TODO(tool) Limit tool use to capable models after documenting :capabilities
+               ;; (gptel-use-tools (and (gptel--model-capable-p 'tool-use) gptel-use-tools))
+               (stream (and (plist-get info :stream) gptel-use-curl gptel-stream
+                            ;; HACK(tool): no stream if Ollama + tools.  Need to find a better way
+                            (not (and (eq (type-of gptel-backend) 'gptel-ollama)
+                                      gptel-tools gptel-use-tools))
+                            ;; Check model-specific request-params for streaming preference
+                            (let* ((model-params (gptel--model-request-params gptel-model))
+                                   (stream-spec (plist-get model-params :stream)))
+                              ;; If not present, there is no model-specific preference
+                              (or (not (memq :stream model-params))
+                                  ;; If present, it must not be :json-false or nil
+                                  (and stream-spec (not (eq stream-spec :json-false)))))
+                            ;; Check backend-specific streaming settings
+                            (gptel-backend-stream gptel-backend)))
+               (gptel-stream stream)
+               (full-prompt))
+          (when (cdr directive)       ; prompt constructed from directive/template
+            (save-excursion (goto-char (point-min))
+                            (gptel--parse-list-and-insert (cdr directive))))
+          (goto-char (point-max))
+          (setq full-prompt (with-current-buffer (plist-get info :buffer)
+                              (gptel--parse-buffer ;prompt from buffer or explicitly supplied
+                               gptel-backend (and gptel--num-messages-to-send
+                                                  (* 2 gptel--num-messages-to-send)))))
+          ;; Inject media chunks into the first user prompt if required.  Media
+          ;; chunks are always included with the first user message,
+          ;; irrespective of the preference in `gptel-use-context'.  This is
+          ;; because media cannot be included (in general) with system messages.
+          ;; TODO(augment): Find a way to do this in the prompt-buffer?
+          (when (and gptel-context--alist gptel-use-context
+                     gptel-track-media (gptel--model-capable-p 'media))
+            (gptel--wrap-user-prompt gptel-backend full-prompt 'media))
+          (unless stream (cl-remf info :stream))
+          (plist-put info :backend gptel-backend)
+          (when gptel-include-reasoning   ;Required for next-request-only scope
+            (plist-put info :include-reasoning gptel-include-reasoning))
+          (when (and gptel-use-tools gptel-tools)
+            (plist-put info :tools gptel-tools))
+          (plist-put info :data
+                     (gptel--request-data gptel-backend full-prompt)))
+        (kill-buffer (current-buffer)))
+      ;; INIT -> WAIT
+      (unless (plist-get info :dry-run) (gptel--fsm-transition fsm))
+      fsm))
+
+#+end_src
+
 * Monkey Patching
 
 #+BEGIN_SRC emacs-lisp
