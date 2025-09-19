@@ -3992,6 +3992,8 @@ uses this when following file links.
           ("\\.pdf" . ,(if (on-windows-p) "%s" 'emacs))
           ("\\.xlsx" . ,(if (on-windows-p) "%s" 'emacs))
           ("\\.docx" . ,(if (on-windows-p) "%s" 'emacs))
+          ("\\.doc" . ,(if (on-windows-p) "%s" 'emacs))
+          ("\\.pptx" . ,(if (on-windows-p) "%s" 'emacs))
           ("\\.ods" . "libreoffice %s")))
 #+END_SRC
 
