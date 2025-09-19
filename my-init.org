@@ -4978,6 +4978,17 @@ Use media by default
   (customize-set-variable 'gptel-track-media t)
 #+end_src
 
+Load the gptel-magit prompt from gptel-prompts
+
+#+begin_src emacs-lisp
+  (defun my:reload-gptel-magit-prompt ()
+    (customize-set-variable 'gptel-magit-commit-prompt (alist-get 'commit-message gptel-directives)))
+
+  (defadvice gptel-prompts-update (after ad-update-commit activate)
+    "Whenever prompts are upaded, also update the gptel magit stuff"
+    (my:reload-gptel-magit-prompt))
+#+end_src
+
 * Monkey Patching
 
 #+BEGIN_SRC emacs-lisp
