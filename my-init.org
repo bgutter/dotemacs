@@ -4972,6 +4972,12 @@ Use branching context in chat buffers, per README.
   (add-hook 'gptel-mode-hook 'my-gptel-custom-font-lock)
 #+end_src
 
+Use media by default
+
+#+begin_src emacs-lisp
+  (customize-set-variable 'gptel-track-media t)
+#+end_src
+
 * Monkey Patching
 
 #+BEGIN_SRC emacs-lisp
