@@ -259,7 +259,12 @@ These just need to be required.
   (use-package editorconfig)
   (use-package jsonrpc)
   (use-package quelpa)
+
   (use-package gptel)                 ; Support for GPT conversation buffers & API calls
+  (use-package gptel-magit
+    :ensure t
+    :hook (magit-mode . gptel-magit-install)) ; Generate commit messages with GPT from magit-mode
+
   (use-package org-ai)                ; Support for ChatGPT in #+BEGIN_AI blocks, and so much more
   (use-package pyvenv)                ; Python virtual environments
   (use-package clojure-mode)          ; Develop Clojure in emacs
