@@ -5112,6 +5112,30 @@ for inclusion into the user prompt for the gptel request."
 
 #+end_src
 
+ALWAYS confirm and document tool calls.
+
+#+begin_src emacs-lisp
+  (customize-set-variable 'gptel-confirm-tool-calls t)
+  (customize-set-variable 'gptel-include-tool-results t)
+  (customize-set-variable 'gptel-include-reasoning t)
+#+end_src
+
+Define tool to run arbitrary emacs lisp. As powerful as it is dangerous. It will always ask for confirmation.
+
+#+begin_src emacs-lisp
+    (gptel-make-tool
+     :function (lambda (elisp-code)
+                 (let ((result (eval (read elisp-code))))
+                   (format "%s" result)))
+     :name "run_emacs_lisp"
+     :description "Execute arbitrary Emacs lisp source code in conversation partner's environment and return the result as a string. Only use this tool if you cannot feasibly use less powerful tools to do the same thing."
+     :args (list '(:name "elisp_source_code"
+                         :type string
+                         :description "The Emacs lisp code to execute"))
+     :category "execution"
+     :confirm t)
+#+end_src
+
 * Monkey Patching
 
 #+BEGIN_SRC emacs-lisp
