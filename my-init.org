@@ -4954,6 +4954,8 @@ Kill buffers when the shell exits.
 
 ** gptel
 
+*** General Config
+
 Jump to end of buffer after every chunk is inserted.
 
 #+begin_src emacs-lisp
@@ -4981,16 +4983,7 @@ Use media by default
   (customize-set-variable 'gptel-track-media t)
 #+end_src
 
-Load the gptel-magit prompt from gptel-prompts
-
-#+begin_src emacs-lisp
-  (defun my:reload-gptel-magit-prompt ()
-    (customize-set-variable 'gptel-magit-commit-prompt (alist-get 'commit-message gptel-directives)))
-
-  (defadvice gptel-prompts-update (after ad-update-commit activate)
-    "Whenever prompts are upaded, also update the gptel magit stuff"
-    (my:reload-gptel-magit-prompt))
-#+end_src
+*** Workarounds
 
 There's an open issue with sending images in org attachment links. Monkeypatch around it for now.
 
@@ -5112,6 +5105,38 @@ for inclusion into the user prompt for the gptel request."
 
 #+end_src
 
+*** Prompts
+
+**** Commit Messages
+
+Load the gptel-magit prompt from gptel-prompts
+
+#+begin_src emacs-lisp
+  (defun my:reload-gptel-magit-prompt ()
+    (customize-set-variable 'gptel-magit-commit-prompt (alist-get 'commit-message gptel-directives)))
+
+  (defadvice gptel-prompts-update (after ad-update-commit activate)
+    "Whenever prompts are upaded, also update the gptel magit stuff"
+    (my:reload-gptel-magit-prompt))
+#+end_src
+
+**** Org Directory Assistant
+
+#+begin_src emacs-lisp
+  (defun my:read-file-as-string (filepath)
+    (with-temp-buffer
+      (insert-file-contents filepath)
+      (buffer-string)))
+
+  (add-to-list
+   'gptel-directives
+   (cons 'org-assistant
+         (my:read-file-as-string
+          (concat my:org-file-tree-base-path "/llm-assistant-prompt.org"))))
+#+end_src
+
+*** tools
+
 ALWAYS confirm and document tool calls.
 
 #+begin_src emacs-lisp
@@ -5120,21 +5145,74 @@ ALWAYS confirm and document tool calls.
   (customize-set-variable 'gptel-include-reasoning t)
 #+end_src
 
+**** org-mode directory tools
+
+Tool to scan for org directory content.
+
+#+begin_src emacs-lisp
+  (gptel-make-tool
+   :name "scan_personal_knowledgebase"
+   :description "Find all files in the conversation partner's org-mode personal knowledgebase containing any of the provided keywords, with line numbers of occurrences. Returns a list of relative file paths with line numbers, with one result per line."
+   :category "org-pkms"
+   :confirm nil
+   :args (list '(:name "keywords"
+                       :type "array"
+                       :items (:type "string")
+                       :description "List of keywords to search for within personal knowledgebase."))
+   :function
+   (lambda (keywords)
+     (let ((keywords-str (mapconcat 'shell-quote-argument keywords "|"))
+           (base-path (expand-file-name my:org-file-tree-base-path))
+           (output ""))
+       (with-temp-buffer
+         (message "Pattern for AG: %s" keywords-str)
+         (call-process "ag" nil t nil
+                       "--nocolor"
+                       "--noheading"
+                       "--vimgrep"
+                       keywords-str
+                       base-path)
+         (goto-char (point-min))
+         (while (re-search-forward "^\\(.*?\\):\\([0-9]+\\):" nil t)
+           (setq output (concat output (match-string 1) ":" (match-string 2) "\n"))))
+       output)))
+#+end_src
+
+Tool to read org directory content.
+
+#+begin_src emacs-lisp
+  (gptel-make-tool
+   :name "read_personal_knowledgebase_file"
+   :description "Read a specific file from personal knowledgebase."
+   :category "org-pkms"
+   :confirm nil
+   :args (list '(:name "relative_filepath"
+                       :type "string"
+                       :description "Relative file path, such as concepts/psychology/complex-ptsd/concept.org"))
+   :function
+   (lambda (relative-filepath)
+     (my:read-file-as-string (concat my:org-file-tree-base-path "/" relative-filepath))))
+#+end_src
+
+**** Arbitrary Code Execution
+
 Define tool to run arbitrary emacs lisp. As powerful as it is dangerous. It will always ask for confirmation.
 
 #+begin_src emacs-lisp
-    (gptel-make-tool
-     :function (lambda (elisp-code)
-                 (let ((result (eval (read elisp-code))))
-                   (format "%s" result)))
-     :name "run_emacs_lisp"
-     :description "Execute arbitrary Emacs lisp source code in conversation partner's environment and return the result as a string. Only use this tool if you cannot feasibly use less powerful tools to do the same thing."
-     :args (list '(:name "elisp_source_code"
-                         :type string
-                         :description "The Emacs lisp code to execute"))
-     :category "execution"
-     :confirm t)
+  (gptel-make-tool
+   :function (lambda (elisp-code)
+               (let ((result (eval (read elisp-code))))
+                 (format "%s" result)))
+   :name "run_emacs_lisp"
+   :description "Execute arbitrary Emacs lisp source code in conversation partner's environment and return the result as a string. Only use this tool if you cannot feasibly use less powerful tools to do the same thing."
+   :args (list '(:name "elisp_source_code"
+                       :type string
+                       :description "The Emacs lisp code to execute"))
+   :category "arbitrary_code_execution"
+   :confirm t)
 #+end_src
+
+
 
 * Monkey Patching
 
