@@ -4260,9 +4260,10 @@ Add function to search existing concepts, journals, etc.
 
 #+BEGIN_SRC emacs-lisp
   (if (on-windows-p)
-      (defun my:org-search-concept ()
-        (interactive)
-        (my:org-occur-in-agenda-files t))
+      (defun my:org-search-concept (arg)
+        (interactive "P")
+        (let ((list-matching-lines-default-context-lines (or arg 15)))
+          (my:org-occur-in-agenda-files t)))
       (defun my:org-search-concept ()
         (interactive)
         (counsel-ag "" my:org-file-tree-base-path)))
