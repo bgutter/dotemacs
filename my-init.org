@@ -5135,12 +5135,12 @@ Load the gptel-magit prompt from gptel-prompts
           (concat my:org-file-tree-base-path "/llm-assistant-prompt.org"))))
 #+end_src
 
-*** tools
+*** Tools
 
-ALWAYS confirm and document tool calls.
+Always include reasoning and tool calls.
 
 #+begin_src emacs-lisp
-  (customize-set-variable 'gptel-confirm-tool-calls t)
+  (customize-set-variable 'gptel-confirm-tool-calls 'auto)
   (customize-set-variable 'gptel-include-tool-results t)
   (customize-set-variable 'gptel-include-reasoning t)
 #+end_src
@@ -5212,7 +5212,40 @@ Define tool to run arbitrary emacs lisp. As powerful as it is dangerous. It will
    :confirm t)
 #+end_src
 
+*** Agents
 
+Agent to help me find things in my notes directory.
+
+#+begin_src emacs-lisp
+  (gptel-make-preset 'hermine
+    :description "An agent for helping me understand the contents of my org-mode directory."
+    :backend "ChatGPT"
+    :model 'gpt-4o
+    :system 'org-assistant
+    :tools '("scan_personal_knowledgebase" "read_personal_knowledgebase_file"))
+#+end_src
+
+Agent to help me answer general knowledge or research questions.
+
+#+begin_src emacs-lisp
+  (gptel-make-preset 'ludi
+    :description "An agent for general knowledge questions and answers, including research."
+    :backend "ChatGPT"
+    :model 'gpt-4o
+    :system 'default
+    :tools nil)
+#+end_src
+
+God-like agent that can do anything within Emacs or on my system because it can run literally any emacs lisp.
+
+#+begin_src emacs-lisp
+  (gptel-make-preset 'abraxas
+    :description "An agent with full access to evaluate emacs-lisp within emacs."
+    :backend "ChatGPT"
+    :model 'gpt-4o
+    :system 'emacs-wizard
+    :tools '("run_emacs_lisp"))
+#+end_src
 
 * Monkey Patching
 
