@@ -5105,6 +5105,10 @@ for inclusion into the user prompt for the gptel request."
 
 #+end_src
 
+**** TODO [#B] Fork gptel, apply changes cleanly, submit PR
+
+However more iteration needed. I think the latter change breaks some things.
+
 *** Prompts
 
 **** Commit Messages
@@ -5216,6 +5220,8 @@ Define tool to run arbitrary emacs lisp. As powerful as it is dangerous. It will
 
 Agent to help me find things in my notes directory.
 
+**** Hermine
+
 #+begin_src emacs-lisp
   (gptel-make-preset 'hermine
     :description "An agent for helping me understand the contents of my org-mode directory."
@@ -5224,6 +5230,13 @@ Agent to help me find things in my notes directory.
     :system 'org-assistant
     :tools '("scan_personal_knowledgebase" "read_personal_knowledgebase_file"))
 #+end_src
+
+***** TODO [#B] Prompt too Complex
+Hermine rarely follows instructions. Does not generate link citations unless asked. Files not visited. Etc.
+
+Possible fix: Make this a function that just queries LLM for keywords, runs the search, iterates results, and submits individual results for relevance testing / summaries? In other words don't trust Hermine to iterate.
+
+**** Ludi
 
 Agent to help me answer general knowledge or research questions.
 
@@ -5235,7 +5248,15 @@ Agent to help me answer general knowledge or research questions.
     :system 'default
     :tools nil)
 #+end_src
+***** TODO [#C] Move from default prompt
+***** TODO [#D] Web-connected deep research version?
 
+Maybe make this one Knecht and the deep research version Ludi
+
+Need to figure out tooling for searching and retrieving web information, citations, etc
+
+
+**** Abraxas
 God-like agent that can do anything within Emacs or on my system because it can run literally any emacs lisp.
 
 #+begin_src emacs-lisp
@@ -5246,6 +5267,18 @@ God-like agent that can do anything within Emacs or on my system because it can 
     :system 'emacs-wizard
     :tools '("run_emacs_lisp"))
 #+end_src
+***** TODO [#C] Make init file an always available context for this agent
+
+**** Narcissus
+
+Coming soon..
+
+Coding agent
+***** TODO [#A] Implement
+***** TODO [#C] Tooling to access module/software documentation/upstream source code?
+Maybe one tool per platform? IE add ability to access QT or Numpy docs+source?
+Maybe just clone the upstream source for a temp dir for more efficient access?
+ReadTheDocs tool?
 
 * Monkey Patching
 
