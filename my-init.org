@@ -5198,6 +5198,60 @@ Tool to read org directory content.
      (my:read-file-as-string (concat my:org-file-tree-base-path "/" relative-filepath))))
 #+end_src
 
+**** Working with Files
+
+List directory contents
+
+#+begin_src emacs-lisp
+ (gptel-make-tool
+  :name "list_directory"
+  :description "List directory contents."
+  :category "file_io"
+  :confirm t
+  :args (list '(:name "path"
+                 :type "string"
+                 :description "Path to the directory."))
+  :function
+  (lambda (path)
+    (directory-files path nil nil t)))
+#+end_src
+
+Write text file.
+
+#+begin_src emacs-lisp
+  (gptel-make-tool
+   :name "write_file"
+   :description "Write a text file. Delete any and all existing content."
+   :category "file_io"
+   :confirm t
+   :args (list '(:name "path"
+                 :type "string"
+                 :description "Where to save the file.")
+               '(:name "content"
+                 :type "string"
+                 :description "Content to place into the file."))
+   :function
+   (lambda (path content)
+     (with-temp-file path
+       (insert content))))
+#+end_src
+
+Read a text file
+
+#+begin_src emacs-lisp
+  (gptel-make-tool
+   :name "read_file"
+   :description "Read a text file."
+   :category "file_io"
+   :confirm t
+   :args (list '(:name "path"
+                 :type "string"
+                 :description "Path to the file."))
+   :function
+   (lambda (path)
+     (my:read-file-as-string path)))
+#+end_src
+
 **** Arbitrary Code Execution
 
 Define tool to run arbitrary emacs lisp. As powerful as it is dangerous. It will always ask for confirmation.
@@ -5235,6 +5289,8 @@ Agent to help me find things in my notes directory.
 Hermine rarely follows instructions. Does not generate link citations unless asked. Files not visited. Etc.
 
 Possible fix: Make this a function that just queries LLM for keywords, runs the search, iterates results, and submits individual results for relevance testing / summaries? In other words don't trust Hermine to iterate.
+
+***** TODO [#C] Tools to capture information, add TODOs, etc
 
 **** Ludi
 
@@ -5279,6 +5335,11 @@ Coding agent
 Maybe one tool per platform? IE add ability to access QT or Numpy docs+source?
 Maybe just clone the upstream source for a temp dir for more efficient access?
 ReadTheDocs tool?
+***** TODO [#A] Tooling for file access
+
+ls-l but recursive, subtree? Params (root, depth, exclude-regex)? Lets LLM get more context in fewer calls
+
+Should it edit files directly (read path, write path functions) or only generate patch files that I apply interactively?
 
 * Monkey Patching
 
