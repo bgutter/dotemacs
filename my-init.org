@@ -5528,6 +5528,13 @@ Tweak =org-cycle= such that it has a fourth state -- subtree without drawers -- 
 
 ** EXWM
 
+En/disable EXWM support
+
+#+begin_src emacs-lisp
+  (defcustom my:use-exwm nil
+    "Whether or not to load EXWM")
+#+end_src
+
 Support for using EXWM (Emacs X-Window Manager). :) Though, I've
 switched to StumpWM for the time being.
 
@@ -5558,7 +5565,7 @@ switched to StumpWM for the time being.
 #+END_SRC
 
 #+begin_src emacs-lisp
-  (unless-on-windows
+  (when my:use-exwm
    (use-package exwm)
    (use-package exwm-config)
    (exwm-config-example))
