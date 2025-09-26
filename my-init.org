@@ -1565,7 +1565,7 @@ backends during experimentation.
   (general-define-key :keymaps 'ivy-minibuffer-map
                       "S-<return>" 'ivy-immediate-done)
 
-  (general-define-key :keymaps 'camcorder-moode-map
+  (general-define-key :keymaps 'camcorder-mode-map
                       "M-<print>" 'camcorder-stop)
 
   (general-define-key :keymaps '(query-replace-map multi-query-replace-map)
