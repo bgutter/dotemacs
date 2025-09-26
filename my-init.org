@@ -2440,9 +2440,6 @@ mirror on GitHub [[https://github.com/tobias/emacs.d/blob/master/lib/echo-area-b
     "Flash the some color in the echo area."
     (echo-area-flash "red" nil "*DING* "))
 
-  (defun ding ()
-    (echo-area-flash "hotpink"))
-
   (setq ring-bell-function 'echo-area-bell)
 #+END_SRC
 
