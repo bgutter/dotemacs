@@ -259,7 +259,14 @@ These just need to be required.
   (use-package ob-http)               ; Send HTTP requests in org-babel
   (use-package editorconfig)
   (use-package jsonrpc)
-  (use-package quelpa)
+
+  (use-package quelpa
+    :ensure)
+
+  (use-package quelpa-use-package
+    :demand
+    :config
+    (quelpa-use-package-activate-advice))
 
   (use-package gptel)                 ; Support for GPT conversation buffers & API calls
   (use-package gptel-magit
