@@ -3202,6 +3202,13 @@ Enable counsel and ivy modes.
   (ivy-mode)
 #+END_SRC
 
+Make counsel ignore certain files for completions
+
+#+begin_src emacs-lisp
+  (customize-set-variable 'counsel-find-file-ignore-regexp
+                          (concat (regexp-opt completion-ignored-extensions) "\\'"))
+#+end_src
+
 Hide the toolbar, menu bar, and scroll bars.
 
 #+BEGIN_SRC emacs-lisp
