@@ -3543,6 +3543,31 @@ Mode hooks
               (org-bullets-mode 1)))
 #+END_SRC
 
+Highlight #firstname-lastname tags -- wish this was an official org syntax
+
+#+begin_src elisp
+(defun my-org-add-font-lock-keywords ()
+  (font-lock-add-keywords nil
+    '(("#[a-zA-Z-]+" . font-lock-constant-face))))
+
+(add-hook 'org-mode-hook 'my-org-add-font-lock-keywords)
+#+end_src
+
+Make hash tags clickable
+
+#+begin_src elisp
+  (defun my-org-ctrl-c-ctrl-c ()
+    (if (org-in-regexp "#[a-zA-Z-]+")
+        (progn
+          (message "C-c C-c on: %s" (match-string 0))
+          (ag (match-string 0) my:org-file-tree-base-path)
+          t)  ; Indicate that the action was handled
+      nil)) ; Let Org handle other cases
+
+  (add-hook 'org-ctrl-c-ctrl-c-final-hook 'my-org-ctrl-c-ctrl-c)
+#+end_src
+
+
 If this is a journal or concept file in my org files directory, rename
 the buffer using some special rules.
 - journal.org in journal dir gets renamed like "journal [2024-1-12]"
