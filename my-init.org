@@ -3561,6 +3561,140 @@ Make hash tags clickable
   (add-hook 'org-ctrl-c-ctrl-c-final-hook 'my-org-ctrl-c-ctrl-c)
 #+end_src
 
+Custom results buffer for hashtag matches. AI slop sorry.
+
+#+begin_src elisp
+  (defun org-get-heading-content ()
+    "Get content of current org heading excluding subheadings."
+    (interactive)
+    (let (start end content)
+      (setq start (save-excursion
+                    (org-back-to-heading)
+                    (forward-line)
+                    (point)))
+      (setq end (save-excursion
+                  (org-end-of-subtree t)
+                  (point)))
+      (setq content (buffer-substring-no-properties start end))
+      (with-temp-buffer
+        (insert content)
+        (goto-char (point-min))
+        (while (re-search-forward org-heading-regexp nil t)
+          (replace-match ""))
+        (buffer-string))))
+
+  (defun is-before-first-headline ()
+    "Check if point is before the first headline."
+    (interactive)
+    (let ((prev-point (point)))
+      (save-excursion
+        (goto-char (point-min))
+        (not (re-search-forward org-heading-regexp prev-point t)))))
+
+  (defun get-current-headline ()
+    (save-excursion
+      (org-back-to-heading t)
+      (org-element-property :raw-value (org-element-at-point))))
+  (defun my/org-next-level-2-heading ()
+    (interactive)
+    (outline-next-heading)
+    (while (and (not (eobp))
+                (not (looking-at "^\\*\\{2\\} ")))
+      (outline-next-heading)))
+  (defun goto-or-create-toplevel-headline (headline-name)
+    "Go to top-level headline with name HEADLINE-NAME or create it if not found."
+    (interactive "sHeadline: ")
+    (goto-char (point-min))
+    (if (re-search-forward (concat "^\\* " headline-name) nil t)
+        (goto-char (match-end 0))
+      ;; If not found, create at the end of the buffer
+      (goto-char (point-max))
+      (insert "\n* " headline-name "\n")))
+
+  (defun my-search-hash-tag ()
+    (interactive)
+    (when (org-in-regexp "#[a-zA-Z-]+")
+      (let* ((tag (substring (match-string 0) 1))
+             (search-str (replace-regexp-in-string "-" "[- ]" tag))
+             (ag-command (format "ag --nocolor --nogroup --line-number --column -- '%s' %s" search-str my:org-file-tree-base-path))
+             (output-buffer (generate-new-buffer "*Org Hash Tag Results*"))
+             (results-buffer (get-buffer-create "*Org Hashtag Matches*")))
+        ;; Run ag and capture output
+        (shell-command ag-command output-buffer)
+        ;; Process output
+        (with-current-buffer results-buffer
+          (insert "#+TITLE: Hash Tag Search Results")
+          (org-mode))
+        (with-current-buffer output-buffer
+          (goto-char (point-min))
+          (while (re-search-forward "^\\(.*\\):\\([0-9]+\\):\\([0-9]+\\):" nil t)
+            (let ((file (match-string 1))
+                  (line (string-to-number (match-string 2)))
+                  (char (string-to-number (match-string 3))))
+              ;; Visit the file and get the heading
+              (with-current-buffer (find-file-noselect file)
+                (save-excursion
+                  (goto-char (point-min))
+                  (forward-line (1- line))
+                  (forward-char char)
+                  (if (not (is-before-first-headline))
+                      (let ((heading-content (org-get-heading-content))
+                            (headline (get-current-headline)))
+                        (with-current-buffer results-buffer
+                          (goto-or-create-toplevel-headline file)
+                          (insert "\n** " headline "\n" ":PROPERTIES:\n:SOURCE: " file  "\n:LINE: " (format "%d" line) "\n:END:\n" heading-content)))))))))
+        (with-current-buffer results-buffer
+          (read-only-mode 1)
+          (goto-char (point-min))
+          (org-overview)
+          (org-hash-tag-results-mode))
+        (kill-buffer output-buffer)
+        (display-buffer results-buffer))))
+  (defun my/org-prev-level-2-heading ()
+    (interactive)
+    (outline-previous-heading)
+    (while (and (not (bobp))
+                (not (looking-at "^\\*\\{2\\} ")))
+      (outline-previous-heading)))
+  (makunbound 'org-hash-tag-results-mode-map)
+  (defvar org-hash-tag-results-mode-map
+    (let ((map (make-sparse-keymap)))
+      (define-key map (kbd "q") (lambda ()
+                                  (interactive)
+                                  (kill-buffer (current-buffer))))
+      (define-key map (kbd "n") (lambda ()
+                                  (interactive)
+                                  (org-fold-hide-entry)
+                                  (my/org-next-level-2-heading)
+                                  (org-fold-show-entry)))
+      (define-key map (kbd "p") (lambda ()
+                                  (interactive)
+                                  (org-fold-hide-entry)
+                                  (my/org-prev-level-2-heading)
+                                  (org-fold-show-entry)))
+      (define-key map (kbd "RET") (lambda ()
+                                    (interactive)
+                                    (let ((file (org-entry-get nil "SOURCE"))
+                                          (line (org-entry-get nil "LINE")))
+                                      (message "Going to %s in %s" line file)
+                                      (find-file-other-window file)
+                                      (goto-line (string-to-number line))
+                                      (recenter)
+                                      (pulse-momentary-highlight-one-line (point)))))
+      (define-key map (kbd "C-c C-o") (lambda () (interactive)
+                                        (let ((file (car (split-string (thing-at-point 'line) ":"))))
+                                          (find-file file))))
+      map)
+    "Keymap for `my-org-minor-mode'.")
+
+  (define-minor-mode org-hash-tag-results-mode
+    "A minor mode for custom Org buffer keybindings."
+    :lighter " org-hash-tag-results"
+    :keymap org-hash-tag-results-mode-map)
+
+  (setq org-ctrl-c-ctrl-c-final-hook nil)
+  (add-hook 'org-ctrl-c-ctrl-c-final-hook 'my-search-hash-tag)
+#+end_src
 
 If this is a journal or concept file in my org files directory, rename
 the buffer using some special rules.
