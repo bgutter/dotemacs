@@ -1435,7 +1435,7 @@ backends during experimentation.
    ;; Workspaces (virtual desktops/saved window configs/etc)
    "S-<left>"    'tab-bar-switch-to-prev-tab
    "S-<right>"   'tab-bar-switch-to-next-tab
-   "S-<up>"      'tab-bar-new-tab
+   "S-<up>"      'my:new-tab
    "C-S-<up>"    'tab-bar-undo-close-tab
    "S-<down>"    'tab-bar-close-tab
    "C-S-<left>"  (ilambda () (tab-bar-move-tab -1))
@@ -1822,6 +1822,15 @@ General functions.
     "kill the current buffer."
     (interactive)
     (kill-buffer (current-buffer)))
+
+  (defun my:new-tab (make-sole-window)
+    "Make a new tab, cloning current tab. With prefix arg, make current window the sole window in new tab."
+    (interactive "P")
+    (let ((current-buffer (current-buffer)))
+      (tab-bar-new-tab)
+      (when make-sole-window
+          (delete-other-windows)
+          (switch-to-buffer current-buffer))))
 
   (defun my:keyboard-escape-quit ()
     "Just silence the bell"
