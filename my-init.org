@@ -3436,8 +3436,6 @@ Use employer's preferred C format...
 #+BEGIN_SRC emacs-lisp
   (add-hook 'ruby-mode-hook
             (lambda ()
-              (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
-              (local-set-key (kbd "TAB")   'generic-smart-tab-key)
               (local-set-key (kbd "C-t") 'indent-for-tab-command)))
 #+END_SRC
 
@@ -3446,8 +3444,6 @@ Use employer's preferred C format...
 #+BEGIN_SRC emacs-lisp
   (add-hook 'scheme-mode-hook
             (lambda ()
-              (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
-              (local-set-key (kbd "TAB")   'generic-smart-tab-key)
               (local-set-key (kbd "C-t")   'indent-for-tab-command)))
 #+END_SRC
 
@@ -3456,8 +3452,6 @@ Use employer's preferred C format...
 #+BEGIN_SRC emacs-lisp
   (add-hook 'emacs-lisp-mode-hook
             (lambda ()
-              (local-set-key (kbd "<tab>") 'generic-smart-tab-key)
-              (local-set-key (kbd "TAB")   'generic-smart-tab-key)
               (local-set-key (kbd "C-t")   'indent-for-tab-command)))
 #+END_SRC
 
