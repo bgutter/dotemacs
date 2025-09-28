@@ -3595,12 +3595,14 @@ Custom results buffer for hashtag matches. AI slop sorry.
     (save-excursion
       (org-back-to-heading t)
       (org-element-property :raw-value (org-element-at-point))))
+
   (defun my/org-next-level-2-heading ()
     (interactive)
     (outline-next-heading)
     (while (and (not (eobp))
                 (not (looking-at "^\\*\\{2\\} ")))
       (outline-next-heading)))
+
   (defun goto-or-create-toplevel-headline (headline-name)
     "Go to top-level headline with name HEADLINE-NAME or create it if not found."
     (interactive "sHeadline: ")
@@ -3614,48 +3616,53 @@ Custom results buffer for hashtag matches. AI slop sorry.
   (defun my-search-hash-tag ()
     (interactive)
     (when (org-in-regexp "#[a-zA-Z-]+")
-      (let* ((tag (substring (match-string 0) 1))
-             (search-str (replace-regexp-in-string "-" "[- ]" tag))
-             (ag-command (format "ag --nocolor --nogroup --line-number --column -- '%s' %s" search-str my:org-file-tree-base-path))
-             (output-buffer (generate-new-buffer "*Org Hash Tag Results*"))
-             (results-buffer (get-buffer-create "*Org Hashtag Matches*")))
-        ;; Run ag and capture output
-        (shell-command ag-command output-buffer)
-        ;; Process output
-        (with-current-buffer results-buffer
-          (insert "#+TITLE: Hash Tag Search Results")
-          (org-mode))
-        (with-current-buffer output-buffer
-          (goto-char (point-min))
-          (while (re-search-forward "^\\(.*\\):\\([0-9]+\\):\\([0-9]+\\):" nil t)
-            (let ((file (match-string 1))
-                  (line (string-to-number (match-string 2)))
-                  (char (string-to-number (match-string 3))))
-              ;; Visit the file and get the heading
-              (with-current-buffer (find-file-noselect file)
-                (save-excursion
-                  (goto-char (point-min))
-                  (forward-line (1- line))
-                  (forward-char char)
-                  (if (not (is-before-first-headline))
-                      (let ((heading-content (org-get-heading-content))
-                            (headline (get-current-headline)))
-                        (with-current-buffer results-buffer
-                          (goto-or-create-toplevel-headline file)
-                          (insert "\n** " headline "\n" ":PROPERTIES:\n:SOURCE: " file  "\n:LINE: " (format "%d" line) "\n:END:\n" heading-content)))))))))
-        (with-current-buffer results-buffer
-          (read-only-mode 1)
-          (goto-char (point-min))
-          (org-overview)
-          (org-hash-tag-results-mode))
-        (kill-buffer output-buffer)
-        (display-buffer results-buffer))))
+      (let (results-buf)
+        (save-window-excursion
+          (let* ((tag (substring (match-string 0) 1))
+               (search-str (replace-regexp-in-string "-" "[- ]" tag))
+               (ag-command (format "ag --nocolor --nogroup --line-number --column --org -- '%s' %s" search-str my:org-file-tree-base-path))
+               (output-buffer (generate-new-buffer "*Org Hash Tag Results*"))
+               (results-buffer (get-buffer-create (generate-new-buffer-name "*Org Hashtag Matches*"))))
+          ;; Run ag and capture output
+          (shell-command ag-command output-buffer)
+          ;; Process output
+          (with-current-buffer results-buffer
+            (insert "#+TITLE: Hash Tag Search Results")
+            (org-mode))
+          (with-current-buffer output-buffer
+            (goto-char (point-min))
+            (while (re-search-forward "^\\(.*\\):\\([0-9]+\\):\\([0-9]+\\):" nil t)
+              (let ((file (match-string 1))
+                    (line (string-to-number (match-string 2)))
+                    (char (string-to-number (match-string 3))))
+                ;; Visit the file and get the heading
+                (with-current-buffer (find-file-noselect file)
+                  (save-excursion
+                    (goto-char (point-min))
+                    (forward-line (1- line))
+                    (forward-char char)
+                    (if (not (is-before-first-headline))
+                        (let ((heading-content (org-get-heading-content))
+                              (headline (get-current-headline)))
+                          (with-current-buffer results-buffer
+                            (goto-or-create-toplevel-headline file)
+                            (insert "\n** " headline "\n" ":PROPERTIES:\n:SOURCE: " file  "\n:LINE: " (format "%d" line) "\n:END:\n" heading-content)))))))))
+          (with-current-buffer results-buffer
+            (read-only-mode 1)
+            (goto-char (point-min))
+            (org-overview)
+            (org-hash-tag-results-mode))
+          (kill-buffer output-buffer)
+          (setq results-buf results-buffer)))
+        (switch-to-buffer-other-window results-buf))))
+
   (defun my/org-prev-level-2-heading ()
     (interactive)
     (outline-previous-heading)
     (while (and (not (bobp))
                 (not (looking-at "^\\*\\{2\\} ")))
       (outline-previous-heading)))
+
   (makunbound 'org-hash-tag-results-mode-map)
   (defvar org-hash-tag-results-mode-map
     (let ((map (make-sparse-keymap)))
@@ -3676,14 +3683,11 @@ Custom results buffer for hashtag matches. AI slop sorry.
                                     (interactive)
                                     (let ((file (org-entry-get nil "SOURCE"))
                                           (line (org-entry-get nil "LINE")))
-                                      (message "Going to %s in %s" line file)
-                                      (find-file-other-window file)
-                                      (goto-line (string-to-number line))
-                                      (recenter)
-                                      (pulse-momentary-highlight-one-line (point)))))
-      (define-key map (kbd "C-c C-o") (lambda () (interactive)
-                                        (let ((file (car (split-string (thing-at-point 'line) ":"))))
-                                          (find-file file))))
+                                      (let ((buf (find-file-noselect file)))
+                                        (display-buffer buf '(display-buffer-pop-up-window))
+                                        (with-current-buffer buf
+                                          (goto-line (string-to-number line))
+                                          (pulse-momentary-highlight-one-line (point)))))))
       map)
     "Keymap for `my-org-minor-mode'.")
 
