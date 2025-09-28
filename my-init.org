@@ -3613,48 +3613,54 @@ Custom results buffer for hashtag matches. AI slop sorry.
       (goto-char (point-max))
       (insert "\n* " headline-name "\n")))
 
-  (defun my-search-hash-tag ()
+  (defun my:org-try-search-hash-tag-under-point ()
     (interactive)
     (when (org-in-regexp "#[a-zA-Z-]+")
-      (let (results-buf)
-        (save-window-excursion
-          (let* ((tag (substring (match-string 0) 1))
-               (search-str (replace-regexp-in-string "-" "[- ]" tag))
-               (ag-command (format "ag --nocolor --nogroup --line-number --column --org -- '%s' %s" search-str my:org-file-tree-base-path))
-               (output-buffer (generate-new-buffer "*Org Hash Tag Results*"))
-               (results-buffer (get-buffer-create (generate-new-buffer-name "*Org Hashtag Matches*"))))
-          ;; Run ag and capture output
-          (shell-command ag-command output-buffer)
-          ;; Process output
-          (with-current-buffer results-buffer
-            (insert "#+TITLE: Hash Tag Search Results")
-            (org-mode))
-          (with-current-buffer output-buffer
-            (goto-char (point-min))
-            (while (re-search-forward "^\\(.*\\):\\([0-9]+\\):\\([0-9]+\\):" nil t)
-              (let ((file (match-string 1))
-                    (line (string-to-number (match-string 2)))
-                    (char (string-to-number (match-string 3))))
-                ;; Visit the file and get the heading
-                (with-current-buffer (find-file-noselect file)
-                  (save-excursion
-                    (goto-char (point-min))
-                    (forward-line (1- line))
-                    (forward-char char)
-                    (if (not (is-before-first-headline))
-                        (let ((heading-content (org-get-heading-content))
-                              (headline (get-current-headline)))
-                          (with-current-buffer results-buffer
-                            (goto-or-create-toplevel-headline file)
-                            (insert "\n** " headline "\n" ":PROPERTIES:\n:SOURCE: " file  "\n:LINE: " (format "%d" line) "\n:END:\n" heading-content)))))))))
-          (with-current-buffer results-buffer
-            (read-only-mode 1)
-            (goto-char (point-min))
-            (org-overview)
-            (org-hash-tag-results-mode))
-          (kill-buffer output-buffer)
-          (setq results-buf results-buffer)))
-        (switch-to-buffer-other-window results-buf))))
+      (let* ((tag (substring (match-string 0) 1))
+             (search-str (replace-regexp-in-string "-" "[- ]" tag)))
+        (my:org-search-ag-regex search-str))))
+
+  (defun my:org-search-ag-regex (regex)
+    (interactive "sEnter ag search regex: ")
+    (let (results-buf)
+      (save-window-excursion
+        (let ((ag-command (format "ag --nocolor --nogroup --line-number --column --org -- '%s' %s"
+                                 regex
+                                 my:org-file-tree-base-path))
+          (output-buffer (generate-new-buffer "*Org Hash Tag Results*"))
+          (results-buffer (get-buffer-create (generate-new-buffer-name "*Org Hashtag Matches*"))))
+        ;; Run ag and capture output
+        (shell-command ag-command output-buffer)
+        ;; Process output
+        (with-current-buffer results-buffer
+          (insert "#+TITLE: Hash Tag Search Results")
+          (org-mode))
+        (with-current-buffer output-buffer
+          (goto-char (point-min))
+          (while (re-search-forward "^\\(.*\\):\\([0-9]+\\):\\([0-9]+\\):" nil t)
+            (let ((file (match-string 1))
+                  (line (string-to-number (match-string 2)))
+                  (char (string-to-number (match-string 3))))
+              ;; Visit the file and get the heading
+              (with-current-buffer (find-file-noselect file)
+                (save-excursion
+                  (goto-char (point-min))
+                  (forward-line (1- line))
+                  (forward-char char)
+                  (if (not (is-before-first-headline))
+                      (let ((heading-content (org-get-heading-content))
+                            (headline (get-current-headline)))
+                        (with-current-buffer results-buffer
+                          (goto-or-create-toplevel-headline file)
+                          (insert "\n** " headline "\n" ":PROPERTIES:\n:SOURCE: " file  "\n:LINE: " (format "%d" line) "\n:END:\n" heading-content)))))))))
+        (with-current-buffer results-buffer
+          (read-only-mode 1)
+          (goto-char (point-min))
+          (org-overview)
+          (org-hash-tag-results-mode))
+        (kill-buffer output-buffer)
+        (setq results-buf results-buffer)))
+    (switch-to-buffer-other-window results-buf)))
 
   (defun my/org-prev-level-2-heading ()
     (interactive)
@@ -3697,7 +3703,7 @@ Custom results buffer for hashtag matches. AI slop sorry.
     :keymap org-hash-tag-results-mode-map)
 
   (setq org-ctrl-c-ctrl-c-final-hook nil)
-  (add-hook 'org-ctrl-c-ctrl-c-final-hook 'my-search-hash-tag)
+  (add-hook 'org-ctrl-c-ctrl-c-final-hook 'my:org-try-search-hash-tag-under-point)
 #+end_src
 
 If this is a journal or concept file in my org files directory, rename
