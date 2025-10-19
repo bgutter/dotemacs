@@ -4342,13 +4342,14 @@ agenda file list directly rather than using an org-roam database.
       (prin1 org-agenda-files (current-buffer))))
 
   (defun my:current-buffer-has-open-tasks ()
-    "Test if the current buffer has open TODO items"
+    "Test if the current buffer has open TODO items, ignoring those with tags NOAGENDA or ARCHIVE."
     (org-element-map
         (org-element-parse-buffer 'headline)
         'headline
       (lambda (h)
-        (eq (org-element-property :todo-type h)
-            'todo))
+        (and (eq (org-element-property :todo-type h) 'todo)
+             (not (or (member "NOAGENDA" (org-element-property :tags h))
+                      (member "ARCHIVE" (org-element-property :tags h))))))
       nil 'first-match))
 
   (defun my:org-add-or-remove-current-buffer-agenda-index ()
