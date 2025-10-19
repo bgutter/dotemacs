@@ -179,6 +179,7 @@ These just need to be required.
   (require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
   (require 'uniquify)              ; rename buffers of same name intelligently
   (require 'org-inlinetask)        ; support for tasks which are not structural to the document's format
+  (require 'org-notmuch)           ; linking to individual emails from notmuch
 #+end_src
 
 *** Packages from Servers
