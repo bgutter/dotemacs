@@ -4303,18 +4303,77 @@ Make sure org-attach places files in the org-attachments directory
   (customize-set-variable 'org-attach-id-dir (concat my:org-file-tree-base-path "/attachments/"))
 #+end_src
 
-Add function to rebuild org file list. Call it once.
+Some logic to maintain =org-agenda-files= such that it contains only
+files with open tasks. This speeds up agenda.
+
+When any org file is saved, it is added or removed from
+=org-agenda-files= as appropriate. The value of this variable is
+written to an *.el file when the variable is modified, and restored
+from that file at Emacs startup.
+
+I actually borrowed this idea from an org-roam hack, documented
+[[https://magnus.therning.org/2021-03-14-keeping-todo-items-in-org-roam.html][here]]. The function to check for open tasks in the current buffer was
+taken verbatim from that blog. My only change is that I'm caching the
+agenda file list directly rather than using an org-roam database.
 
 #+BEGIN_SRC emacs-lisp
-  (defun my-org-update-agenda-index()
+  (defun my:org-read-agenda-index ()
+    "Read cached value for `org-agenda-files'"
     (interactive)
-    (setq org-agenda-files
-          (seq-filter
-           (lambda (x) (not (my:fname-seafile-conflict-p x)))
-           (directory-files-recursively my:org-file-tree-base-path ".*\\.org$"))))
-  (when my:org-file-tree-base-path
-    (my-org-update-agenda-index))
+    (with-temp-buffer
+      (erase-buffer)
+      (insert-file-contents (concat my:org-file-tree-base-path "/org-agenda-files.cache.el"))
+      (setq org-agenda-files (read (current-buffer)))))
+
+  (defun my:org-write-agenda-index ()
+    "Write `org-agenda-files' to our file cache."
+    (interactive)
+    (with-temp-file (concat my:org-file-tree-base-path "/org-agenda-files.cache.el")
+      (prin1 org-agenda-files (current-buffer))))
+
+  (defun my:current-buffer-has-open-tasks ()
+    "Test if the current buffer has open TODO items"
+    (org-element-map
+        (org-element-parse-buffer 'headline)
+        'headline
+      (lambda (h)
+        (eq (org-element-property :todo-type h)
+            'todo))
+      nil 'first-match))
+
+  (defun my:org-add-or-remove-current-buffer-agenda-index ()
+    "Add or remove this file from `org-agenda-files' depending on whether it has any open tasks. Update cache."
+    (if (my:current-buffer-has-open-tasks)
+        (progn
+          (add-to-list 'org-agenda-files (buffer-file-name))
+          (my:org-write-agenda-index))
+      (progn
+        (setq org-agenda-files (remove (buffer-file-name) org-agenda-files))
+        (my:org-write-agenda-index))))
+
+  (defun my:org-fully-rebuild-org-agenda-files ()
+    "If cache file gets deleted, fully rebuild it."
+    (interactive)
+    (dolist (file (directory-files-recursively my:org-file-tree-base-path ".*\\.org$"))
+      (with-current-buffer (find-file-noselect file)
+        (my:org-add-or-remove-current-buffer-agenda-index))))
 #+END_SRC
+
+Install and run code from previous block
+
+#+begin_src emacs-lisp
+  (when my:org-file-tree-base-path
+
+    (let ((agenda-files-cache-path (concat my:org-file-tree-base-path "/org-agenda-files.cache.el")))
+      (unless (file-exists-p agenda-files-cache-path)
+        (write-region "nil" nil agenda-files-cache-path)))
+
+    (my:org-read-agenda-index))
+
+    (add-hook 'org-mode-hook
+              (lambda ()
+                (add-hook 'before-save-hook 'my:org-add-or-remove-current-buffer-agenda-index nil t)))
+#+end_src
 
 Add function to interactively select an existing concept file.
 
@@ -4404,8 +4463,7 @@ Functions for creating and opening daily journal pages.
               (let ((my:journal-expansion-time time))
                 (yas-expand-snippet (yas-lookup-snippet "Journal Page Template" 'org-mode)))
               (save-buffer)
-              (kill-buffer)
-              (my-org-update-agenda-index))))
+              (kill-buffer))))
         path)))
 
   (defun my-org-journal-open-today ()
