@@ -4024,7 +4024,9 @@ I want to be able to have multiple agenda windows.
   (customize-set-variable 'org-agenda-sticky t)
 #+END_SRC
 
-Add custom agenda command, use some awesome code from [[https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html][this blog]] and [[https://stackoverflow.com/questions/10074016/org-mode-filter-on-tag-in-agenda-view/33444799#33444799][this StackOverflow user]].
+Add custom agenda command.
+
+First, utility functions from [[https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html][this blog]] and [[https://stackoverflow.com/questions/10074016/org-mode-filter-on-tag-in-agenda-view/33444799#33444799][this StackOverflow user]].
 
 #+BEGIN_SRC emacs-lisp
   (defun air-org-skip-subtree-if-priority (priority)
@@ -4087,33 +4089,38 @@ Add custom agenda command, use some awesome code from [[https://blog.aaronbieber
         (if (member tag (org-get-tags-at current-headline))
             next-headline
           nil))))
+#+END_SRC
 
+Now the actual agenda templates.
+
+#+begin_src emacs-lisp
   (setq org-agenda-custom-commands
         `(("x" "Combined Task List"
            (
+            ;; Blocked tasks
+            (org-ql-block '(and (todo "WAIT")
+                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
+                          ((org-ql-block-header "!!! Blocked")))
 
-            (todo "WAIT"
-                  ((org-agenda-skip-function '(zin/org-agenda-skip-tag "NOAGENDA"))
-                   (org-agenda-overriding-header "Blocked Tasks:")))
+            ;; My task list
+            (org-ql-block '(and (todo "TODO" "NEXT")
+                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
+                          ((org-ql-block-header "Open Tasks")))
 
-            (alltodo ""
-                     ((org-agenda-skip-function '(or (org-agenda-skip-entry-if 'todo '("WAIT" "ASSIGNED" "BACKLOG"))
-                                                     (zin/org-agenda-skip-tag "NOAGENDA")
-                                                     (zin/org-agenda-skip-tag "UNFILED")))
-                                                     ;;(org-agenda-skip-if nil '(scheduled deadline))))
-                      (org-agenda-overriding-header "Current and Unscheduled Tasks:")))
+            ;; Delegated tasks to manage
+            (org-ql-block '(and (todo "ASSIGNED")
+                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
+                          ((org-ql-block-header "Delegated Tasks")))
 
-            (todo "ASSIGNED"
-                  ((org-agenda-skip-function '(zin/org-agenda-skip-tag "NOAGENDA"))
-                   (org-agenda-overriding-header "Delegated Tasks:")))
+            ;; Backlog
+            (org-ql-block '(and (todo "BACKLOG")
+                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
+                          ((org-ql-block-header "Backlog")))
 
-            (todo "BACKLOG"
-                  ((org-agenda-skip-function '(zin/org-agenda-skip-tag "NOAGENDA"))
-                   (org-agenda-overriding-header "Tasks To Delegate:")))
-
-            (tags "UNFILED"
-                  ((org-agenda-overriding-header "Unfiled Captures:")))))))
-#+END_SRC
+            ;; (tags "UNFILED"
+                  ;; ((org-agenda-overriding-header "Unfiled Captures:")))
+            ))))
+#+end_src
 
 Don't show blocked tasks (ORDERED property set to t)
 
