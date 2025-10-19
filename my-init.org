@@ -4346,7 +4346,9 @@ agenda file list directly rather than using an org-roam database.
 
   (defun my:org-add-or-remove-current-buffer-agenda-index ()
     "Add or remove this file from `org-agenda-files' depending on whether it has any open tasks. Update cache."
-    (if (my:current-buffer-has-open-tasks)
+    (if (and
+         (string-prefix-p my:org-file-tree-base-path (buffer-file-name))
+         (my:current-buffer-has-open-tasks))
         (progn
           (add-to-list 'org-agenda-files (buffer-file-name))
           (my:org-write-agenda-index))
