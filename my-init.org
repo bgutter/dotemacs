@@ -4322,9 +4322,9 @@ written to an *.el file when the variable is modified, and restored
 from that file at Emacs startup.
 
 I actually borrowed this idea from an org-roam hack, documented
-[[https://magnus.therning.org/2021-03-14-keeping-todo-items-in-org-roam.html][here]]. The function to check for open tasks in the current buffer was
-taken verbatim from that blog. My only change is that I'm caching the
-agenda file list directly rather than using an org-roam database.
+[[https://magnus.therning.org/2021-03-14-keeping-todo-items-in-org-roam.html][here]]. My only change is that I'm caching the agenda file list directly
+rather than using an org-roam database, and, using org-ql in place of
+org-element-map.
 
 #+BEGIN_SRC emacs-lisp
   (defun my:org-read-agenda-index ()
@@ -4343,14 +4343,12 @@ agenda file list directly rather than using an org-roam database.
 
   (defun my:current-buffer-has-open-tasks ()
     "Test if the current buffer has open TODO items, ignoring those with tags NOAGENDA or ARCHIVE."
-    (org-element-map
-        (org-element-parse-buffer 'headline)
-        'headline
-      (lambda (h)
-        (and (eq (org-element-property :todo-type h) 'todo)
-             (not (or (member "NOAGENDA" (org-element-property :tags h))
-                      (member "ARCHIVE" (org-element-property :tags h))))))
-      nil 'first-match))
+    (let ((matches (org-ql-select (list (buffer-file-name))
+                     '(and
+                       (todo "TODO")
+                       (not (tags "NOAGENDA"))
+                       (not (tags "ARCHIVE"))))))
+      (not (null matches))))
 
   (defun my:org-add-or-remove-current-buffer-agenda-index ()
     "Add or remove this file from `org-agenda-files' depending on whether it has any open tasks. Update cache."
