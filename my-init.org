@@ -1985,7 +1985,7 @@ Working with Seafile conflicts.
   (defun my:org-merge-conflict ()
     "Interactively merge "
     (interactive)
-    (my:seafile-merge-conflicts my:org-file-tree-base-path))
+    (my:seafile-merge-conflicts org-directory))
 #+END_SRC
 
 ** Screenshots & Attachments
@@ -3558,7 +3558,7 @@ Make hash tags clickable
     (if (org-in-regexp "#[a-zA-Z-]+")
         (let ((search-str (replace-regexp-in-string "-" "[- ]" (substring (match-string 0) 1))))
           (message "C-c C-c on: %s" search-str)
-          (ag-regexp search-str my:org-file-tree-base-path)
+          (ag-regexp search-str org-directory)
           t)  ; Indicate that the action was handled
       nil)) ; Let Org handle other cases
 
@@ -3630,7 +3630,7 @@ Custom results buffer for hashtag matches. AI slop sorry.
       (save-window-excursion
         (let ((ag-command (format "ag --nocolor --nogroup --line-number --column --org -- '%s' %s"
                                  regex
-                                 my:org-file-tree-base-path))
+                                 org-directory))
           (output-buffer (generate-new-buffer "*Org Hash Tag Results*"))
           (results-buffer (get-buffer-create (generate-new-buffer-name "*Org Hashtag Matches*"))))
         ;; Run ag and capture output
@@ -3725,11 +3725,11 @@ the buffer using some special rules.
 
   (defun my:rename-org-buffer-name-in-org-dir-as-needed ()
     (let ((filename (buffer-file-name)))
-      (if (and filename my:org-file-tree-base-path)
+      (if (and filename org-directory)
           (cond
 
            ;; Handle journal files
-           ((file-in-directory-p filename (concat my:org-file-tree-base-path "/journal/"))
+           ((file-in-directory-p filename (concat org-directory "/journal/"))
             (let ((date-fields (my:extract-date-from-journal-path filename)))
               (rename-buffer (concat "journal ["
                                      (alist-get 'year date-fields) "-"
@@ -3739,9 +3739,9 @@ the buffer using some special rules.
                              t)))
 
            ;; Handle concept files
-           ((file-in-directory-p filename (concat my:org-file-tree-base-path "/concepts/"))
+           ((file-in-directory-p filename (concat org-directory "/concepts/"))
             (let*
-                ((concept-relpath (file-relative-name filename (concat my:org-file-tree-base-path "/concepts/")))
+                ((concept-relpath (file-relative-name filename (concat org-directory "/concepts/")))
                  (concept-clean-relpath (replace-regexp-in-string "/concept\\.org\\'" "" concept-relpath)))
               (rename-buffer (concat "concept ["
                                      concept-clean-relpath
@@ -4283,28 +4283,27 @@ Customize the habit display a bit.
 Defcustoms for various personal definitions.
 
 #+BEGIN_SRC emacs-lisp
-  (defconst my:org-file-tree-base-path
+  (customize-set-variable 'org-directory
     (expand-file-name "org"
                       (if (on-windows-p)
                           (getenv "USERPROFILE")
-                        "/sync/documents"))
-    "Base directory of my org directory structure.")
+                        "/sync/documents")))
   (defun my:org-scraps-path ()
-    (concat my:org-file-tree-base-path "/scraps/scraps.org"))
+    (concat org-directory "/scraps/scraps.org"))
   (defun my:org-dream-journal-path ()
-    (concat my:org-file-tree-base-path "/concepts/dreams/journal/concept.org"))
+    (concat org-directory "/concepts/dreams/journal/concept.org"))
   (defun my:incomprehensible-voice-notes-path ()
-    (concat my:org-file-tree-base-path "/voice-notes/incomprehensible.org"))
+    (concat org-directory "/voice-notes/incomprehensible.org"))
   (defun my:unfiled-notes-path ()
-    (concat my:org-file-tree-base-path "/voice-notes/unfiled-notes.org"))
+    (concat org-directory "/voice-notes/unfiled-notes.org"))
   (defun my:generate-gpt-conversation-file-name ()
-    (concat my:org-file-tree-base-path "/llm-history/" (format-time-string "%Y/%m/%d/%I-%M-%S-%p") "/chat.org"))
+    (concat org-directory "/llm-history/" (format-time-string "%Y/%m/%d/%I-%M-%S-%p") "/chat.org"))
 #+END_SRC
 
 Make sure org-attach places files in the org-attachments directory
 
 #+begin_src emacs-lisp
-  (customize-set-variable 'org-attach-id-dir (concat my:org-file-tree-base-path "/attachments/"))
+  (customize-set-variable 'org-attach-id-dir (concat org-directory "/attachments/"))
 #+end_src
 
 Some logic to maintain =org-agenda-files= such that it contains only
@@ -4326,13 +4325,13 @@ agenda file list directly rather than using an org-roam database.
     (interactive)
     (with-temp-buffer
       (erase-buffer)
-      (insert-file-contents (concat my:org-file-tree-base-path "/org-agenda-files.cache.el"))
+      (insert-file-contents (concat org-directory "/org-agenda-files.cache.el"))
       (setq org-agenda-files (read (current-buffer)))))
 
   (defun my:org-write-agenda-index ()
     "Write `org-agenda-files' to our file cache."
     (interactive)
-    (with-temp-file (concat my:org-file-tree-base-path "/org-agenda-files.cache.el")
+    (with-temp-file (concat org-directory "/org-agenda-files.cache.el")
       (prin1 org-agenda-files (current-buffer))))
 
   (defun my:current-buffer-has-open-tasks ()
@@ -4348,7 +4347,7 @@ agenda file list directly rather than using an org-roam database.
   (defun my:org-add-or-remove-current-buffer-agenda-index ()
     "Add or remove this file from `org-agenda-files' depending on whether it has any open tasks. Update cache."
     (if (and
-         (string-prefix-p my:org-file-tree-base-path (buffer-file-name))
+         (string-prefix-p org-directory (buffer-file-name))
          (my:current-buffer-has-open-tasks))
         (progn
           (add-to-list 'org-agenda-files (buffer-file-name))
@@ -4360,7 +4359,7 @@ agenda file list directly rather than using an org-roam database.
   (defun my:org-fully-rebuild-org-agenda-files ()
     "If cache file gets deleted, fully rebuild it."
     (interactive)
-    (dolist (file (directory-files-recursively my:org-file-tree-base-path ".*\\.org$"))
+    (dolist (file (directory-files-recursively org-directory ".*\\.org$"))
       (with-current-buffer (find-file-noselect file)
         (my:org-add-or-remove-current-buffer-agenda-index))))
 #+END_SRC
@@ -4368,9 +4367,9 @@ agenda file list directly rather than using an org-roam database.
 Install and run code from previous block
 
 #+begin_src emacs-lisp
-  (when my:org-file-tree-base-path
+  (when org-directory
 
-    (let ((agenda-files-cache-path (concat my:org-file-tree-base-path "/org-agenda-files.cache.el")))
+    (let ((agenda-files-cache-path (concat org-directory "/org-agenda-files.cache.el")))
       (unless (file-exists-p agenda-files-cache-path)
         (write-region "nil" nil agenda-files-cache-path)))
 
@@ -4388,7 +4387,7 @@ Add function to interactively select an existing concept file.
     (seq-filter (lambda (path)
                   (and (file-directory-p path)
                        (file-exists-p (concat path "/concept.org"))))
-                (directory-files-recursively (concat my:org-file-tree-base-path "/concepts/") ".*" t)))
+                (directory-files-recursively (concat org-directory "/concepts/") ".*" t)))
 
   (defun my-org-find-concept ()
     (call-interactively
@@ -4420,7 +4419,7 @@ Add function to search existing concepts, journals, etc.
       (interactive "sOccur Pattern: ")
       (let ((list-matching-lines-default-context-lines 15)
             buffers)
-        (dolist (file (directory-files-recursively (concat my:org-file-tree-base-path "/concepts/") ".*" t))
+        (dolist (file (directory-files-recursively (concat org-directory "/concepts/") ".*" t))
           (when (file-exists-p file)
             (let ((buf (find-file-noselect file)))
               (push buf buffers))))
@@ -4428,19 +4427,19 @@ Add function to search existing concepts, journals, etc.
 
   (defun my:org-search--ag ()
     (interactive)
-    (counsel-ag "" my:org-file-tree-base-path))
+    (counsel-ag "" org-directory))
 
   (defun my:org-search-concept--ag ()
     (interactive)
-    (counsel-ag "" (concat my:org-file-tree-base-path "/concepts/")))
+    (counsel-ag "" (concat org-directory "/concepts/")))
 
   (defun my:org-search-journal--ag ()
     (interactive)
-    (counsel-ag "" (concat my:org-file-tree-base-path "/journal/")))
+    (counsel-ag "" (concat org-directory "/journal/")))
 
   (defun my:org-search-llm--ag ()
     (interactive)
-    (counsel-ag "" (concat my:org-file-tree-base-path "/llm-history/")))
+    (counsel-ag "" (concat org-directory "/llm-history/")))
 
   (defun my:org-search ()
     (interactive)
@@ -4490,7 +4489,7 @@ Functions for creating and opening daily journal pages.
   (defun my-org-journal-path (time)
     "Get the path to some day's journal file, given time (compatible with (current-time))."
     (let*
-        ((journal-root (concat my:org-file-tree-base-path "/journal/"))
+        ((journal-root (concat org-directory "/journal/"))
          (filename     "journal.org")
          (path (concat journal-root (format-time-string "%Y/%m/%e/" time) filename)))
       path))
@@ -4543,11 +4542,11 @@ Functions for creating and opening daily journal pages.
 
   (defun my:list-journal-pages (&optional newest-first)
     "Return a sorted alist mapping datetime to journal page path."
-    (let* ((journal-root  (concat my:org-file-tree-base-path "/journal/"))
+    (let* ((journal-root  (concat org-directory "/journal/"))
            (filename      "^journal.org$")
            (raw-list      (directory-files-recursively journal-root filename))
            (journal-alist (mapcar (lambda (fname)
-                                    (let* ((components (split-string (file-relative-name fname (concat my:org-file-tree-base-path "/journal/")) "/"))
+                                    (let* ((components (split-string (file-relative-name fname (concat org-directory "/journal/")) "/"))
                                            (year (string-to-number (first components)))
                                            (month (string-to-number (second components)))
                                            (day (string-to-number (third components))))
@@ -4609,14 +4608,14 @@ Advise org-save-all-org-buffers to autocommit any changes in my org folder
       (list
        (format-time-string "%Y-%m-%d %I:%M:%S:%3N")
        ""
-       (shell-command-to-string (concat "cd " my:org-file-tree-base-path " && git status --porcelain")))
+       (shell-command-to-string (concat "cd " org-directory " && git status --porcelain")))
       "\n")))
 
   (defun my:org-autocommit ()
     "Automatically add/update files in the org dir."
     (interactive)
     (when my:commit-org
-      (shell-command (concat "cd " my:org-file-tree-base-path " && git add -A && git commit -m " (my:org-autocommit-get-message)))))
+      (shell-command (concat "cd " org-directory " && git add -A && git commit -m " (my:org-autocommit-get-message)))))
 
   (defadvice org-save-all-org-buffers
       (after my:org-save-all-org-buffers-autocommit activate)
@@ -4868,7 +4867,7 @@ share this file on GitHub without needing to sanitize as much.
   (if (and my:org-caldav-calendar-id my:org-ical-timezone my:org-caldav-url)
       (setq org-caldav-url         my:org-caldav-url
             org-caldav-calendar-id my:org-caldav-calendar-id
-            org-caldav-inbox       (concat my:org-file-tree-base-path "/calendar.org")
+            org-caldav-inbox       (concat org-directory "/calendar.org")
             org-icalendar-timezone my:org-ical-timezone
             org-caldav-files       '()))
 #+END_SRC
@@ -5333,7 +5332,7 @@ Load the gptel-magit prompt from gptel-prompts
    'gptel-directives
    (cons 'org-assistant
          (my:read-file-as-string
-          (concat my:org-file-tree-base-path "/llm-assistant-prompt.org"))))
+          (concat org-directory "/llm-assistant-prompt.org"))))
 #+end_src
 
 *** Tools
@@ -5363,7 +5362,7 @@ Tool to scan for org directory content.
    :function
    (lambda (keywords)
      (let ((keywords-str (mapconcat 'shell-quote-argument keywords "|"))
-           (base-path (expand-file-name my:org-file-tree-base-path))
+           (base-path (expand-file-name org-directory))
            (output ""))
        (with-temp-buffer
          (message "Pattern for AG: %s" keywords-str)
@@ -5392,7 +5391,7 @@ Tool to read org directory content.
                        :description "Relative file path, such as concepts/psychology/complex-ptsd/concept.org"))
    :function
    (lambda (relative-filepath)
-     (my:read-file-as-string (concat my:org-file-tree-base-path "/" relative-filepath))))
+     (my:read-file-as-string (concat org-directory "/" relative-filepath))))
 #+end_src
 
 **** Working with Files
