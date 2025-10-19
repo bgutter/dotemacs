@@ -1335,10 +1335,10 @@ backends during experimentation.
                       "oa"               'org-agenda
                       "ot"               'org-todo-list
                       "oc"               'my:org-concept-open
-                      "osc"              'my:org-search-concept
-                      "osj"              'my:org-search-journal
-                      "osg"              'my:org-search-llm-history
-                      "oss"              'my:org-search
+                      "osc"              (if (on-windows-p) 'my:org-search-ag-regex 'my:org-search-concept)
+                      "osj"              (if (on-windows-p) 'my:org-search-ag-regex 'my:org-search-journal)
+                      "osg"              (if (on-windows-p) 'my:org-search-ag-regex 'my:org-search-llm-history)
+                      "oss"              (if (on-windows-p) 'my:org-search-ag-regex 'my:org-search)
                       "oo"               'my:org-occur-in-agenda-files
                       "ov"               'my:voice-notes
                       "or"               'my:org-refile-transient
@@ -3624,13 +3624,14 @@ Custom results buffer for hashtag matches. AI slop sorry.
              (search-str (replace-regexp-in-string "-" "[- ]" tag)))
         (my:org-search-ag-regex search-str))))
 
-  (defun my:org-search-ag-regex (regex)
-    (interactive "sEnter ag search regex: ")
+  (defun my:org-search-ag-regex (regex &optional directory)
+     (interactive (list (read-string "Enter ag search regex: ")
+                       (read-directory-name "Search directory" org-directory)))
     (let (results-buf)
       (save-window-excursion
         (let ((ag-command (format "ag --nocolor --nogroup --line-number --column --org -- '%s' %s"
                                  regex
-                                 org-directory))
+                                 (or directory org-directory)))
           (output-buffer (generate-new-buffer "*Org Hash Tag Results*"))
           (results-buffer (get-buffer-create (generate-new-buffer-name "*Org Hashtag Matches*"))))
         ;; Run ag and capture output
@@ -4421,55 +4422,21 @@ Add function to insert link to existing concept.
 Add function to search existing concepts, journals, etc.
 
 #+BEGIN_SRC emacs-lisp
-  (defun my:org-search-concept--occur (query)
-      (interactive "sOccur Pattern: ")
-      (let ((list-matching-lines-default-context-lines 15)
-            buffers)
-        (dolist (file (directory-files-recursively (concat org-directory "/concepts/") ".*" t))
-          (when (file-exists-p file)
-            (let ((buf (find-file-noselect file)))
-              (push buf buffers))))
-        (multi-occur buffers query)))
-
-  (defun my:org-search--ag ()
+  (defun my:org-search ()
     (interactive)
     (counsel-ag "" org-directory))
 
-  (defun my:org-search-concept--ag ()
+  (defun my:org-search-concept ()
     (interactive)
     (counsel-ag "" (concat org-directory "/concepts/")))
 
-  (defun my:org-search-journal--ag ()
+  (defun my:org-search-journal ()
     (interactive)
     (counsel-ag "" (concat org-directory "/journal/")))
 
-  (defun my:org-search-llm--ag ()
-    (interactive)
-    (counsel-ag "" (concat org-directory "/llm-history/")))
-
-  (defun my:org-search ()
-    (interactive)
-    (if (on-windows-p)
-        (call-interactively 'my:org-search--occur)
-      (call-interactively 'my:org-search--ag)))
-
-  (defun my:org-search-concept ()
-    (interactive)
-    (if (on-windows-p)
-        (call-interactively 'my:org-search-concept--occur)
-      (call-interactively 'my:org-search-concept--ag)))
-
-  (defun my:org-search-journal ()
-    (interactive)
-    (if (on-windows-p)
-        (call-interactively 'my:org-search-journal--occur)
-      (call-interactively 'my:org-search-journal--ag)))
-
   (defun my:org-search-llm-history ()
     (interactive)
-    (if (on-windows-p)
-        (call-interactively 'my:org-search-llm--occur)
-      (call-interactively 'my:org-search-llm--ag)))
+    (counsel-ag "" (concat org-directory "/llm-history/")))
 #+END_SRC
 
 Add function to run org-occur-in-agenda-files on thing at point without prefix, or, interactively without prefix.
