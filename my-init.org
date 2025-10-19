@@ -1334,7 +1334,10 @@ backends during experimentation.
                       "oa"               'org-agenda
                       "ot"               'org-todo-list
                       "oc"               'my:org-concept-open
-                      "os"               'my:org-search-concept
+                      "osc"              'my:org-search-concept
+                      "osj"              'my:org-search-journal
+                      "osg"              'my:org-search-llm-history
+                      "oss"              'my:org-search
                       "oo"               'my:org-occur-in-agenda-files
                       "ov"               'my:voice-notes
                       "or"               'my:org-refile-transient
@@ -4410,14 +4413,55 @@ Add function to insert link to existing concept.
 Add function to search existing concepts, journals, etc.
 
 #+BEGIN_SRC emacs-lisp
-  (if (on-windows-p)
-      (defun my:org-search-concept (arg)
-        (interactive "P")
-        (let ((list-matching-lines-default-context-lines (or arg 15)))
-          (my:org-occur-in-agenda-files t)))
-      (defun my:org-search-concept ()
-        (interactive)
-        (counsel-ag "" my:org-file-tree-base-path)))
+  (defun my:org-search-concept--occur (query)
+      (interactive "sOccur Pattern: ")
+      (let ((list-matching-lines-default-context-lines 15)
+            buffers)
+        (dolist (file (directory-files-recursively (concat my:org-file-tree-base-path "/concepts/") ".*" t))
+          (when (file-exists-p file)
+            (let ((buf (find-file-noselect file)))
+              (push buf buffers))))
+        (multi-occur buffers query)))
+
+  (defun my:org-search--ag ()
+    (interactive)
+    (counsel-ag "" my:org-file-tree-base-path))
+
+  (defun my:org-search-concept--ag ()
+    (interactive)
+    (counsel-ag "" (concat my:org-file-tree-base-path "/concepts/")))
+
+  (defun my:org-search-journal--ag ()
+    (interactive)
+    (counsel-ag "" (concat my:org-file-tree-base-path "/journal/")))
+
+  (defun my:org-search-llm--ag ()
+    (interactive)
+    (counsel-ag "" (concat my:org-file-tree-base-path "/llm-history/")))
+
+  (defun my:org-search ()
+    (interactive)
+    (if (on-windows-p)
+        (call-interactively 'my:org-search--occur)
+      (call-interactively 'my:org-search--ag)))
+
+  (defun my:org-search-concept ()
+    (interactive)
+    (if (on-windows-p)
+        (call-interactively 'my:org-search-concept--occur)
+      (call-interactively 'my:org-search-concept--ag)))
+
+  (defun my:org-search-journal ()
+    (interactive)
+    (if (on-windows-p)
+        (call-interactively 'my:org-search-journal--occur)
+      (call-interactively 'my:org-search-journal--ag)))
+
+  (defun my:org-search-llm-history ()
+    (interactive)
+    (if (on-windows-p)
+        (call-interactively 'my:org-search-llm--occur)
+      (call-interactively 'my:org-search-llm--ag)))
 #+END_SRC
 
 Add function to run org-occur-in-agenda-files on thing at point without prefix, or, interactively without prefix.
