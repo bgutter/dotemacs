@@ -3611,11 +3611,12 @@ Custom results buffer for hashtag matches. AI slop sorry.
     "Go to top-level headline with name HEADLINE-NAME or create it if not found."
     (interactive "sHeadline: ")
     (goto-char (point-min))
-    (if (re-search-forward (concat "^\\* " headline-name) nil t)
-        (goto-char (match-end 0))
-      ;; If not found, create at the end of the buffer
-      (goto-char (point-max))
-      (insert "\n* " headline-name "\n")))
+    (let ((sanitized-headline-name (replace-regexp-in-string "\\\\" "/" headline-name)))
+      (if (re-search-forward (concat "^\\* " sanitized-headline-name) nil t)
+          (goto-char (match-end 0))
+        ;; If not found, create at the end of the buffer
+        (goto-char (point-max))
+        (insert "\n* " sanitized-headline-name "\n"))))
 
   (defun my:org-try-search-hash-tag-under-point ()
     (interactive)
@@ -3629,13 +3630,13 @@ Custom results buffer for hashtag matches. AI slop sorry.
                        (read-directory-name "Search directory" org-directory)))
     (let (results-buf)
       (save-window-excursion
-        (let ((ag-command (format "ag --nocolor --nogroup --line-number --column --org -- '%s' %s"
+        (let ((search-command (format "rg --color=never --no-heading --line-number --column -- '%s' %s"
                                  regex
                                  (or directory org-directory)))
           (output-buffer (generate-new-buffer "*Org Hash Tag Results*"))
           (results-buffer (get-buffer-create (generate-new-buffer-name "*Org Hashtag Matches*"))))
         ;; Run ag and capture output
-        (shell-command ag-command output-buffer)
+        (shell-command search-command output-buffer)
         ;; Process output
         (with-current-buffer results-buffer
           (insert "#+TITLE: Hash Tag Search Results")
@@ -5844,7 +5845,7 @@ Emacs for Windows works extremely well, but still have constant hangs and crashe
 3. Install =fish=, =build-essential=, and whatever other system apps I use.
 4. Build emacs from the git mirror, unless you want a very old build. Not needed if using the Arch image. Make sure to use the GTK and ImageMagick switches. At time of writing, enabling XWidgets causes a compilation error due to missing typenames (something related to Lisp/JS interop?). Enabling cairo seems to be fine.
 5. Configure =xmodmap= like in Linux, as discussed in the Key Mappings section.
-6. Install =fonts-noto= and =fonts-liberation=, =silversearcher-ag=, and whatever else is needed.
+6. Install =fonts-noto= and =fonts-liberation=, =silversearcher-ag=, =ripgrep=,and whatever else is needed.
 7. Install =vcxsrv= on Windows and run it.
 8. Mount network shares like =sudo mount -t drvfs '\\blah.com\SHARE' /mnt/blah=. Save any recurring mounts in ~/mount-drives.sh. TODO: fstab?
 9. Kindly ask IT, just one more time, to let you install native Linux. :)
