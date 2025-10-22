@@ -4106,8 +4106,29 @@ Now the actual agenda templates.
 
             ;; My task list
             (org-ql-block '(and (todo "TODO" "NEXT")
+                                (priority "A")
                                 (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
-                          ((org-ql-block-header "Open Tasks")))
+                          ((org-ql-block-header "Open Tasks -- Emergency")))
+
+            (org-ql-block '(and (todo "TODO" "NEXT")
+                                (priority "B")
+                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
+                          ((org-ql-block-header "Open Tasks -- Priority")))
+
+            (org-ql-block '(and (todo "TODO" "NEXT")
+                                (priority "C")
+                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
+                          ((org-ql-block-header "Open Tasks -- Need To Do")))
+
+            (org-ql-block '(and (todo "TODO" "NEXT")
+                                (priority "D")
+                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
+                          ((org-ql-block-header "Open Tasks -- Good To Do")))
+
+            (org-ql-block '(and (todo "TODO" "NEXT")
+                                (priority "E")
+                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
+                          ((org-ql-block-header "Open Tasks -- Maybe Someday")))
 
             ;; Delegated tasks to manage
             (org-ql-block '(and (todo "ASSIGNED")
@@ -4120,7 +4141,7 @@ Now the actual agenda templates.
                           ((org-ql-block-header "Backlog")))
 
             ;; (tags "UNFILED"
-                  ;; ((org-agenda-overriding-header "Unfiled Captures:")))
+            ;; ((org-agenda-overriding-header "Unfiled Captures:")))
             ))))
 #+end_src
 
