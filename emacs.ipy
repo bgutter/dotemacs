@@ -4,10 +4,10 @@ IPython Initialization Code for Emacs
 Called each time ipython is started from within emacs.
 """
 
-%matplotlib qt5
+%matplotlib qt6
 %gui qt
 
-from matplotlib.pyplot import *
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import scipy.signal as sps
