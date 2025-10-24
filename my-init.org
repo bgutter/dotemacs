@@ -133,36 +133,43 @@ This section ensures that all required packages are loaded.
 
 ** Package System Config
 
-Initialize the package system. Tell emacs to load the newest version of anything it looks for (IE, if there's a foo.el and foo.elc, take the newest one).
+Initialize straight.el. See [[https://github.com/radian-software/straight.el][GitHub]].
 
-#+BEGIN_SRC emacs-lisp
-  (require 'package)
+#+begin_src emacs-lisp
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+#+end_src
 
-  (add-to-list 'load-path "~/.emacs.d/emacs-config/lisp/")
-  (add-to-list 'load-path "~/.emacs.d/elpa/")
+Hook into =use-package=
 
-  (add-to-list 'package-archives
-               '("melpa" . "http://melpa.org/packages/") t)
+#+begin_src emacs-lisp
+(straight-use-package 'use-package)
+#+end_src
 
-  (customize-set-variable 'load-prefer-newer t)
-                                          ;(package-initialize)
-                                          ;(setq package-enable-at-startup nil)
-#+END_SRC
+Always autoinstall
 
-Set up use-package, installing if missing.
+#+begin_src emacs-lisp
+(setq straight-use-package-by-default t)
+#+end_src
 
-#+BEGIN_SRC emacs-lisp
-  (unless (package-installed-p 'use-package)
-    (package-install 'use-package))
-  (require 'use-package)
-#+END_SRC
+Add local lisp directory to load path
 
-Always install if missing (implied :ensure t argument to all uses of use-package).
-
-#+BEGIN_SRC emacs-lisp
-  (require 'use-package-ensure)
-  (setq use-package-always-ensure t)
-#+END_SRC
+#+begin_src emacs-lisp
+  (add-to-list 'load-path "~/.emacs.d/emacs-config/lisp")
+#+end_src
 
 ** Package List
 
@@ -179,7 +186,9 @@ These just need to be required.
   (require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
   (require 'uniquify)              ; rename buffers of same name intelligently
   (require 'org-inlinetask)        ; support for tasks which are not structural to the document's format
-  (require 'org-notmuch)           ; linking to individual emails from notmuch
+  (use-package org-notmuch
+    :after (org notmuch)
+    :straight nil)           ; linking to individual emails from notmuch
 #+end_src
 
 *** Packages from Servers
@@ -261,14 +270,6 @@ These just need to be required.
   (use-package editorconfig)
   (use-package jsonrpc)
 
-  (use-package quelpa
-    :ensure)
-
-  (use-package quelpa-use-package
-    :demand
-    :config
-    (quelpa-use-package-activate-advice))
-
   (use-package gptel)                 ; Support for GPT conversation buffers & API calls
   (use-package gptel-magit
     :ensure t
@@ -276,7 +277,7 @@ These just need to be required.
   (use-package gptel-prompts
     :after (gptel)
     :demand t
-    :quelpa (gptel-prompts :fetcher github :repo "jwiegley/gptel-prompts")
+    :straight (gptel-prompts :type git :host github :repo "jwiegley/gptel-prompts")
     :config
     (customize-set-variable 'gptel-prompts-directory "~/.emacs.d/emacs-config/llm-prompts")
     (gptel-prompts-update)
@@ -293,20 +294,8 @@ These just need to be required.
   (use-package dockerfile-mode)       ; edit Dockerfiles
   (use-package rjsx-mode)             ; edit JSX files
 
-  (use-package unpackaged :quelpa (unpackaged :fetcher github :repo "alphapapa/unpackaged.el"))
-
-  ;; Just get copilot working -- but not on windows
-  (unless-on-windows
-   (quelpa
-    '(quelpa-use-package
-      :fetcher git
-     :url "https://github.com/quelpa/quelpa-use-package.git"))
-   (require 'quelpa-use-package)
-   (use-package copilot
-     :quelpa (copilot :fetcher github
-                      :repo "copilot-emacs/copilot.el"
-                      :branch "main"
-                      :files ("*.el"))))
+  (use-package unpackaged
+    :straight (unpackaged :type git :host github :repo "alphapapa/unpackaged.el"))
 #+END_SRC
 
 * Microsoft Windows Settings

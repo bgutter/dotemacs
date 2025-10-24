@@ -18,8 +18,9 @@ git clone https://github.com/bgutter/dotemacs.git emacs-config
 Copy =example-init.el= up into =~/.emacs.d/init.el=.
 
 #+BEGIN_SRC sh
-cd emacs-config
-cp ./example-init.el ../init.el
+  cd emacs-config
+  cp ./example-init.el ../init.el
+  cp ./early-init.el ../early-init.el
 #+END_SRC
 
 If you want to keep your existing customizations, copy them out of your existing =init.el= (or =.emacs=) and into =~/.emacs.d/emacs-config/custom.el=.
