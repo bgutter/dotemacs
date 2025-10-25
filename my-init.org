@@ -4830,6 +4830,40 @@ Always save all files after a refile. A little surprised the files aren't saved 
 
 ** python-mode
 
+Install a dedicated Python venv right in =~/.emacs.d/=. Goal is to
+define a consistent Python environment for tinkering with non-project
+tasks across all machines.
+
+#+begin_src emacs-lisp
+  (defun my:ensure-emacs-python-venv ()
+    (interactive)
+    (let ((venv-path (expand-file-name "emacs-python-venv" user-emacs-directory)))
+      (unless (file-directory-p venv-path)
+        (make-directory venv-path t)
+        (shell-command (format "python3 -m venv %s" venv-path))
+        (shell-command (format "%s/bin/pip install -r ~/.emacs.d/emacs-config/emacs-python-venv-requirements.txt" venv-path)))
+      (pyvenv-activate venv-path)))
+
+  (my:ensure-emacs-python-venv)
+#+end_src
+
+Add a function to update requirements.txt if pip is used to manually
+modify environment.
+
+#+begin_src emacs-lisp
+  (defun my:freeze-emacs-python-venv ()
+    (interactive)
+    (let ((venv-path (expand-file-name "emacs-python-venv" user-emacs-directory))
+          (pip-freeze-command (format "%s/bin/pip freeze" venv-dir)))
+      (with-temp-buffer
+        (let ((exit-code (call-process-shell-command pip-freeze-command nil t)))
+          (if (= exit-code 0)
+              (write-region (point-min)
+                            (point-max)
+                            (expand-file-name "emacs-python-venv-requirements.txt" "~/.emacs.d/emacs-config/"))
+            (message "Failed to run pip freeze!"))))))
+#+end_src
+
 Use IPython, and use the included initialization script.
 
 #+BEGIN_SRC emacs-lisp
