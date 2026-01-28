@@ -1,0 +1,55 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Documentation (already in image)
+README.org
+
+# Emacs generated files
+*.elc
+*~
+\#*\#
+.\#*
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build artifacts
+*.o
+*.so
+*.a
+
+# IDE
+.vscode
+.idea
+
+# Logs
+*.log
+
+# Cache directories
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# elpa and straight packages (will be installed in container)
+elpa/
+straight/
+eln-cache/
+
+# Custom files that shouldn't be in base image
+custom.el

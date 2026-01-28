@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  emacs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dotemacs:latest
+    container_name: dotemacs
+    
+    # For GUI mode with X11 forwarding (Linux/macOS)
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - XAUTHORITY=/tmp/.Xauthority
+    
+    volumes:
+      # Mount the configuration (read-only recommended to prevent accidental changes)
+      - ./:/root/.emacs.d/emacs-config:ro
+      
+      # Persistent package storage (elpa, straight, etc.)
+      - emacs-packages:/root/.emacs.d/elpa
+      - emacs-straight:/root/.emacs.d/straight
+      
+      # Optional: mount X11 socket for GUI mode
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      
+      # Optional: mount Xauthority for X11 authentication
+      - ${XAUTHORITY:-$HOME/.Xauthority}:/tmp/.Xauthority:ro
+      
+      # Optional: mount a work directory
+      # - ~/projects:/root/projects
+    
+    # For running in terminal mode by default
+    stdin_open: true
+    tty: true
+    
+    # Uncomment to run as daemon
+    # command: emacs --daemon
+    
+    # Keep container running for daemon mode
+    # command: tail -f /dev/null
+
+  # Alternative service for daemon mode
+  emacs-daemon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dotemacs:latest
+    container_name: dotemacs-daemon
+    
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+    
+    volumes:
+      - ./:/root/.emacs.d/emacs-config:ro
+      - emacs-packages:/root/.emacs.d/elpa
+      - emacs-straight:/root/.emacs.d/straight
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+    
+    command: ["emacs", "--daemon"]
+    
+    # Keep the container running after daemon starts
+    restart: unless-stopped
+
+volumes:
+  emacs-packages:
+  emacs-straight:

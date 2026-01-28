@@ -46,3 +46,201 @@ cd ~/.emacs.d/emacs-config
 git update-index --assume-unchanged custom.el
 #+END_SRC
 
+* Using Docker
+
+Docker support is provided for running this Emacs configuration in an isolated, reproducible environment with all prerequisites pre-installed.
+
+** Why Use Docker?
+
+- *Consistent Environment*: All dependencies (Emacs, ImageMagick, ag, Python packages) are pre-configured and version-locked
+- *Testing*: Try this configuration without affecting your system Emacs setup
+- *CI/CD*: Run automated tests and linting in GitHub Actions or other CI systems
+- *Cross-platform*: Works consistently across Linux, macOS, and Windows (with WSL2/Docker Desktop)
+- *Quick Start*: No need to manually install ImageMagick, ag, scanimage, or Python dependencies
+
+** Prerequisites
+
+- Docker (version 20.10+)
+- Docker Compose (version 2.0+)
+- For GUI mode on Linux/macOS: X11 server
+- For GUI mode on Windows: WSL2 with VcXsrv or Xming
+
+** Quick Start
+
+*** Terminal Mode (Recommended for Quick Testing)
+
+Run Emacs in terminal mode inside the container:
+
+#+BEGIN_SRC sh
+docker-compose run --rm emacs
+#+END_SRC
+
+Or build and run with plain Docker:
+
+#+BEGIN_SRC sh
+docker build -t dotemacs .
+docker run -it --rm dotemacs
+#+END_SRC
+
+*** GUI Mode (X11 Forwarding)
+
+**** On Linux
+
+#+BEGIN_SRC sh
+# Allow X11 connections from Docker
+xhost +local:docker
+
+# Run with X11 forwarding
+docker-compose run --rm -e DISPLAY=$DISPLAY emacs emacs
+
+# Revoke X11 access when done (optional, for security)
+xhost -local:docker
+#+END_SRC
+
+**** On macOS
+
+#+BEGIN_SRC sh
+# Install XQuartz first: brew install --cask xquartz
+# Start XQuartz and enable "Allow connections from network clients" in preferences
+
+# Get your IP
+IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
+
+# Allow X11 connections
+xhost + $IP
+
+# Run with display forwarding
+docker-compose run --rm -e DISPLAY=$IP:0 emacs emacs
+#+END_SRC
+
+**** On Windows (WSL2)
+
+#+BEGIN_SRC sh
+# Install VcXsrv or Xming and start it
+# In WSL2 terminal:
+
+export DISPLAY=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):0
+
+docker-compose run --rm -e DISPLAY=$DISPLAY emacs emacs
+#+END_SRC
+
+*** Daemon Mode
+
+Run Emacs as a daemon in the background:
+
+#+BEGIN_SRC sh
+# Start the daemon
+docker-compose up -d emacs-daemon
+
+# Connect to the daemon with emacsclient
+docker exec -it dotemacs-daemon emacsclient -c -nw
+
+# Stop the daemon
+docker-compose down
+#+END_SRC
+
+** Customization
+
+*** Mount Your Own Projects
+
+Edit =docker-compose.yml= to add volume mounts for your projects:
+
+#+BEGIN_SRC yaml
+volumes:
+  - ~/projects:/root/projects
+  - ~/Documents:/root/Documents
+#+END_SRC
+
+*** Use Custom configuration
+
+To test your own =custom.el= changes:
+
+#+BEGIN_SRC sh
+# Mount custom.el as writable
+docker run -it --rm \
+  -v $(pwd):/root/.emacs.d/emacs-config:ro \
+  -v $(pwd)/custom.el:/root/.emacs.d/emacs-config/custom.el:rw \
+  dotemacs
+#+END_SRC
+
+*** Persistent Package Storage
+
+Emacs packages are stored in Docker volumes by default (=emacs-packages= and =emacs-straight=). This speeds up subsequent runs. To start fresh:
+
+#+BEGIN_SRC sh
+docker-compose down -v  # Remove volumes
+#+END_SRC
+
+** Use Cases
+
+*** Testing Changes
+
+Before committing changes to your Emacs config:
+
+#+BEGIN_SRC sh
+# Build with your changes
+docker build -t dotemacs:test .
+
+# Test in terminal mode
+docker run -it --rm dotemacs:test
+
+# Test loading all packages
+docker run --rm dotemacs:test emacs --batch --eval "(message \"Config loaded successfully\")"
+#+END_SRC
+
+*** CI/CD Integration
+
+Example GitHub Actions workflow:
+
+#+BEGIN_SRC yaml
+name: Test Emacs Config
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker image
+        run: docker build -t dotemacs:ci .
+      - name: Test config loads
+        run: docker run --rm dotemacs:ci emacs --batch --eval "(message \"Success\")"
+#+END_SRC
+
+*** Development Environment
+
+Create a full development environment with all tools:
+
+#+BEGIN_SRC sh
+# Start daemon mode
+docker-compose up -d emacs-daemon
+
+# Enter the container for development
+docker exec -it dotemacs-daemon bash
+
+# Use emacsclient inside the container
+emacsclient -c -nw /root/projects/myproject
+#+END_SRC
+
+** Troubleshooting
+
+*** X11 Issues
+
+If GUI mode doesn't work:
+
+1. Check X11 is running: =echo $DISPLAY=
+2. Verify X11 permissions: =xhost= should show =local:docker=
+3. Test X11 from Docker: =docker run --rm -e DISPLAY=$DISPLAY alpine sh -c "apk add --no-cache xeyes && xeyes"=
+
+*** Performance
+
+- First run will be slow as packages download and compile
+- Use volumes for persistent package storage (enabled by default)
+- Consider using =emacs-daemon= for faster startup times
+
+*** Package Installation Failures
+
+Some packages require GUI environment to install. If you see errors:
+
+1. Run in daemon mode instead of terminal mode
+2. Or comment out problematic packages in =my-init.org= for Docker builds
+

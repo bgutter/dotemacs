@@ -294,7 +294,14 @@ These just need to be required.
   (use-package jupyter)               ; ipython in org-babel
   (use-package org-download)          ; attach images on system clipboard to org files
   (use-package nix-mode)              ; edit system configs in nix
-  (use-package dockerfile-mode)       ; edit Dockerfiles
+  
+  ;; Docker support
+  (use-package dockerfile-mode        ; edit Dockerfiles
+    :config
+    (add-hook 'dockerfile-mode-hook 'hs-minor-mode)) ; Enable code folding
+  
+  (use-package docker-compose-mode)   ; edit docker-compose.yml files
+  
   (use-package rjsx-mode)             ; edit JSX files
 
   (use-package unpackaged
