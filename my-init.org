@@ -287,6 +287,10 @@ These just need to be required.
     ;; Ensure prompts are updated if prompt files change
     (gptel-prompts-add-update-watchers)) ; Store LLM directives as text files in the repo
 
+  (use-package agent-shell           ; Coding with AI
+    :custom
+    (agent-shell-thought-process-expand-by-default t))
+
   (use-package org-ai)                ; Support for ChatGPT in #+BEGIN_AI blocks, and so much more
   (use-package pyvenv)                ; Python virtual environments
   (use-package clojure-mode)          ; Develop Clojure in emacs
@@ -441,6 +445,17 @@ Function to generate a new conversation and store it in the LLM history folder.
       (gptel-mode)
       (call-interactively 'save-buffer)))
 
+#+end_src
+
+** agent-shell
+
+#+begin_src emacs-lisp
+  (defun my:run-agent-shell ()
+    (interactive)
+    (split-window-left)
+    (if (on-windows-p)
+        (agent-shell-github-start-copilot)
+      (agent-shell-anthropic-start-claude-code)))
 #+end_src
 
 * Key Mappings
@@ -1412,10 +1427,10 @@ backends during experimentation.
                       "pd"                 'my:simple-pdb
 
                       ;; "g" -> GPT
-                      "ga" 'gptel-quick   ; GPT Ask question, no context
                       "gi" 'gptel-insert  ; GPT Insert
                       "ge" 'gptel-rewrite ; GPT Edit
                       "gc" 'my:gptel-new-conversation ; GPT Conversation
+                      "ga" 'my:run-agent-shell
                       )
 
   (general-define-key
@@ -1714,6 +1729,10 @@ backends during experimentation.
 
   (general-define-key :keymaps 'cider-mode-map
                       "C-c C-t t" 'my:cider-eval-and-run-test-at-point)
+
+  (general-define-key :keymaps 'agent-shell-mode-map
+                      "C-<up>"   'my:scroll-down-some-lines
+                      "C-<down>" 'my:scroll-up-some-lines)
 
   (customize-set-variable 'exwm-input-global-keys
                           `((,(kbd "H-<left>") .    windmove-left)
