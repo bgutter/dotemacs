@@ -246,7 +246,9 @@ These just need to be required.
   (use-package cape                   ; Contains a shim to get corfu and eglot working together
     :after (corfu eglot)
     :config
-    (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster))
+    (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
+    (add-to-list 'eglot-server-programs
+                 '((python-mode python-ts-mode) "basedpyright-langserver" "--stdio"))) ;; enabled basedpywright
   (use-package olivetti)              ; Center text with fill-columns, critical for large displays.
   (use-package rainbow-delimiters)    ; Colorize matched parens, brackets, etc.
   (use-package helm-descbinds)        ; Extremely useful for learning new major modes.
@@ -5182,15 +5184,6 @@ Adjust autosave interval.
 #+BEGIN_SRC emacs-lisp
   (customize-set-variable 'real-auto-save-interval 0.25)
 #+END_SRC
-
-** eglot
-
-Enable basedpyright for Python editing
-
-#+begin_src emacs-lisp
-  (add-to-list 'eglot-server-programs
-               '((python-mode python-ts-mode) "basedpyright-langserver" "--stdio"))
-#+end_src
 
 ** vterm
 
