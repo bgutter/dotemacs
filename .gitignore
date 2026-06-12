@@ -1,3 +1,4 @@
 *.elc
 *~
 my-init.el
+/.agent-shell/
