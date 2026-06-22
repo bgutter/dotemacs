@@ -8,6 +8,12 @@ in the emacs community, and to the best of my knowledge, the original
 source for each section has been attributed. Please let me know if you
 find missing or incorrect attributions!
 
+* Lexical Binding
+
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t -*-
+#+end_src
+
 #+BEGIN_SRC emacs-lisp
   (message "Start processing of user-init ORG file.")
 #+END_SRC
@@ -130,46 +136,6 @@ This section ensures that all required packages are loaded.
 #+BEGIN_SRC emacs-lisp
   (message "SECTION: Required Packages.")
 #+END_SRC
-
-** Package System Config
-
-Initialize straight.el. See [[https://github.com/radian-software/straight.el][GitHub]].
-
-#+begin_src emacs-lisp
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name
-        "straight/repos/straight.el/bootstrap.el"
-        (or (bound-and-true-p straight-base-dir)
-            user-emacs-directory)))
-      (bootstrap-version 7))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-#+end_src
-
-Hook into =use-package=
-
-#+begin_src emacs-lisp
-(straight-use-package 'use-package)
-#+end_src
-
-Always autoinstall
-
-#+begin_src emacs-lisp
-(setq straight-use-package-by-default t)
-#+end_src
-
-Add local lisp directory to load path
-
-#+begin_src emacs-lisp
-  (add-to-list 'load-path "~/.emacs.d/emacs-config/lisp")
-#+end_src
 
 ** Package List
 
@@ -881,7 +847,8 @@ Setup the WORKON directories for pyvenv
       ((dirname (if (on-windows-p)
                     "C:/virtual-environments"
                   "~/python-envs/")))
-    (setenv "WORKON_HOME" dirname))
+    (if (file-exists-p dirname)
+        (setenv "WORKON_HOME" dirname)))
 #+end_src
 
 This needs to run due to a bug in emacs-jupyter.
@@ -976,7 +943,7 @@ Smart tab key framework
 
 #+BEGIN_SRC emacs-lisp
   (defun gen-smart-tab-key (indent autocomplete indent-count)
-    (lexical-let
+    (let
         ((indent indent)
          (autocomplete autocomplete)
          (indent-count indent-count))
@@ -2905,13 +2872,13 @@ This function produces a closure which helps in calculating easing offsets.
 #+BEGIN_SRC emacs-lisp
   (defun make-easing-calculator (easing-period-seconds reset-period-seconds &optional throttle-period-seconds max-step-size power)
     "Returns a closure which yields an eased value."
-    (lexical-let ((start-time nil)
-                  (last-time  nil)
-                  (max-step-size (or max-step-size 1.0))
-                  (easing-period-seconds easing-period-seconds)
-                  (reset-period-seconds reset-period-seconds)
-                  (power (or power 1))
-                  (throttle-period-seconds throttle-period-seconds))
+    (let ((start-time nil)
+          (last-time  nil)
+          (max-step-size (or max-step-size 1.0))
+          (easing-period-seconds easing-period-seconds)
+          (reset-period-seconds reset-period-seconds)
+          (power (or power 1))
+          (throttle-period-seconds throttle-period-seconds))
       (lambda ()
         (let* ((now         (float-time))
                (in-progress (and last-time (< (- now last-time) reset-period-seconds)))
@@ -2960,7 +2927,7 @@ Functions for moving frames with an eased speed.
     (let ((distance (funcall move-frame-easing-calc)))
       (when distance
         (setq distance (max distance 1))
-        (case direction
+        (cl-case direction
           (:right (move-frame distance 0))
           (:left  (move-frame (- distance) 0))
           (:down  (move-frame 0 distance))
@@ -3003,7 +2970,7 @@ Functions for resizing frames with an eased speed.
     (let ((distance (funcall resize-frame-easing-calc)))
       (when distance
         (setq distance (max distance 1))
-        (case direction
+        (cl-case direction
           (:bigger-horizontally  (resize-frame distance 0))
           (:smaller-horizontally (resize-frame (- distance) 0))
           (:bigger-vertically    (resize-frame 0 (* 0.5 distance)))
@@ -3045,7 +3012,7 @@ Functions for resizing windows with eased speed.
     (let ((distance (funcall resize-window-easing-calc)))
       (when distance
         (setq distance (round (max distance 1)))
-        (case direction
+        (cl-case direction
           (:bigger-horizontally  (shrink-window (- distance) t))
           (:smaller-horizontally (shrink-window distance t))
           (:bigger-vertically    (shrink-window (- distance)) nil)
@@ -4093,7 +4060,7 @@ First, utility functions from [[https://blog.aaronbieber.com/2016/09/24/an-agend
 
   If a is before b, return -1. If a is after b, return 1. If they
   are equal return t."
-    (lexical-let ((prop prop))
+    (let ((prop prop))
       #'(lambda (a b)
 
           (let* ((a-pos (get-text-property 0 'org-marker a))
@@ -4385,16 +4352,22 @@ org-element-map.
   (defun my:org-read-agenda-index ()
     "Read cached value for `org-agenda-files'"
     (interactive)
-    (with-temp-buffer
-      (erase-buffer)
-      (insert-file-contents (concat org-directory "/org-agenda-files.cache.el"))
-      (setq org-agenda-files (read (current-buffer)))))
+    (let
+        ((my-agenda-files-cache-path (concat org-directory "/org-agenda-files.cache.el")))
+      (if (file-exists-p my-agenda-files-cache-path)
+          (with-temp-buffer
+            (erase-buffer)
+            (insert-file-contents my-agenda-files-cache-path)
+            (setq org-agenda-files (read (current-buffer)))))))
 
   (defun my:org-write-agenda-index ()
     "Write `org-agenda-files' to our file cache."
     (interactive)
-    (with-temp-file (concat org-directory "/org-agenda-files.cache.el")
-      (prin1 org-agenda-files (current-buffer))))
+    (let
+        ((my-agenda-files-cache-path (concat org-directory "/org-agenda-files.cache.el")))
+      (if (file-exists-p my-agenda-files-cache-path)
+          (with-temp-file my-agenda-files-cache-path
+            (prin1 org-agenda-files (current-buffer))))))
 
   (defun my:current-buffer-has-open-tasks ()
     "Test if the current buffer has open TODO items, ignoring those with tags NOAGENDA or ARCHIVE."
@@ -4428,17 +4401,9 @@ org-element-map.
 Install and run code from previous block
 
 #+begin_src emacs-lisp
-  (when org-directory
-
-    (let ((agenda-files-cache-path (concat org-directory "/org-agenda-files.cache.el")))
-      (unless (file-exists-p agenda-files-cache-path)
-        (write-region "nil" nil agenda-files-cache-path)))
-
-    (my:org-read-agenda-index))
-
-    (add-hook 'org-mode-hook
-              (lambda ()
-                (add-hook 'before-save-hook 'my:org-add-or-remove-current-buffer-agenda-index nil t)))
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (add-hook 'before-save-hook 'my:org-add-or-remove-current-buffer-agenda-index nil t)))
 #+end_src
 
 Add function to interactively select an existing concept file.
@@ -4832,7 +4797,7 @@ Custom refile functions.
                                          (?d "Dream")
                                          (?i "Incomprehensible")
                                          (?o "Other")))))
-      (case (first choice)
+      (cl-case (first choice)
         (?c (my:org-refile-as-concept))
         (?j (my:org-refile-as-journal))
         (?s (my:org-refile-as-scrap))
@@ -5394,11 +5359,12 @@ Load the gptel-magit prompt from gptel-prompts
       (insert-file-contents filepath)
       (buffer-string)))
 
-  (add-to-list
-   'gptel-directives
-   (cons 'org-assistant
-         (my:read-file-as-string
-          (concat org-directory "/llm-assistant-prompt.org"))))
+  (if (file-exists-p org-directory)
+      (add-to-list
+       'gptel-directives
+       (cons 'org-assistant
+             (my:read-file-as-string
+              (concat org-directory "/llm-assistant-prompt.org")))))
 #+end_src
 
 *** Tools
