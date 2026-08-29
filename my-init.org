@@ -4148,6 +4148,14 @@ Now the actual agenda templates.
             ))))
 #+end_src
 
+Tweak overdue faces
+
+#+begin_src emacs-lisp
+(setq org-agenda-deadline-faces
+         '((1 . (:foreground "red" :slant italic))
+           (0 . (:foreground "white" :background "dark red" :weight bold))))
+#+end_src
+
 Don't show blocked tasks (ORDERED property set to t)
 
 #+BEGIN_SRC emacs-lisp
