@@ -3942,15 +3942,15 @@ And their faces.
 #+END_SRC
 
 And their priorities:
-|----------+----------------------------------------------|
-| priority | Meaning                                      |
-|----------+----------------------------------------------|
-| *A*      | This is critical and urgent                  |
-| *B*      | This is very important and/or time sensitive |
-| *C*      | Needs to happen in the near future.          |
-| *D*      | Would be cool to do this.                    |
-| *E*      | Just an idea. Whatever.                      |
-|----------+----------------------------------------------|
+|----------+---------------------|
+| priority | Meaning             |
+|----------+---------------------|
+| *A*      | Emergency           |
+| *B*      | Must Do             |
+| *C*      | Should Do           |
+| *D*      | Above and Beyond    |
+| *E*      | Purely Aspirational |
+|----------+---------------------|
 
 #+BEGIN_SRC emacs-lisp
   (setq org-highest-priority ?A)
@@ -4103,28 +4103,32 @@ Now the actual agenda templates.
                                 (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
                           ((org-ql-block-header "!!! Blocked")))
 
+            (org-ql-block '(and (todo "NEXT")
+                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
+                          ((org-ql-block-header "Focus List")))
+
             ;; My task list
-            (org-ql-block '(and (todo "TODO" "NEXT")
+            (org-ql-block '(and (todo "TODO")
                                 (priority "A")
                                 (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
                           ((org-ql-block-header "Open Tasks -- Emergency")))
 
-            (org-ql-block '(and (todo "TODO" "NEXT")
+            (org-ql-block '(and (todo "TODO")
                                 (priority "B")
                                 (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
                           ((org-ql-block-header "Open Tasks -- Priority")))
 
-            (org-ql-block '(and (todo "TODO" "NEXT")
+            (org-ql-block '(and (todo "TODO")
                                 (priority "C")
                                 (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
                           ((org-ql-block-header "Open Tasks -- Need To Do")))
 
-            (org-ql-block '(and (todo "TODO" "NEXT")
+            (org-ql-block '(and (todo "TODO")
                                 (priority "D")
                                 (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
                           ((org-ql-block-header "Open Tasks -- Good To Do")))
 
-            (org-ql-block '(and (todo "TODO" "NEXT")
+            (org-ql-block '(and (todo "TODO")
                                 (priority "E")
                                 (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
                           ((org-ql-block-header "Open Tasks -- Maybe Someday")))
