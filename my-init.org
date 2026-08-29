@@ -4373,7 +4373,7 @@ org-element-map.
     "Test if the current buffer has open TODO items, ignoring those with tags NOAGENDA or ARCHIVE."
     (let ((matches (org-ql-select (list (buffer-file-name))
                      '(and
-                       (todo "TODO")
+                       (todo "TODO" "ASSIGNED" "BACKLOG" "NEXT" "IN_PROGRESS" "PENDING" "WAIT")
                        (not (tags "NOAGENDA"))
                        (not (tags "ARCHIVE"))))))
       (not (null matches))))
