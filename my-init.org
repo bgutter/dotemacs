@@ -268,6 +268,7 @@ These just need to be required.
   (use-package nix-mode)              ; edit system configs in nix
   (use-package dockerfile-mode)       ; edit Dockerfiles
   (use-package rjsx-mode)             ; edit JSX files
+  (use-package org-super-agenda)      ; better agendas
 
   (use-package unpackaged
     :straight (unpackaged :type git :host github :repo "alphapapa/unpackaged.el"))
@@ -4008,7 +4009,8 @@ Unclutter the agenda display.
 #+BEGIN_SRC emacs-lisp
   (customize-set-variable 'org-agenda-prefix-format
                           '((agenda . " %i %?-12t% s")
-                            (todo . " %i %-12:c")
+                            ;(todo . " %i %-12:c")
+                            (todo . " %i ")
                             (tags . " ")
                             (search . " %i %-12:c")))
 #+END_SRC
@@ -4016,7 +4018,7 @@ Unclutter the agenda display.
 Set a default category name, don't use filename.
 
 #+begin_src emacs-lisp
-(setq-default org-category "_")
+(setq-default org-category "?")
 #+end_src
 
 I want to be able to have multiple agenda windows.
@@ -4095,65 +4097,40 @@ First, utility functions from [[https://blog.aaronbieber.com/2016/09/24/an-agend
 Now the actual agenda templates.
 
 #+begin_src emacs-lisp
+  (setq org-agenda-super-agenda-mode t)
   (setq org-agenda-custom-commands
-        `(("x" "Combined Task List"
-           (
-            ;; Blocked tasks
-            (org-ql-block '(and (todo "WAIT")
-                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
-                          ((org-ql-block-header "!!! Blocked")))
+      `(("x" "Combined Task List"
+         ((tags "WAIT"
+                ((org-agenda-overriding-header "Blocked"
+                 :group "Blocked")))
 
-            (org-ql-block '(and (todo "NEXT")
-                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
-                          ((org-ql-block-header "Focus List")))
+          (todo "NEXT"
+                ((org-agenda-overriding-header "Doing Now"
+                 :group "Focus")))
 
-            ;; My task list
-            (org-ql-block '(and (todo "TODO")
-                                (priority "A")
-                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
-                          ((org-ql-block-header "Open Tasks -- Emergency")))
+          (org-ql-block '(and (todo "TODO")
+                              (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
+                        ((org-ql-block-header "Personal Backlog")
+                         (org-super-agenda-groups '((:name "Emergency" :priority "A")
+                                            (:name "Must Do" :priority "B")
+                                            (:name "Should Do" :priority "C")
+                                            (:auto-category t)))))
 
-            (org-ql-block '(and (todo "TODO")
-                                (priority "B")
-                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
-                          ((org-ql-block-header "Open Tasks -- Priority")))
+          (todo "ASSIGNED"
+                ((org-agenda-overriding-header "Delegated Tasks"
+                 :group "Delegated")))
 
-            (org-ql-block '(and (todo "TODO")
-                                (priority "C")
-                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
-                          ((org-ql-block-header "Open Tasks -- Need To Do")))
-
-            (org-ql-block '(and (todo "TODO")
-                                (priority "D")
-                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
-                          ((org-ql-block-header "Open Tasks -- Good To Do")))
-
-            (org-ql-block '(and (todo "TODO")
-                                (priority "E")
-                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
-                          ((org-ql-block-header "Open Tasks -- Maybe Someday")))
-
-            ;; Delegated tasks to manage
-            (org-ql-block '(and (todo "ASSIGNED")
-                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
-                          ((org-ql-block-header "Delegated Tasks")))
-
-            ;; Backlog
-            (org-ql-block '(and (todo "BACKLOG")
-                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
-                          ((org-ql-block-header "Backlog")))
-
-            ;; (tags "UNFILED"
-            ;; ((org-agenda-overriding-header "Unfiled Captures:")))
-            ))))
+          (todo "BACKLOG"
+                ((org-agenda-overriding-header "Assignable Backlog"
+                 :group "Backlog")))))))
 #+end_src
 
 Tweak overdue faces
 
 #+begin_src emacs-lisp
-(setq org-agenda-deadline-faces
-         '((1 . (:foreground "red" :slant italic))
-           (0 . (:foreground "white" :background "dark red" :weight bold))))
+  (setq org-agenda-deadline-faces
+           '((1.0 . (:foreground "white" :background "dark red" :weight bold))
+             (0.0 . (:foreground "salmon" :slant italic))))
 #+end_src
 
 Don't show blocked tasks (ORDERED property set to t)
@@ -4166,7 +4143,7 @@ Don't show blocked tasks (ORDERED property set to t)
 Hide tags in agenda
 
 #+begin_src emacs-lisp
-(customize-set-variable 'org-agenda-remove-tags t)
+(customize-set-variable 'org-agenda-remove-tags nil)
 #+end_src
 
 Show past week and next two in agenda view.
