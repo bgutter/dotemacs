@@ -233,6 +233,8 @@ These just need to be required.
   (unless-on-windows                       ; A more compatible terminal emulator for emacs via libvterm
    (use-package vterm))
   (use-package org-ql)                ; A sane interface for finding things in Org
+                                      ; Cherry-pick ea72409f64d8c4e4bfa70504b527a96ee672e089 in the
+                                      ; repo cloned by straight.el to fix sorting
   (use-package realgud)               ; Powerful generalized debugger interface
   (use-package dired-subtree)         ; Better file trees in the directory editor
   (use-package real-auto-save)        ; Actually save the buffer
@@ -4151,51 +4153,41 @@ Now the actual agenda templates.
       '(("x" "Combined Task List"
 
          ;; Blocked tasks at top
-         ((org-ql-block '(todo "WAIT")
-                        ((org-ql-block-header "Blocked (tag is WAIT)")
-                         (org-super-agenda-groups '((:name none :priority "A")
-                                                    (:name none :priority "B")
-                                                    (:name none :priority "C")
-                                                    (:name none :priority "D")
-                                                    (:name none :priority "E")))))
+         ((org-ql-block '((todo "WAIT")
+                          :sort (deadline priority))
+                        ((org-ql-block-header "Blocked (tag is WAIT)")))
 
           ;; Next, all tasks actively being worked on
-          (org-ql-block '(and (todo "NEXT")
+          (org-ql-block '((and (todo "NEXT")
                               (not (property "ASSIGNEE")))
-                        ((org-ql-block-header "Doing Now (tag is NEXT and Not Delegated)")
-                         (org-super-agenda-groups '((:name none :priority "A")
-                                                    (:name none :priority "B")
-                                                    (:name none :priority "C")
-                                                    (:name none :priority "D")
-                                                    (:name none :priority "E")))))
+                          :sort (deadline priority))
+                        ((org-ql-block-header "Doing Now (tag is NEXT and Not Delegated)")))
 
           ;; Then, full backlog, with lower priority tasks broken into categories
-          (org-ql-block '(and (todo "TODO")
+          (org-ql-block '((and (todo "TODO")
                               (not (property "ASSIGNEE"))
-                              (or (priority "A" "B" "C")
+                              (or (priority "A")
                                   (deadline auto))
                               (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
-                        ((org-ql-block-header "Priority Personal Backlog (#[A-C] or Due Soon, and, Not Delegated)")
-                         (org-super-agenda-groups '((:name none :priority "A")
-                                                    (:name none :priority "B")
-                                                    (:name none :priority "C")
-                                                    (:name none :priority "D")
-                                                    (:name none :priority "E")))))
+                          :sort (deadline priority))
+                        ((org-ql-block-header "Priority Personal Backlog (Emergency, or Due Soon, and, Not Delegated)")))
 
           ;; Then, delegated items
-          (org-ql-block '(and
-                           (todo "ASSIGNED" "TODO" "BACKLOG")
+          (org-ql-block '((and
+                           (todo "ASSIGNED" "TODO" "BACKLOG" "NEXT")
                            (property "ASSIGNEE"))
-                        ((org-ql-block-header "All Open & Delegated Tasks by Assignee")
+                          :sort (deadline priority))
+                        ((org-ql-block-header "Delegated by Assignee (any status, any deadline)")
                          (org-super-agenda-groups '((:auto-property "ASSIGNEE")))))
 
           ;; Then, full backlog, with lower priority tasks broken into categories
-          (org-ql-block '(and (todo "TODO")
+          (org-ql-block '((and (todo "TODO")
                               (not (property "ASSIGNEE"))
-                              (and (priority "D" "E")
+                              (and (priority "B" "C" "D" "E")
                                    (not (deadline auto)))
                               (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
-                        ((org-ql-block-header "Low Priority Backlog by Category (#[D-E], Not Due Soon, and Not Delegated)")
+                          :sort (deadline priority))
+                        ((org-ql-block-header "Low Priority Backlog by Category (Non-Emergency, Not Due Soon, and Not Delegated)")
                          (org-super-agenda-groups '((:auto-category t)))))))))
 #+end_src
 
