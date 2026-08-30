@@ -1354,7 +1354,8 @@ backends during experimentation.
                       "a"        'emms-show-all)
 
   (general-define-key :keymaps 'org-super-agenda-header-map
-                     "<tab>"   #'origami-toggle-node)
+                     "<tab>"   #'origami-toggle-node
+                     "<backtab>" #'my:org-agenda-fold-sections)
 
   (setq my:shortcut-leader "<f12>")
   (general-define-key :prefix my:shortcut-leader
@@ -4189,6 +4190,31 @@ Now the actual agenda templates.
                           :sort (deadline priority))
                         ((org-ql-block-header "Low Priority Backlog by Category (Non-Emergency, Not Due Soon, and Not Delegated)")
                          (org-super-agenda-groups '((:auto-category t)))))))))
+#+end_src
+
+Automatically collapse all org-super-agenda groups
+
+Define the function
+
+#+begin_src emacs-lisp
+
+  (defun my:org-agenda-fold-sections ()
+    "Call origami-close-node on every line starting with whitespace then ASSIGNEE:, or, whitespace then Category:"
+    (interactive)
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+        (when (looking-at "^[[:blank:]]+\\(ASSIGNEE:\\|Category:\\)")
+          (message (number-to-string (point)))
+          (origami-close-node (current-buffer) (point)))
+        (forward-line 1))))
+
+#+end_src
+
+Add the hook
+
+#+begin_src emacs-lisp
+;(add-hook 'org-agenda-finalize-hook #'my:org-agenda-fold-sections)
 #+end_src
 
 Tweak overdue faces
