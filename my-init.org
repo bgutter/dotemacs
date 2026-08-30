@@ -4148,7 +4148,7 @@ First, utility functions from [[https://blog.aaronbieber.com/2016/09/24/an-agend
 Now the actual agenda templates.
 
 #+begin_src emacs-lisp
-  (setq org-super-agenda-mode t)
+  (org-super-agenda-mode t)
   (setq org-agenda-custom-commands
       '(("x" "Combined Task List"
 
@@ -4451,6 +4451,9 @@ org-element-map.
     (dolist (file (directory-files-recursively org-directory ".*\\.org$"))
       (with-current-buffer (find-file-noselect file)
         (my:org-add-or-remove-current-buffer-agenda-index))))
+
+  ;; Go ahead and read the agenda index
+  (my:org-read-agenda-index)
 #+END_SRC
 
 Install and run code from previous block
@@ -6446,4 +6449,3 @@ Figwheel will hot reload your backend just like your frontend.
 **** Developing ClojureScript in Emacs
 
 Call =cider-jack-in-cljs= from a buffer in the project.
-
