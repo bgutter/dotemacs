@@ -48,7 +48,8 @@ Set config variables on a per-system basis.
 
 #+BEGIN_SRC emacs-lisp
   (defvar my:use-frames nil)
-  (defvar my:commit-org nil)
+  (defcustom my:commit-org nil
+    "Whether to automatically stage and commit in org-directory on org-save-all-org-buffers")
 
   (pcase (system-name)
 
@@ -3952,11 +3953,10 @@ Current Tags:
 |-----------+--------------------------------------------------------------------------------------------------|
 | tag       | Use                                                                                              |
 |-----------+--------------------------------------------------------------------------------------------------|
-| TODO      | Items which are queued to be completed by me.                                                    |
-| BACKLOG   | Items which are queued to be completed, by someone -- maybe me.                                  |
-| ASSIGNED  | Items which are queued to be completed by someone else.                                          |
-| NEXT      | Items which are considered to be in-progress. Max 3-5 items at any point in time.                |
-| WAIT      | Items which are blocked by an external party.                                                    |
+| TODO      | Items which are queued to be completed.                                                          |
+| NEXT      | Items which are considered to be in-progress. Max 3-5 items at any point in time per assignee.   |
+| WAIT      | Items which are blocked and in a waiting state.                                                  |
+|-----------+--------------------------------------------------------------------------------------------------|
 | DONE      | Items which have been completed as described.                                                    |
 | CANCELLED | Items which will not be completed.                                                               |
 | HIATUS    | "Soft-cancelled". Items which were originally TODO'd, but for some reason, may not ever be done. |
@@ -3964,12 +3964,14 @@ Current Tags:
 |-----------+--------------------------------------------------------------------------------------------------|
 
 Deprecated Tags:
-|-------------+------------------------|
-| tag         | Use                    |
-|-------------+------------------------|
-| IN_PROGRESS | Previous name for NEXT |
-| PENDING     | Previous name for WAIT |
-|-------------+------------------------|
+|-------------+-------------------------------------------------------------------------------------------|
+| tag         | Use                                                                                       |
+|-------------+-------------------------------------------------------------------------------------------|
+| IN_PROGRESS | Previous name for NEXT                                                                    |
+| PENDING     | Previous name for WAIT                                                                    |
+| BACKLOG     | Before ASSIGNED property. Items which are queued to be completed, by someone -- maybe me. |
+| ASSIGNED    | Before ASSIGNED property. Items which are queued to be completed by someone else.         |
+|-------------+-------------------------------------------------------------------------------------------|
 
 #+BEGIN_SRC emacs-lisp
   (setq-default org-todo-keywords
@@ -4153,18 +4155,18 @@ Now the actual agenda templates.
   (setq org-agenda-custom-commands
       '(("x" "Combined Task List"
 
-         ;; Blocked tasks at top
+         ;; WAIT -- assigned or unassigned
          ((org-ql-block '((todo "WAIT")
                           :sort (deadline priority))
                         ((org-ql-block-header "Blocked (tag is WAIT)")))
 
-          ;; Next, all tasks actively being worked on
+          ;; NEXT -- unassigned
           (org-ql-block '((and (todo "NEXT")
                               (not (property "ASSIGNEE")))
                           :sort (deadline priority))
                         ((org-ql-block-header "Doing Now (tag is NEXT and Not Delegated)")))
 
-          ;; Then, full backlog, with lower priority tasks broken into categories
+          ;; TODO -- unassigned -- Either Priority #A or Upcoming
           (org-ql-block '((and (todo "TODO")
                               (not (property "ASSIGNEE"))
                               (or (priority "A")
@@ -4173,7 +4175,8 @@ Now the actual agenda templates.
                           :sort (deadline priority))
                         ((org-ql-block-header "Priority Personal Backlog (Emergency, or Due Soon, and, Not Delegated)")))
 
-          ;; Then, delegated items
+          ;; TODO|NEXT -- assigned
+          ;; Subdivided by ASSIGNEE
           (org-ql-block '((and
                            (todo "ASSIGNED" "TODO" "BACKLOG" "NEXT")
                            (property "ASSIGNEE"))
@@ -4181,7 +4184,8 @@ Now the actual agenda templates.
                         ((org-ql-block-header "Delegated by Assignee (any status, any deadline)")
                          (org-super-agenda-groups '((:auto-property "ASSIGNEE")))))
 
-          ;; Then, full backlog, with lower priority tasks broken into categories
+          ;; TODO -- unassigned -- Priority <= #B AND NOT Upcoming
+          ;; Subdivided by Category
           (org-ql-block '((and (todo "TODO")
                               (not (property "ASSIGNEE"))
                               (and (priority "B" "C" "D" "E")
@@ -4397,7 +4401,7 @@ Defcustoms for various personal definitions.
     (expand-file-name "org"
                       (if (on-windows-p)
                           (getenv "USERPROFILE")
-                        "/sync/documents")))
+                        "/home/brandon")))
   (defun my:org-scraps-path ()
     (concat org-directory "/scraps/scraps.org"))
   (defun my:org-dream-journal-path ()
@@ -4678,11 +4682,11 @@ Advise org-save-all-org-buffers to autocommit any changes in my org folder
 #+BEGIN_SRC emacs-lisp
   (defun my:org-autocommit-get-message ()
     "Return a string for an org autocommit commit message.
-     I use YYYY-MM-DD HH:MM:SS:ms"
+     Format: YYYY-MM-DD HH:MM am/pm (SS-ms)"
     (prin1-to-string
      (string-join
       (list
-       (format-time-string "%Y-%m-%d %I:%M:%S:%3N")
+       (downcase (format-time-string "%Y-%m-%d %I:%M %p (%S-%3N)"))
        ""
        (shell-command-to-string (concat "cd " org-directory " && git status --porcelain")))
       "\n")))
