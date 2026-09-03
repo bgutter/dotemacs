@@ -3993,7 +3993,19 @@ Deprecated Tags:
 
 #+BEGIN_SRC emacs-lisp
   (setq-default org-todo-keywords
-                '((sequence "TODO(t!)" "ASSIGNED(a!)" "BACKLOG(b!)" "IN_PROGRESS(i!)" "NEXT(n!)" "PENDING(p!)" "WAIT(w!)" "|" "DONE(d!)" "CANCELLED(c!)" "HIATUS(h!)" "MIGRATED(m!)")))
+                '((sequence
+                   "TODO(t!)"
+                   ;"ASSIGNED(a!)"
+                   ;"BACKLOG(b!)"
+                   ;"IN_PROGRESS(i!)"
+                   "NEXT(n!)"
+                   ;"PENDING(p!)"
+                   "WAIT(w!)"
+                   "|"
+                   "DONE(d!)"
+                   "CANCELLED(c!)"
+                   "HIATUS(h!)"
+                   "MIGRATED(m!)")))
 #+END_SRC
 
 And their faces.
@@ -4001,16 +4013,16 @@ And their faces.
 #+BEGIN_SRC emacs-lisp
   (setq-default org-todo-keyword-faces
                 '(( "TODO" .        (:foreground "white"      :background "darkorchid4"  :weight bold              ))
-                  ( "ASSIGNED" .    (:foreground "white"      :background "blue"         :weight bold              ))
-                  ( "BACKLOG" .     (:foreground "white"      :background "darkorchid4"  :weight bold              ))
-                  ( "IN_PROGRESS" . (                         :background "deeppink3"    :weight bold              ))
+                  ;( "ASSIGNED" .    (:foreground "white"      :background "blue"         :weight bold              ))
+                  ;( "BACKLOG" .     (:foreground "white"      :background "darkorchid4"  :weight bold              ))
+                  ;( "IN_PROGRESS" . (                         :background "deeppink3"    :weight bold              ))
                   ( "NEXT" .        (                         :background "deeppink3"    :weight bold              ))
                   ( "HIATUS" .      (:foreground "white"                                              :slant italic))
                   ( "DONE" .        (:foreground "forst green"                           :weight bold              ))
                   ( "CANCELLED" .   (:foreground "light gray"                                         :slant italic))
-                  ( "FAILED" .      (:foreground "white"      :background "red"          :weight bold              ))
+                  ;( "FAILED" .      (:foreground "white"      :background "red"          :weight bold              ))
                   ( "MIGRATED"      (:foreground "light gray"                                         :slant italic))
-                  ( "PENDING"       (:foreground "light gray"                                         :slant italic))
+                  ;( "PENDING"       (:foreground "light gray"                                         :slant italic))
                   ( "WAIT"          (                         :background "Red"          :weight bold              ))))
 #+END_SRC
 
@@ -4196,7 +4208,7 @@ Now the actual agenda templates.
           ;; TODO|NEXT -- assigned
           ;; Subdivided by ASSIGNEE
           (org-ql-block '((and
-                           (todo "ASSIGNED" "TODO" "BACKLOG" "NEXT")
+                           (todo "TODO" "NEXT")
                            (property "ASSIGNEE"))
                           :sort (deadline priority))
                         ((org-ql-block-header "Delegated by Assignee (any status, any deadline)")
@@ -4476,7 +4488,7 @@ org-element-map.
     "Test if the current buffer has open TODO items, ignoring those with tags NOAGENDA or ARCHIVE."
     (let ((matches (org-ql-select (list (buffer-file-name))
                      '(and
-                       (todo "TODO" "ASSIGNED" "BACKLOG" "NEXT" "IN_PROGRESS" "PENDING" "WAIT")
+                       (todo "TODO" "NEXT" "WAIT")
                        (not (tags "NOAGENDA"))
                        (not (tags "ARCHIVE"))))))
       (not (null matches))))
