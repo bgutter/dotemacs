@@ -4821,6 +4821,17 @@ Define org-capture templates.
            :prepend t
            :empty-lines 1)
 
+          ("q"
+           "Quick Capture"
+           entry
+           (file+headline my-org-journal-make-if-missing "Action Items")
+           "** TODO [#C] %^{Task Description}
+  :LOGBOOK:
+  - State \"TODO\"       from              %U
+  :END:"
+           :empty-lines 1
+           :immediate-finish t)
+
           ("p"
            "Writing Prompt"
            plain
