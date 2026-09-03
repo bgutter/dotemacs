@@ -7,6 +7,7 @@
 #+DATE:  `(format-time-string "%Y-%m-%d" my:journal-expansion-time)`
 #+STARTUP: showeverything
 #+PROPERTY: DATE `(format-time-string "%Y-%m-%d" my:journal-expansion-time)`
+#+CATEGORY: Inbox
 
 #+BEGIN: clocktable :scope agenda :block `(format-time-string "%Y-%m-%d" my:journal-expansion-time)` :fileskip0 t :maxlevel 2 :compact t :properties ("TAGS")
 #+END:
