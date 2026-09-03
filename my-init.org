@@ -153,9 +153,10 @@ These just need to be required.
   (require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
   (require 'uniquify)              ; rename buffers of same name intelligently
   (require 'org-inlinetask)        ; support for tasks which are not structural to the document's format
-  (use-package org-notmuch
-    :after (org notmuch)
-    :straight nil)           ; linking to individual emails from notmuch
+  (unless-on-windows
+   (use-package org-notmuch
+     :after (org notmuch)
+     :straight nil))           ; linking to individual emails from notmuch
 #+end_src
 
 *** Packages from Servers
@@ -205,7 +206,8 @@ These just need to be required.
   (use-package hydra)                 ; persistent key submaps
   (use-package ess)                   ; emacs speaks statistics -- R support
   (use-package treemacs)              ; Advanced folder/file/content browser
-  (use-package notmuch)               ; reading emails
+  (unless-on-windows
+   (use-package notmuch))             ; reading emails
   (use-package smtpmail)              ; sending emails
   (use-package ccls)                  ; C/C++/OBJC LSP backend
   (use-package eglot)                 ; LSP client built into Emacs
@@ -227,7 +229,8 @@ These just need to be required.
   (use-package ac-slime)              ; autocompletion for SLIME
   (use-package clhs)                  ; Lookup symbol in Common Lisp Hyper Spec
   (use-package ivy-posframe)          ; Move minibuffer to child frame
-  (use-package counsel-notmuch)       ; Search notmuch emails with ivy
+  (unless-on-windows
+   (use-package counsel-notmuch))     ; Search notmuch emails with ivy
   (use-package ts)                    ; Timestamp utility functions for org-mode
   (use-package auto-yasnippet)        ; On the fly text templating
   (use-package plantuml-mode)         ; Edit plantuml files; UML generation from plain text.
