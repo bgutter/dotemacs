@@ -1399,7 +1399,8 @@ backends during experimentation.
                       "ov"               'my:voice-notes
                       "or"               'my:org-refile-transient
                       "o SPC"            'my:org-toggle-wrap
-                      "oli"              'my:org-insert-link-to-scanned-document
+                      "ols"              'org-store-link
+                      "oli"              'org-insert-last-stored-link
                       "oj"               'my:open-journal
 
                       ;; "v"-> VC (Magit) global shortcuts
