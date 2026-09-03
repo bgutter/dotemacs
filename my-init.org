@@ -4450,6 +4450,13 @@ Make sure org-attach places files in the org-attachments directory
   (customize-set-variable 'org-attach-id-dir (concat org-directory "/attachments/"))
 #+end_src
 
+Also make sure that org links are always performed using IDs, so that
+they are not constantly breaking when moving headings around.
+
+#+begin_src emacs-lisp
+  (customize-set-variable 'org-id-link-to-org-use-id t)
+#+end_src
+
 Some logic to maintain =org-agenda-files= such that it contains only
 files with open tasks. This speeds up agenda.
 
