@@ -211,6 +211,7 @@ These just need to be required.
   (use-package smtpmail)              ; sending emails
   (use-package ccls)                  ; C/C++/OBJC LSP backend
   (use-package eglot)                 ; LSP client built into Emacs
+  (use-package lsp-mode)              ; LSP support
   (use-package corfu)                 ; Improved completion frontend
   (use-package cape                   ; Contains a shim to get corfu and eglot working together
     :after (corfu eglot)
