@@ -4186,13 +4186,16 @@ Now the actual agenda templates.
       '(("x" "Combined Task List"
 
          ;; WAIT -- assigned or unassigned
-         ((org-ql-block '((todo "WAIT")
+         ((org-ql-block '((and (todo "WAIT")
+                               (not (property "ASSIGNEE"))
+                               (not (tags "NOAGENDA" "ARCHIVE" "UNFILED" "milestone")))
                           :sort (deadline priority))
                         ((org-ql-block-header "Blocked (tag is WAIT)")))
 
           ;; NEXT -- unassigned
           (org-ql-block '((and (todo "NEXT")
-                              (not (property "ASSIGNEE")))
+                              (not (property "ASSIGNEE"))
+                              (not (tags "NOAGENDA" "ARCHIVE" "UNFILED" "milestone")))
                           :sort (deadline priority))
                         ((org-ql-block-header "Doing Now (tag is NEXT and Not Delegated)")))
 
@@ -4201,15 +4204,16 @@ Now the actual agenda templates.
                               (not (property "ASSIGNEE"))
                               (or (priority "A")
                                   (deadline auto))
-                              (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
+                              (not (tags "NOAGENDA" "UNFILED" "ARCHIVE" "milestone")))
                           :sort (deadline priority))
                         ((org-ql-block-header "Priority Personal Backlog (Emergency, or Due Soon, and, Not Delegated)")))
 
           ;; TODO|NEXT -- assigned
           ;; Subdivided by ASSIGNEE
           (org-ql-block '((and
-                           (todo "TODO" "NEXT")
-                           (property "ASSIGNEE"))
+                           (todo "TODO" "NEXT" "WAIT")
+                           (property "ASSIGNEE")
+                           (not (tags "NOAGENDA" "UNFILED" "ARCHIVE" "milestone")))
                           :sort (deadline priority))
                         ((org-ql-block-header "Delegated by Assignee (any status, any deadline)")
                          (org-super-agenda-groups '((:auto-property "ASSIGNEE")))))
@@ -4220,9 +4224,24 @@ Now the actual agenda templates.
                               (not (property "ASSIGNEE"))
                               (and (priority "B" "C" "D" "E")
                                    (not (deadline auto)))
-                              (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
+                              (not (tags "NOAGENDA" "UNFILED" "ARCHIVE" "milestone")))
                           :sort (deadline priority))
                         ((org-ql-block-header "Low Priority Backlog by Category (Non-Emergency, Not Due Soon, and Not Delegated)")
+                         (org-super-agenda-groups '((:auto-category t)))))))
+
+        ("m" "Milestones"
+         ((org-ql-block '((and (tags "milestone")
+                               (todo "TODO")
+                               (not (tags "NOAGENDA" "UNFILED" "ARCHIVE"))
+                               (priority "A"))
+                          :sort (deadline))
+                        ((org-ql-block-header "Upcoming Key Milestones")))
+
+          (org-ql-block '((and (tags "milestone")
+                               (todo "TODO" "DONE")
+                               (not (tags "NOAGENDA" "UNFILED" "ARCHIVE")))
+                          :sort (deadline))
+                        ((org-ql-block-header "All Project Milestones")
                          (org-super-agenda-groups '((:auto-category t)))))))))
 #+end_src
 
