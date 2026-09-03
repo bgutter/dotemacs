@@ -4471,6 +4471,9 @@ rather than using an org-roam database, and, using org-ql in place of
 org-element-map.
 
 #+BEGIN_SRC emacs-lisp
+  (defcustom my:org-agenda-forced-files nil
+    "List of files always included in org-agenda-files, regardless of the caching logic below.")
+
   (defun my:org-read-agenda-index ()
     "Read cached value for `org-agenda-files'"
     (interactive)
@@ -4480,7 +4483,9 @@ org-element-map.
           (with-temp-buffer
             (erase-buffer)
             (insert-file-contents my-agenda-files-cache-path)
-            (setq org-agenda-files (read (current-buffer)))))))
+            (setq org-agenda-files (delete-dups
+                                    (append (read (current-buffer))
+                                            my:org-agenda-forced-files)))))))
 
   (defun my:org-write-agenda-index ()
     "Write `org-agenda-files' to our file cache."
@@ -4489,7 +4494,7 @@ org-element-map.
         ((my-agenda-files-cache-path (concat org-directory "/org-agenda-files.cache.el")))
       (if (file-exists-p my-agenda-files-cache-path)
           (with-temp-file my-agenda-files-cache-path
-            (prin1 org-agenda-files (current-buffer))))))
+            (prin1 (delete-dups org-agenda-files) (current-buffer))))))
 
   (defun my:current-buffer-has-open-tasks ()
     "Test if the current buffer has open TODO items, ignoring those with tags NOAGENDA or ARCHIVE."
