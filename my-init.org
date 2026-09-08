@@ -4225,10 +4225,11 @@ Now the actual agenda templates.
           ;; TODO -- unassigned -- Priority <= #B AND NOT Upcoming
           ;; Subdivided by Category
           (org-ql-block '((and (todo "TODO")
-                              (not (property "ASSIGNEE"))
-                              (and (priority "B" "C" "D" "E")
-                                   (not (deadline auto)))
-                              (not (tags "NOAGENDA" "UNFILED" "ARCHIVE" "milestone")))
+                               (not (property "ASSIGNEE"))
+                               (priority "B" "C" "D" "E")
+                               (or (not (deadline)) ;; no deadline, or, deadline and imminent
+                                   (deadline :from 15 :to 90))
+                               (not (tags "NOAGENDA" "UNFILED" "ARCHIVE" "milestone")))
                           :sort (deadline priority))
                         ((org-ql-block-header "Low Priority Backlog by Category (Non-Emergency, Not Due Soon, and Not Delegated)")
                          (org-super-agenda-groups '((:auto-category t)))))))
