@@ -4307,7 +4307,8 @@ Also -- don't show trailing whitespace here.
               (setq org-agenda-span 21
                     org-agenda-start-on-weekday nil
                     org-agenda-start-day "-7d"
-                    show-trailing-whitespace nil)))
+                    show-trailing-whitespace nil)
+              (sticky-buffer-mode t)))
 #+END_SRC
 
 *** Babel
@@ -4513,8 +4514,7 @@ org-element-map.
             (insert-file-contents my-agenda-files-cache-path)
             (setq org-agenda-files (delete-dups
                                     (append (read (current-buffer))
-                                            my:org-agenda-forced-files
-                                            (list my:org-hashtags-file))))))))
+                                            my:org-agenda-forced-files)))))))
 
   (defun my:org-write-agenda-index ()
     "Write `org-agenda-files' to our file cache."
