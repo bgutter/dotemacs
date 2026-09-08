@@ -4276,6 +4276,14 @@ Add the hook
 ;(add-hook 'org-agenda-finalize-hook #'my:org-agenda-fold-sections)
 #+end_src
 
+Define an org-ql predicate to check assignee. Taken almost verbatim from the org-ql pedicate tutorial.
+
+#+begin_src emacs-lisp
+  (org-ql-defpred assigned (&rest names)
+    "Is this item assigned to a given person? With no args, evaluates to true for any assignee."
+    :body (cl-loop for name in names thereis (property "ASSIGNEE" name)))
+#+end_src
+
 Tweak overdue faces
 
 #+begin_src emacs-lisp
