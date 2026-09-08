@@ -4298,12 +4298,15 @@ Hide tags in agenda
 
 Show past week and next two in agenda view.
 
+Also -- don't show trailing whitespace here.
+
 #+BEGIN_SRC emacs-lisp
   (add-hook 'org-agenda-mode-hook
             (lambda ()
               (setq org-agenda-span 21
                     org-agenda-start-on-weekday nil
-                    org-agenda-start-day "-7d")))
+                    org-agenda-start-day "-7d"
+                    show-trailing-whitespace nil)))
 #+END_SRC
 
 *** Babel
