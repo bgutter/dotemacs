@@ -1717,7 +1717,8 @@ backends during experimentation.
                       "s"           'org-agenda-schedule
                       "M-<up>"      'backward-paragraph
                       "M-<down>"    'forward-paragraph
-                      "<RET>"       'my:org-agenda-switch-to)
+                      "<RET>"       'my:org-agenda-switch-to
+                      "<backtab>"   #'my:org-agenda-fold-sections)
 
   (general-define-key :keymaps 'shell-mode-map
                       "C-p"   'comint-previous-input
