@@ -5048,6 +5048,132 @@ Always save all files after a refile. A little surprised the files aren't saved 
                 (org-save-all-org-buffers)))
 #+END_SRC
 
+*** org-remote
+:PROPERTIES:
+:ID:       b680541d-e61b-4b37-a9d1-51ebbb2d83b8
+:END:
+
+This is something I am working on to interact with my org-dir from a
+mobile device. There are a lot of existing solutions for this, but,
+every one I've tried is far from the mark in one way or another.
+
+The most common "big problem" that I run into is that other org-mobile
+apps end up implementing a bunch of org-mode behavior in their own
+app...and sometimes (as with beorg) that behavior can be customized
+with lisp...but usually there just isn't much scriptability.
+
+Another thing is that most push "offline usability" as a core feature,
+whereas for me, it's more of an anti-feature. I don't want to have
+conflicting versions of the org-dir state. I want a stateless client
+to an active org-mode server. I run emacs in daemon mode anyway, so,
+why not?
+
+Another thing I dislike about other mobile org solutions is that they
+often try very hard to make org-mode text editing practical on
+mobile. Some do a good job, but....text editing is always going to be
+miserable on a touchscreen. This just isn't worth pursuing IMO. The
+only thing the mobile app needs to do is provide a touch-screen
+friendly API for capture and agenda interactions. Forget editing *.org
+format files. Or, offload that to another app.
+
+While working on this, I did discover Mova, which seems to be a very
+similarly inspired project. It looks like they are packaging emacs
+into a docker image as their server solution. I don't think I'll want
+to do that, but, it is clever.
+
+With that as my motivation, here are my goals and accepted limitations
+of org-remote;
+- Remote access for org-agenda and org-capture
+  - Possibly generic org-directory browsing by heading someday
+- All configuration in emacs init file as elisp
+  - No configuration in client
+  - No automation/scripting in client
+- Reuse existing emacs org-mode APIs in server so that emacs config is respected
+  - No custom parsing, no third-party org-mode libraries
+
+Accpeted limitations;
+- No offline support for client app
+- Will be frequently working around Emacs apis that may
+  unintentionally prompt for user input
+- As an exception to the "use existing org-mode APIs" thing, I will
+  probably actually use org-ql instead...just because it is a
+  substantially better API to work with.
+- You won't actually have 'remote' access unless you set up a VPN for
+  your home network, or, your laptop and phone are just on the same
+  wifi network.
+- You need to wire your own reverse proxy for basic http
+  auth. Authentication not in scope of this service.
+- No multi-user support, or, anything else that Emacs doesn't natively
+  give.
+
+Configurations with defaults
+
+#+begin_src emacs-lisp
+  (require 'simple-httpd)
+
+  (defcustom my:org-remote-server-port 59503
+    "Port to run the org-remote server on.")
+
+  (defcustom my:org-remote-agenda-commands
+    '(("agenda" "Agenda" (todo "TODO") nil))
+    "The agenda templates available for clients to query.
+
+  This is different from org-agenda-custom-commands, but, is inspired by
+  it. Each command is of the following form;
+
+  (key desc org-ql-query settings files)
+
+  See the default value for an example. See org-ql documentation for
+  information on query structure.")
+
+#+end_src
+
+Functions to start & stop the server;
+
+#+begin_src emacs-lisp
+  (defun my:org-remote-start-server ()
+    "Start the org-remote server."
+    (interactive)
+    (setq httpd-port my:org-remote-server-port)
+    (httpd-start))
+
+  (defun my:org-remote-stop-server ()
+    "Stop the org-remote server."
+    (interactive)
+    (httpd-stop))
+#+end_src
+
+Route for fetching agenda items
+
+#+begin_src emacs-lisp
+  (defun my:org-remote-agenda-query-from-key (key)
+    (cl-loop for lst in my:org-remote-agenda-commands
+           when (equal (car lst) key)
+           return (nth 2 lst)))
+
+  (defun my:org-element-to-json (element)
+    (let
+        ((raw-value (org-element-property :raw-value element))
+         (todo-keyword (org-element-property :todo-keyword element))
+         (filename (buffer-file-name (org-element-property :buffer element)))
+         (id (org-element-property :ID element)))
+      (json-serialize `(:raw-value ,raw-value
+                        :todo-keyword ,todo-keyword
+                        :filename ,filename
+                        :ID ,id))))
+
+  (defun httpd/org-remote/agenda (proc path query request)
+    (let* ((agenda-key (cadr (assoc "key" query)))
+           (query-form (my:org-remote-agenda-query-from-key agenda-key))
+           (files (org-agenda-files))
+           (results (and query-form (org-ql-select files query-form))))
+      (with-httpd-buffer proc "application/json"
+        (insert "[")
+        (dolist (result results)
+          (insert (format "%s,\n" (my:org-element-to-json result))))
+        (insert "]"))))
+#+end_src
+
 ** python-mode
 
 Install a dedicated Python venv right in =~/.emacs.d/=. Goal is to
