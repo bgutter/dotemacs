@@ -6120,6 +6120,19 @@ switched to StumpWM for the time being.
    (exwm-config-example))
 #+end_src
 
+* Chained Inits
+
+** Org Directory Init
+
+Support for evaluating an init.org present in root of =org-directory=.
+
+#+begin_src emacs-lisp
+  (when (boundp 'org-directory)
+    (let ((org-init-file (expand-file-name "init.org" org-directory)))
+      (when (file-exists-p org-init-file)
+        (org-babel-load-file org-init-file))))
+#+end_src
+
 * Configuration Notes & Vestigial Code
 
 #+BEGIN_SRC emacs-lisp
