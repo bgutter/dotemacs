@@ -1404,24 +1404,40 @@ backends during experimentation.
                       ;; ? means help
                       "?"                'helm-descbinds
 
-                      ;; "o"-> Org global shortcuts
+                      ;; "o"  -> Org global shortcuts
+
+                      ;; "od" -> Org Daily (journal actions)
                       "odd"              'my-org-journal-open-today
                       "odt"              'my-org-journal-open-tomorrow
                       "ody"              'my-org-journal-open-yesterday
+                      "od?"              'my:open-journal ;; ask
+
+                      ;; "oa" -> Org Agenda
                       "oa"               'org-agenda
+
+                      ;; "ot" -> Org Todo
                       "ota"              'my:org-assign-todo
+
+                      ;; "os" -> Org Concepts
                       "oc"               'my:org-concept-open
+
+                      ;; "ol" -> Org Link
+                      "ols"              'org-store-link
+                      "oli"              'org-insert-last-stored-link
+
+                      ;; "os" -> Org Search
                       "osc"              (if (on-windows-p) 'my:org-search-ag-regex 'my:org-search-concept)
                       "osj"              (if (on-windows-p) 'my:org-search-ag-regex 'my:org-search-journal)
                       "osg"              (if (on-windows-p) 'my:org-search-ag-regex 'my:org-search-llm-history)
                       "oss"              (if (on-windows-p) 'my:org-search-ag-regex 'my:org-search)
+
+                      ;; "or" -> Org Refile
+                      "or"               'my:org-refile-transient
+
+                      ;; Org Misc
                       "oo"               'my:org-occur-in-agenda-files
                       "ov"               'my:voice-notes
-                      "or"               'my:org-refile-transient
                       "o SPC"            'my:org-toggle-wrap
-                      "ols"              'org-store-link
-                      "oli"              'org-insert-last-stored-link
-                      "oj"               'my:open-journal
 
                       ;; "v"-> VC (Magit) global shortcuts
                       "vs"               'magit-status
