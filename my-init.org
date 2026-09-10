@@ -1058,16 +1058,10 @@ shown quickly when the ORDERED property is set to t for a heading.
 Assign task under point
 
 #+begin_src emacs-lisp
-  (defun my:read-lines-from-file (file-path)
-    "Read lines from file and return as list of strings"
-    (with-temp-buffer
-      (insert-file-contents file-path)
-      (split-string (buffer-string) "\n" t)))
-
   (defun my:org-assign-todo ()
     "Set ASSIGNEE property for heading under point to a value using completing-read on the hashtags.ogr content"
     (interactive)
-    (let ((assignee (completing-read "Assign To: " (my:read-lines-from-file my:org-hashtags-file))))
+    (let ((assignee (completing-read "Assign To: " (my:org-hashtags-all))))
       (org-set-property "ASSIGNEE" assignee)))
 #+end_src
 
@@ -4313,7 +4307,19 @@ Define an org-ql predicate to check assignee. Taken almost verbatim from the org
 #+begin_src emacs-lisp
   (org-ql-defpred assigned (&rest names)
     "Is this item assigned to a given person? With no args, evaluates to true for any assignee."
-    :body (cl-loop for name in names thereis (property "ASSIGNEE" name)))
+    :body (and (property "ASSIGNEE")
+               (or (null names)
+                   (cl-loop for name in names thereis (property "ASSIGNEE" name)))))
+#+end_src
+
+Another to test for items in journals versus concept files
+
+#+begin_src emacs-lisp
+  (org-ql-defpred concept (&rest concept-path-items)
+    "Is this item in a concept of a certain name? With no args, matches any concept file."
+    :body (and (path (expand-file-name "concepts" org-directory))
+               (or (null concept-path-items)
+                   (cl-loop for path-item in concept-path-items thereis (path (concat "." (regexp-quote path-item) ".*"))))))
 #+end_src
 
 Tweak overdue faces
@@ -4697,7 +4703,14 @@ org-agenda-files.
   (add-hook 'org-mode-hook
             (lambda ()
               (add-hook 'before-save-hook #'my:sync-hashtags-on-save nil t)))
+  (defun my:read-lines-from-file (file-path)
+    "Read lines from file and return as list of strings"
+    (with-temp-buffer
+      (insert-file-contents file-path)
+      (split-string (buffer-string) "\n" t)))
 
+  (defun my:org-hashtags-all ()
+    (my:read-lines-from-file my:org-hashtags-file))
 #+end_src
 
 Add function to interactively select an existing concept file.
