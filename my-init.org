@@ -1058,6 +1058,22 @@ shown quickly when the ORDERED property is set to t for a heading.
 Assign task under point
 
 #+begin_src emacs-lisp
+  (defun my:read-lines-from-file (file-path)
+    "Read lines from file and return as list of strings"
+    (with-temp-buffer
+      (insert-file-contents file-path)
+      (split-string (buffer-string) "\n" t)))
+
+  (defun my:org-assign-todo ()
+    "Set ASSIGNEE property for heading under point to a value using completing-read on the hashtags.ogr content"
+    (interactive)
+    (let ((assignee (completing-read "Assign To: " (my:read-lines-from-file my:org-hashtags-file))))
+      (org-set-property "ASSIGNEE" assignee)))
+#+end_src
+
+And also support assignment in agenda views
+
+#+begin_src emacs-lisp
     (defun my:org-agenda-assign ()
       "Assign task under point by setting the ASSIGNEE property."
       (interactive)
@@ -1393,7 +1409,7 @@ backends during experimentation.
                       "odt"              'my-org-journal-open-tomorrow
                       "ody"              'my-org-journal-open-yesterday
                       "oa"               'org-agenda
-                      "ot"               'org-todo-list
+                      "ota"              'my:org-assign-todo
                       "oc"               'my:org-concept-open
                       "osc"              (if (on-windows-p) 'my:org-search-ag-regex 'my:org-search-concept)
                       "osj"              (if (on-windows-p) 'my:org-search-ag-regex 'my:org-search-journal)
