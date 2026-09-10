@@ -4351,6 +4351,45 @@ Also -- don't show trailing whitespace here.
               (sticky-buffer-mode t)))
 #+END_SRC
 
+**** More Org-QL
+
+Function to find all tasks assigned to a person, broken by category
+
+#+begin_src emacs-lisp
+  (defun my:tasks-for-assignee-by-category (assignee)
+    (org-ql-search org-agenda-files
+      `(and (or (todo) (done))
+            (assigned ,assignee))
+      :super-groups '((:auto-category t))))
+#+end_src
+
+And the inverse
+
+#+begin_src emacs-lisp
+  (defun my:tasks-for-category-by-assignee (category)
+    (org-ql-search org-agenda-files
+      `(and (or (todo) (done))
+            (category ,category))
+      :sort '(date)
+      :super-groups '((:auto-property "ASSIGNEE"))))
+#+end_src
+
+Custom link type to show a user's tasks across all agenda files
+
+#+begin_src emacs-lisp
+  (org-link-set-parameters "tasks-assigned-to"
+                         :follow (lambda (assignee)
+                                   (my:tasks-for-assignee-by-category assignee)))
+#+end_src
+
+And the inverse
+
+#+begin_src emacs-lisp
+  (org-link-set-parameters "tasks-in-category"
+                         :follow (lambda (category)
+                                   (my:tasks-for-category-by-assignee category)))
+#+end_src
+
 *** Babel
 
 Enable many different languages in org-babel. Remember to reload org whenever these change (C-c C-c on the file header).
