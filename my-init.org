@@ -3409,7 +3409,6 @@ The hook =prog-mode-hook= is triggered in all programming major-modes.
                (display-line-numbers-mode 1)
                (auto-highlight-symbol-mode)
                (hs-minor-mode)
-               (hs-hide-all)
                (rainbow-delimiters-mode)))
 #+END_SRC
 
