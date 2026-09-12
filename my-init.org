@@ -1486,6 +1486,7 @@ backends during experimentation.
                       "dbnv"               'cancel-debug-on-variable-change
 
                       ;; "w" -> window management
+                      "ws"                 'sticky-buffer-mode
                       "wb"                 'balance-windows
                       "wu"                 'winner-undo
                       "wr"                 'winner-redo
@@ -4357,8 +4358,7 @@ Also -- don't show trailing whitespace here.
               (setq org-agenda-span 21
                     org-agenda-start-on-weekday nil
                     org-agenda-start-day "-7d"
-                    show-trailing-whitespace nil)
-              (sticky-buffer-mode t)))
+                    show-trailing-whitespace nil)))
 #+END_SRC
 
 **** More Org-QL
