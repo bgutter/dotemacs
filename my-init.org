@@ -1412,6 +1412,10 @@ backends during experimentation.
                       ;; "ot" -> Org Todo
                       "ota"              'my:org-assign-todo
 
+                      ;; "oq" -> Org Query
+                      "oqa"              'my:tasks-for-assignee-by-category
+                      "oqc"              'my:tasks-for-category-by-assignee
+
                       ;; "os" -> Org Concepts
                       "oc"               'my:org-concept-open
 
@@ -4359,10 +4363,28 @@ Also -- don't show trailing whitespace here.
 
 **** More Org-QL
 
+Helper function to find all unique categories
+
+#+begin_src emacs-lisp
+  (defun my:list-unique-agenda-categories ()
+    "List all unique categories across all agenda files using org-ql."
+    (interactive)
+    (let ((categories (org-ql-query
+                        :select '(org-get-category)
+                        :from org-agenda-files))
+          unique-categories)
+      (dolist (category categories)
+        (unless (member category unique-categories)
+          (push category unique-categories)))
+      unique-categories))
+#+end_src
+
 Function to find all tasks assigned to a person, broken by category
 
 #+begin_src emacs-lisp
   (defun my:tasks-for-assignee-by-category (assignee)
+    (interactive
+     (list (completing-read "Tasks Assigned To: " (my:org-hashtags-all))))
     (org-ql-search org-agenda-files
       `(and (or (todo) (done))
             (assigned ,assignee))
@@ -4373,6 +4395,8 @@ And the inverse
 
 #+begin_src emacs-lisp
   (defun my:tasks-for-category-by-assignee (category)
+    (interactive
+     (list (completing-read "Tasks in Category: " (my:list-unique-agenda-categories))))
     (org-ql-search org-agenda-files
       `(and (or (todo) (done))
             (category ,category))
@@ -4703,6 +4727,7 @@ org-agenda-files.
   (add-hook 'org-mode-hook
             (lambda ()
               (add-hook 'before-save-hook #'my:sync-hashtags-on-save nil t)))
+
   (defun my:read-lines-from-file (file-path)
     "Read lines from file and return as list of strings"
     (with-temp-buffer
