@@ -6,8 +6,13 @@
 #+TITLE: $1
 #+DATE:  `(format-time-string "%Y-%m-%d")`
 #+CATEGORY: $2
+#+FILETAGS: $3
 
-[[tasks-in-category:$2]]
+* Shortcuts
+
+[[org-ql-search-agenda:\`(and (todo) (category ,(org-get-category)))::super-groups:'((:auto-property "ASSIGNEE"))::sort:'(priority)][Open in This Category, by Assignee]]
+
+[[org-ql-search-agenda:\`(and (or (todo) (done)) (category ,(org-get-category)))::super-groups:'((:auto-todo))::sort:'(priority)][Open in This Category, by Status]]
 
 $0
 

@@ -4419,6 +4419,44 @@ And the inverse
                                    (my:tasks-for-category-by-assignee category)))
 #+end_src
 
+And a more generalized variant. Links should be like;
+
+[ [org-ql-search-agenda:'(and (todo) ...)::super-groups:'(...)::sort:(...)][] ]
+
+super-groups and sort are just two examples. They can be any number (0
+or many) of keyword args to org-ql-search, in any order.
+
+Unlike the link included in org-ql, this has two main variations;
+- Searches agenda files, not current buffer
+- Evaluates values as elisp, so they must be quoted, but can be programmatic
+- Allows supplying kwargs to org-ql-search by submitting key:val pairs delimited by ::
+
+#+begin_src emacs-lisp
+  (defun my:split-string-once (string delimiter)
+    "Split STRING into a list of two substrings at the first occurrence of DELIMITER."
+    (let ((pos (string-match (regexp-quote delimiter) string)))
+      (if pos
+          (list (substring string 0 pos)
+                (substring string (+ pos (length delimiter))))
+        (list string))))
+
+  (org-link-set-parameters "org-ql-search-agenda"
+                           :follow (lambda (link)
+                                     "Form: query::keyword:(arg-form)::keyword2:(argform2)..."
+                                     (let* ((parts (split-string link "::"))
+                                            (query (eval (read (car parts))))
+                                            (kwargs-strs (cdr parts))
+                                            (kwargs nil))
+                                       (mapcar
+                                        (lambda (str)
+                                          (pcase-let
+                                              ((`(,first-part ,second-part) (my:split-string-once str ":")))
+                                            (push (eval (read second-part)) kwargs)
+                                            (push (intern (concat ":" first-part)) kwargs)))
+                                        kwargs-strs)
+                                       (apply #'org-ql-search org-agenda-files query kwargs))))
+#+end_src
+
 *** Babel
 
 Enable many different languages in org-babel. Remember to reload org whenever these change (C-c C-c on the file header).
