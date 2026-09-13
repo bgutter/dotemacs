@@ -4222,47 +4222,58 @@ Now the actual agenda templates.
 
          ;; WAIT -- assigned or unassigned
          ((org-ql-block '((and (todo "WAIT")
-                               (not (property "ASSIGNEE"))
+                               (not (assigned))
                                (not (tags "NOAGENDA" "ARCHIVE" "UNFILED" "milestone")))
                           :sort (deadline priority))
-                        ((org-ql-block-header "Blocked (tag is WAIT)")))
+                        ((org-ql-block-header "Personally Blocked (Unassigned and keyword=WAIT)")))
 
           ;; NEXT -- unassigned
           (org-ql-block '((and (todo "NEXT")
-                              (not (property "ASSIGNEE"))
+                              (not (assigned))
                               (not (tags "NOAGENDA" "ARCHIVE" "UNFILED" "milestone")))
                           :sort (deadline priority))
-                        ((org-ql-block-header "Doing Now (tag is NEXT and Not Delegated)")))
+                        ((org-ql-block-header "Doing Now (Unassigned and keyword=NEXT)")))
 
           ;; TODO -- unassigned -- Either Priority #A or Upcoming
           (org-ql-block '((and (todo "TODO")
-                              (not (property "ASSIGNEE"))
+                              (not (assigned))
                               (or (priority "A")
                                   (deadline auto))
                               (not (tags "NOAGENDA" "UNFILED" "ARCHIVE" "milestone")))
                           :sort (deadline priority))
-                        ((org-ql-block-header "Priority Personal Backlog (Emergency, or Due Soon, and, Not Delegated)")))
+                        ((org-ql-block-header "Personal Priority Backlog (Unassigned with Deadline Warning or #A)")))
 
           ;; TODO|NEXT -- assigned
           ;; Subdivided by ASSIGNEE
           (org-ql-block '((and
                            (todo "TODO" "NEXT" "WAIT")
-                           (property "ASSIGNEE")
+                           (assigned)
                            (not (tags "NOAGENDA" "UNFILED" "ARCHIVE" "milestone")))
                           :sort (deadline priority))
-                        ((org-ql-block-header "Delegated by Assignee (any status, any deadline)")
+                        ((org-ql-block-header "Assigned Tasks (No Filters)")
                          (org-super-agenda-groups '((:auto-property "ASSIGNEE")))))
 
-          ;; TODO -- unassigned -- Priority <= #B AND NOT Upcoming
+          ;; TODO -- unassigned -- Priority <= #B AND either no deadline or not Upcoming
           ;; Subdivided by Category
           (org-ql-block '((and (todo "TODO")
-                               (not (property "ASSIGNEE"))
+                               (not (assigned))
                                (priority "B" "C" "D" "E")
-                               (or (not (deadline)) ;; no deadline, or, deadline and imminent
-                                   (deadline :from 15 :to 90))
+                               (not (deadline))
                                (not (tags "NOAGENDA" "UNFILED" "ARCHIVE" "milestone")))
                           :sort (deadline priority))
-                        ((org-ql-block-header "Low Priority Backlog by Category (Non-Emergency, Not Due Soon, and Not Delegated)")
+                        ((org-ql-block-header "Personal Non-Priority Backlog (Unassigned, <= #B, no deadline)")
+                         (org-super-agenda-groups '((:auto-category t)))))))
+
+        ;; Premise -- when a task has a deadline, I won't see it in backlog. I won't see it AT ALL
+        ;; until it hits the warning period (which I set for each task as I set a deadline). If I ever
+        ;; want to see tasks which have deadlines but are not yet in warning period, I can use the future agenda.
+        ("f" "Future"
+         ((org-ql-block '((and (todo "TODO" "WAIT" "NEXT")
+                               (not (assigned))
+                               (deadline)
+                               (not (deadline auto)))
+                          :sort (deadline priority))
+                        ((org-ql-block-header "Unassigned Tasks with Deadline but no Warning")
                          (org-super-agenda-groups '((:auto-category t)))))))
 
         ("m" "Milestones"
