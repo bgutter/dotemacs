@@ -4381,12 +4381,12 @@ Another that can be used to find mentions of certain hashtags
   (org-ql-defpred mentions-any (&rest hashtags)
     "String-based seach across all parts of a heading and body. Any one can be found."
     :body (cl-loop for hashtag in hashtags thereis
-                   (regexp (regexp-quote hashtag))))
+                   (regexp (concat "\\_<" (regexp-quote hashtag) "\\_>"))))
 
   (org-ql-defpred mentions-all (&rest hashtags)
     "String-based seach across all parts of a heading and body. All must be found."
     :body (cl-loop for hashtag in hashtags always
-                   (regexp (regexp-quote hashtag))))
+                   (concat "\\_<" (regexp-quote hashtag) "\\_>"))))
 #+end_src
 
 Helper function to find all unique categories
