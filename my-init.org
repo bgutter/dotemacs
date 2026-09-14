@@ -3724,13 +3724,6 @@ Custom results buffer for hashtag matches. AI slop sorry.
         (goto-char (point-max))
         (insert "\n* " sanitized-headline-name "\n"))))
 
-  (defun my:org-try-search-hash-tag-under-point ()
-    (interactive)
-    (when (org-in-regexp "#[a-zA-Z-]+")
-      (let* ((tag (substring (match-string 0) 1))
-             (search-str (replace-regexp-in-string "-" "[- ]" tag)))
-        (my:org-search-ag-regex search-str))))
-
   (defun my:org-search-ag-regex (regex &optional directory)
      (interactive (list (read-string "Enter ag search regex: ")
                        (read-directory-name "Search directory" org-directory)))
@@ -3815,7 +3808,7 @@ Custom results buffer for hashtag matches. AI slop sorry.
     :keymap org-hash-tag-results-mode-map)
 
   (setq org-ctrl-c-ctrl-c-final-hook nil)
-  (add-hook 'org-ctrl-c-ctrl-c-final-hook 'my:org-try-search-hash-tag-under-point)
+  (add-hook 'org-ctrl-c-ctrl-c-final-hook (lambda () (call-interactively #'my:org-hashtag-query-tag-under-point)))
 #+end_src
 
 If this is a journal or concept file in my org files directory, rename
@@ -4387,6 +4380,25 @@ Another that can be used to find mentions of certain hashtags
     "String-based seach across all parts of a heading and body. All must be found."
     :body (cl-loop for hashtag in hashtags always
                    (concat "\\_<" (regexp-quote hashtag) "\\_>"))))
+#+end_src
+
+A function that will find mentions of hashtag at point
+
+#+begin_src emacs-lisp
+  (defun my:org-hashtag-query-tag-under-point (search-all)
+    "Find open TODOs assigned to this tag. With prefix, find all headings with any mention of this tag."
+    (interactive (list (not (null current-prefix-arg))))
+    (when (org-in-regexp "#[a-zA-Z-]+")
+      (let* ((tag (substring (match-string 0) 1))
+             (search-files (if search-all
+                               (directory-files-recursively org-directory  ".*\\.org$")
+                             org-agenda-files))
+             (search-str (substring-no-properties tag)))
+        (org-ql-search search-files
+          (if search-all
+              `(mentions-any ,search-str)
+            `(and (todo) (assigned ,(concat "#" search-str))))
+          :super-groups '((:auto-category t))))))
 #+end_src
 
 Helper function to find all unique categories
