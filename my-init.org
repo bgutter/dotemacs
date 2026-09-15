@@ -4046,7 +4046,7 @@ And their faces.
                   ;( "IN_PROGRESS" . (                         :background "deeppink3"    :weight bold              ))
                   ( "NEXT" .        (                         :background "deeppink3"    :weight bold              ))
                   ( "HIATUS" .      (:foreground "white"                                              :slant italic))
-                  ( "DONE" .        (:foreground "forst green"                           :weight bold              ))
+                  ( "DONE" .        (:foreground "forest green"                           :weight bold              ))
                   ( "CANCELLED" .   (:foreground "light gray"                                         :slant italic))
                   ;( "FAILED" .      (:foreground "white"      :background "red"          :weight bold              ))
                   ( "MIGRATED"      (:foreground "light gray"                                         :slant italic))
@@ -4379,7 +4379,7 @@ Another that can be used to find mentions of certain hashtags
   (org-ql-defpred mentions-all (&rest hashtags)
     "String-based seach across all parts of a heading and body. All must be found."
     :body (cl-loop for hashtag in hashtags always
-                   (concat "\\_<" (regexp-quote hashtag) "\\_>"))))
+                   (concat "\\_<" (regexp-quote hashtag) "\\_>")))
 #+end_src
 
 A function that will find mentions of hashtag at point
