@@ -4240,12 +4240,23 @@ A function that will find mentions of hashtag at point
              (search-files (if search-all
                                (directory-files-recursively org-directory  ".*\\.org$")
                              org-agenda-files))
-             (search-str (substring-no-properties tag)))
+             (search-str (substring-no-properties tag))
+             (tag-name (concat "#" search-str)))
         (org-ql-search search-files
           (if search-all
               `(mentions-any ,search-str)
-            `(and (todo) (assigned ,(concat "#" search-str))))
-          :super-groups '((:auto-category t))))))
+            `(and (or (done) (todo)) (mentions-any ,search-str)))
+          :sort '(deadline priority todo)
+          :super-groups `((:name ,(concat "Assigned to " tag-name)
+                                 :and (:property ("ASSIGNEE" ,tag-name)
+                                                 :todo ("TODO" "NEXT" "WAIT")))
+                          (:name ,(concat "Other Open Tasks Mentioning " tag-name)
+                                 :todo ("TODO" "NEXT" "WAIT"))
+                          (:name ,(concat "Recently Completed By " tag-name)
+                                 :and (:property ("ASSIGNEE" ,tag-name)
+                                                 :todo ("DONE" "CANCELLED" "HIATUS" "MIGRATED")))
+                          (:name ,(concat "Recently Completed & Mentioning " tag-name)
+                                 :todo ("DONE" "CANCELLED" "HIATUS" "MIGRATED")))))))
 #+end_src
 
 Helper function to find all unique categories
