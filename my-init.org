@@ -3647,170 +3647,6 @@ Mode hooks
               (org-bullets-mode 1)))
 #+END_SRC
 
-Highlight #firstname-lastname tags -- wish this was an official org syntax
-
-#+begin_src elisp
-(defun my-org-add-font-lock-keywords ()
-  (font-lock-add-keywords nil
-    '(("#[a-zA-Z-]+" . font-lock-constant-face))))
-
-(add-hook 'org-mode-hook 'my-org-add-font-lock-keywords)
-#+end_src
-
-Make hash tags clickable
-
-#+begin_src elisp
-  (defun my-org-ctrl-c-ctrl-c ()
-    (if (org-in-regexp "#[a-zA-Z-]+")
-        (let ((search-str (replace-regexp-in-string "-" "[- ]" (substring (match-string 0) 1))))
-          (message "C-c C-c on: %s" search-str)
-          (ag-regexp search-str org-directory)
-          t)  ; Indicate that the action was handled
-      nil)) ; Let Org handle other cases
-
-  (add-hook 'org-ctrl-c-ctrl-c-final-hook 'my-org-ctrl-c-ctrl-c)
-#+end_src
-
-Custom results buffer for hashtag matches. AI slop sorry.
-
-#+begin_src elisp
-  (defun org-get-heading-content ()
-    "Get content of current org heading excluding subheadings."
-    (interactive)
-    (let (start end content)
-      (setq start (save-excursion
-                    (org-back-to-heading)
-                    (forward-line)
-                    (point)))
-      (setq end (save-excursion
-                  (org-end-of-subtree t)
-                  (point)))
-      (setq content (buffer-substring-no-properties start end))
-      (with-temp-buffer
-        (insert content)
-        (goto-char (point-min))
-        (while (re-search-forward org-heading-regexp nil t)
-          (replace-match ""))
-        (buffer-string))))
-
-  (defun is-before-first-headline ()
-    "Check if point is before the first headline."
-    (interactive)
-    (let ((prev-point (point)))
-      (save-excursion
-        (goto-char (point-min))
-        (not (re-search-forward org-heading-regexp prev-point t)))))
-
-  (defun get-current-headline ()
-    (save-excursion
-      (org-back-to-heading t)
-      (org-element-property :raw-value (org-element-at-point))))
-
-  (defun my/org-next-level-2-heading ()
-    (interactive)
-    (outline-next-heading)
-    (while (and (not (eobp))
-                (not (looking-at "^\\*\\{2\\} ")))
-      (outline-next-heading)))
-
-  (defun goto-or-create-toplevel-headline (headline-name)
-    "Go to top-level headline with name HEADLINE-NAME or create it if not found."
-    (interactive "sHeadline: ")
-    (goto-char (point-min))
-    (let ((sanitized-headline-name (replace-regexp-in-string "\\\\" "/" headline-name)))
-      (if (re-search-forward (concat "^\\* " sanitized-headline-name) nil t)
-          (goto-char (match-end 0))
-        ;; If not found, create at the end of the buffer
-        (goto-char (point-max))
-        (insert "\n* " sanitized-headline-name "\n"))))
-
-  (defun my:org-search-ag-regex (regex &optional directory)
-     (interactive (list (read-string "Enter ag search regex: ")
-                       (read-directory-name "Search directory" org-directory)))
-    (let (results-buf)
-      (save-window-excursion
-        (let ((search-command (format "rg --color=never --no-heading --line-number --column -- '%s' %s"
-                                 regex
-                                 (or directory org-directory)))
-          (output-buffer (generate-new-buffer "*Org Hash Tag Results*"))
-          (results-buffer (get-buffer-create (generate-new-buffer-name "*Org Hashtag Matches*"))))
-        ;; Run ag and capture output
-        (shell-command search-command output-buffer)
-        ;; Process output
-        (with-current-buffer results-buffer
-          (insert "#+TITLE: Hash Tag Search Results")
-          (org-mode))
-        (with-current-buffer output-buffer
-          (goto-char (point-min))
-          (while (re-search-forward "^\\(.*\\):\\([0-9]+\\):\\([0-9]+\\):" nil t)
-            (let ((file (match-string 1))
-                  (line (string-to-number (match-string 2)))
-                  (char (string-to-number (match-string 3))))
-              ;; Visit the file and get the heading
-              (with-current-buffer (find-file-noselect file)
-                (save-excursion
-                  (goto-char (point-min))
-                  (forward-line (1- line))
-                  (forward-char char)
-                  (if (not (is-before-first-headline))
-                      (let ((heading-content (org-get-heading-content))
-                            (headline (get-current-headline)))
-                        (with-current-buffer results-buffer
-                          (goto-or-create-toplevel-headline file)
-                          (insert "\n** " headline "\n" ":PROPERTIES:\n:SOURCE: " file  "\n:LINE: " (format "%d" line) "\n:END:\n" heading-content)))))))))
-        (with-current-buffer results-buffer
-          (read-only-mode 1)
-          (goto-char (point-min))
-          (org-overview)
-          (org-hash-tag-results-mode))
-        (kill-buffer output-buffer)
-        (setq results-buf results-buffer)))
-    (switch-to-buffer-other-window results-buf)))
-
-  (defun my/org-prev-level-2-heading ()
-    (interactive)
-    (outline-previous-heading)
-    (while (and (not (bobp))
-                (not (looking-at "^\\*\\{2\\} ")))
-      (outline-previous-heading)))
-
-  (makunbound 'org-hash-tag-results-mode-map)
-  (defvar org-hash-tag-results-mode-map
-    (let ((map (make-sparse-keymap)))
-      (define-key map (kbd "q") (lambda ()
-                                  (interactive)
-                                  (kill-buffer (current-buffer))))
-      (define-key map (kbd "n") (lambda ()
-                                  (interactive)
-                                  (org-fold-hide-entry)
-                                  (my/org-next-level-2-heading)
-                                  (org-fold-show-entry)))
-      (define-key map (kbd "p") (lambda ()
-                                  (interactive)
-                                  (org-fold-hide-entry)
-                                  (my/org-prev-level-2-heading)
-                                  (org-fold-show-entry)))
-      (define-key map (kbd "RET") (lambda ()
-                                    (interactive)
-                                    (let ((file (org-entry-get nil "SOURCE"))
-                                          (line (org-entry-get nil "LINE")))
-                                      (let ((buf (find-file-noselect file)))
-                                        (display-buffer buf '(display-buffer-pop-up-window))
-                                        (with-current-buffer buf
-                                          (goto-line (string-to-number line))
-                                          (pulse-momentary-highlight-one-line (point)))))))
-      map)
-    "Keymap for `my-org-minor-mode'.")
-
-  (define-minor-mode org-hash-tag-results-mode
-    "A minor mode for custom Org buffer keybindings."
-    :lighter " org-hash-tag-results"
-    :keymap org-hash-tag-results-mode-map)
-
-  (setq org-ctrl-c-ctrl-c-final-hook nil)
-  (add-hook 'org-ctrl-c-ctrl-c-final-hook (lambda () (call-interactively #'my:org-hashtag-query-tag-under-point)))
-#+end_src
-
 If this is a journal or concept file in my org files directory, rename
 the buffer using some special rules.
 - journal.org in journal dir gets renamed like "journal [2024-1-12]"
@@ -4346,6 +4182,17 @@ Also -- don't show trailing whitespace here.
                     show-trailing-whitespace nil)))
 #+END_SRC
 
+Highlight #firstname-lastname tags.
+
+#+begin_src elisp
+  (defun my-org-add-font-lock-keywords ()
+    (font-lock-add-keywords nil
+      '(("#[a-zA-Z-]+" . font-lock-constant-face))))
+
+  (add-hook 'org-mode-hook 'my-org-add-font-lock-keywords)
+#+end_src
+
+
 **** More Org-QL
 
 Define an org-ql predicate to check assignee. Taken almost verbatim from the org-ql pedicate tutorial.
@@ -4813,6 +4660,15 @@ org-agenda-files.
   (defun my:org-hashtags-all ()
     (my:read-lines-from-file my:org-hashtags-file))
 #+end_src
+
+Add org C-c C-c handler for hsahtags that calls =my:org-hashtag-query-tag-under-point=.
+
+#+begin_src emacs-lisp
+  (add-hook 'org-ctrl-c-ctrl-c-final-hook
+            (lambda ()
+              (call-interactively #'my:org-hashtag-query-tag-under-point)))
+#+end_src
+
 
 Add function to interactively select an existing concept file.
 
