@@ -1429,6 +1429,9 @@ backends during experimentation.
                       "osg"              (if (on-windows-p) 'my:org-search-ag-regex 'my:org-search-llm-history)
                       "oss"              (if (on-windows-p) 'my:org-search-ag-regex 'my:org-search)
 
+                      ;; "oh" -> Org Hashtag
+                      "ohqt"             'my:org-hashtag-query-tag-under-point
+
                       ;; "or" -> Org Refile
                       "or"               'my:org-refile-transient
 
