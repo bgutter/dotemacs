@@ -1415,6 +1415,7 @@ backends during experimentation.
                       ;; "oq" -> Org Query
                       "oqa"              'my:tasks-for-assignee-by-category
                       "oqc"              'my:tasks-for-category-by-assignee
+                      "oqd"              'my:tasks-closed-recently
 
                       ;; "os" -> Org Concepts
                       "oc"               'my:org-concept-open
@@ -4301,6 +4302,20 @@ And the inverse
             (category ,category))
       :sort '(date)
       :super-groups '((:auto-property "ASSIGNEE"))))
+#+end_src
+
+Tasks completed in past three weeks
+
+#+begin_src emacs-lisp
+  (defun my:tasks-closed-recently ()
+    (interactive)
+    (let ((org-super-agenda-date-format "%A, %Y-%m-%d"))
+      (org-ql-search (org-agenda-files)
+        '(and (todo "DONE" "CANCELLED" "MIGRATED" "HIATUS")
+              (closed :from -21))
+        :title "Recently Completed Tasks Grouped by Date"
+        :sort '(date)
+        :super-groups '((:auto-ts t)))))
 #+end_src
 
 Custom link type to show a user's tasks across all agenda files
