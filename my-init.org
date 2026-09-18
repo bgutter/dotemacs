@@ -1107,6 +1107,28 @@ And also support assignment in agenda views
     (org-agenda-redo))
 #+end_src
 
+Add, remove, and get participants
+
+#+begin_src emacs-lisp
+  (defun my:org-add-participant ()
+    (interactive)
+    (let* ((new-participant (completing-read "[+] Participant: " (my:org-hashtags-all)))
+           (current-prop (org-entry-get (point) "PARTICIPANTS"))
+           (current-participants (if current-prop (split-string current-prop) '()))
+           (new-participants (delete-dups (append current-participants (list new-participant))))
+           (new-prop (string-join new-participants " ")))
+      (org-set-property "PARTICIPANTS" new-prop)))
+
+  (defun my:org-remove-participant ()
+    (interactive)
+    (let* ((current-prop (org-entry-get (point) "PARTICIPANTS"))
+           (current-participants (if current-prop (split-string current-prop) '()))
+           (participant-to-pop (completing-read "[-] Participant: " current-participants))
+           (new-participants (remove participant-to-pop current-participants))
+           (new-prop (string-join new-participants " ")))
+      (org-set-property "PARTICIPANTS" new-prop)))
+#+end_src
+
 Modify org-agenda-switch-to to respect the 'pop-up-buffers custom
 variable. It will open a new frame or window when opening TODO items
 in agenda views.
@@ -1411,6 +1433,8 @@ backends during experimentation.
 
                       ;; "ot" -> Org Todo
                       "ota"              'my:org-assign-todo
+                      "otp"              'my:org-add-participant
+                      "otP"              'my:org-remove-participant
 
                       ;; "oq" -> Org Query
                       "oqa"              'my:tasks-for-assignee-by-category
