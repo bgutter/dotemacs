@@ -4227,7 +4227,10 @@ When a task has a :SENSITIVE: property value t, replace it with unicode dot char
     "Just flip the value of `my:org-ql-hide-sensitive-results'"
     (interactive)
     (setq my:org-ql-hide-redact-results (not my:org-ql-hide-redact-results))
-    (org-agenda-redo))
+    (org-agenda-redo)
+    (if my:org-ql-hide-redact-results
+        (message "Hiding sensitive content in agenda.")
+      (message "Showing sensitive content in agenda.")))
 #+end_src
 
 Install advice
