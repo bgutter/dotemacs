@@ -4452,14 +4452,23 @@ A helper function to support interactive selection of org-mode TODO headings
 #+begin_src emacs-lisp
   (defun my:org-ql-completing-read-for-query (prompt files query)
     "Returns a marker after asking user to select the result of an org-ql query."
-    (let* ((selection (completing-read prompt
-                                      (org-ql-select files query
-                                        :action (lambda ()
-                                                  (propertize (org-get-heading t t t t)
-                                                              'org--marker (copy-marker (point)))))
-                                      nil
-                                      t))
-          (marker (get-text-property 0 'org--marker selection)))
+    (let* ((selection
+            (completing-read
+             prompt
+             (org-ql-select files query
+               :action (lambda ()
+                         (let* ((todo     (org-entry-get nil "TODO"))
+                                (priority (org-entry-get nil "PRIORITY"))
+                                (heading  (org-get-heading t t t t))
+                                (todo-str     (when todo
+                                                (concat (propertize todo 'face (org-get-todo-face todo)) " ")))
+                                (priority-str (when priority
+                                                (concat (propertize (format "[#%s]" priority) 'face 'org-priority) " ")))
+                                (display  (concat todo-str priority-str heading)))
+                           (propertize display 'org--marker (copy-marker (point))))))
+             nil
+             t))
+           (marker (get-text-property 0 'org--marker selection)))
       marker))
 #+end_src
 
