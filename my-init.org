@@ -1435,6 +1435,8 @@ backends during experimentation.
                       "ota"              'my:org-assign-todo
                       "otp"              'my:org-add-participant
                       "otP"              'my:org-remove-participant
+                      "ots"              'my:org-make-sensitive
+                      "otS"              'my:org-make-insensitive
 
                       ;; "oq" -> Org Query
                       "oqa"              'my:tasks-for-assignee-by-category
@@ -1768,6 +1770,7 @@ backends during experimentation.
                       "s-<down>" 'ahs-forward)
 
   (general-define-key :keymaps 'org-agenda-mode-map
+                      "&"           'my:org-ql-toggle-redact-sensitive-content
                       "p"           'org-agenda-priority
                       "t"           'my:org-agenda-todo-and-redo
                       "a"           'my:org-agenda-assign
@@ -4195,6 +4198,53 @@ Hide tags in agenda
 
 #+begin_src emacs-lisp
 (customize-set-variable 'org-agenda-remove-tags nil)
+#+end_src
+
+When a task has a :SENSITIVE: property value t, replace it with unicode dot characters in agendas, unless =my:org-ql-hide-sensitive-results= is non-nil
+
+#+begin_src emacs-lisp
+  (defvar my:org-ql-hide-redact-results t
+    "When non-nil, org-ql buffers will redact headline content for any headings with property :SENSITIVE: set to t.")
+
+  (defun my:org-ql-view--format-element--redact-sensitive (orig-fun element)
+    "When `my:org-ql-hide-sensitive-results' is non-nil, for any headings with property `:SENSITIVE:' set to `t',
+  replace every non-whitespace character in the headline text with unicode dot."
+    (let* ((marker (and element (or (org-element-property :org-hd-marker element)
+                                    (org-element-property :org-marker element))))
+           (sensitive (and my:org-ql-hide-redact-results
+                           marker
+                           (org-with-point-at marker
+                                                (org-entry-get (point) "SENSITIVE")))))
+      (if (and sensitive (org-element-property :raw-value element))
+          (let* ((redacted (replace-regexp-in-string "[^ \t\n]" "•" (org-element-property :raw-value element)))
+                 (new-element (list (car element)
+                                    (plist-put (copy-sequence (cadr element)) :raw-value redacted))))
+            (funcall orig-fun new-element))
+        (funcall orig-fun element))))
+
+  (defun my:org-ql-toggle-redact-sensitive-content ()
+    "Just flip the value of `my:org-ql-hide-sensitive-results'"
+    (interactive)
+    (setq my:org-ql-hide-redact-results (not my:org-ql-hide-redact-results))
+    (org-agenda-redo))
+#+end_src
+
+Install advice
+
+#+begin_src emacs-lisp
+  (advice-add 'org-ql-view--format-element :around #'my:org-ql-view--format-element--redact-sensitive)
+#+end_src
+
+Functions to set and unset sensitive for a heading
+
+#+begin_src emacs-lisp
+  (defun my:org-make-sensitive ()
+    (interactive)
+    (org-set-property "SENSITIVE" "t"))
+
+  (defun my:org-make-insensitive ()
+    (interactive)
+    (org-delete-property "SENSITIVE"))
 #+end_src
 
 Show past week and next two in agenda view.
