@@ -1449,6 +1449,7 @@ backends during experimentation.
                       ;; "ol" -> Org Link
                       "ols"              'org-store-link
                       "oli"              'org-insert-last-stored-link
+                      "olt"              'my:org-link-and-backlink-to-open-task
 
                       ;; "os" -> Org Search
                       "osc"              (if (on-windows-p) 'my:org-search-ag-regex 'my:org-search-concept)
@@ -4444,6 +4445,75 @@ Unlike the link included in org-ql, this has two main variations;
                                             (push (intern (concat ":" first-part)) kwargs)))
                                         kwargs-strs)
                                        (apply #'org-ql-search org-agenda-files query kwargs))))
+#+end_src
+
+A helper function to support interactive selection of org-mode TODO headings
+
+#+begin_src emacs-lisp
+  (defun my:org-ql-completing-read-for-query (prompt files query)
+    "Returns a marker after asking user to select the result of an org-ql query."
+    (let* ((selection (completing-read prompt
+                                      (org-ql-select files query
+                                        :action (lambda ()
+                                                  (propertize (org-get-heading t t t t)
+                                                              'org--marker (copy-marker (point)))))
+                                      nil
+                                      t))
+          (marker (get-text-property 0 'org--marker selection)))
+      marker))
+#+end_src
+
+A helper function to append to the body of an org-mode heading
+
+#+begin_src emacs-lisp
+  (defun my:org-append-to-body (marker content)
+    "Append a string to the end of the body of the org-heading at marker."
+    (save-excursion
+      (with-current-buffer (marker-buffer marker)
+        (goto-char marker)
+        (let ((body-end (save-excursion
+                          (if (outline-next-heading)
+                              (point)
+                            (point-max)))))
+          (goto-char body-end)
+          (skip-chars-backward " \t\n")
+          (end-of-line)
+          (insert "\n" content)))))
+#+end_src
+
+A helper function to get a link to the heading at a given marker
+
+#+begin_src emacs-lisp
+  (defun my:org-link-from-marker (marker &optional custom-prefix)
+    "Return a string link to some marker in a heading."
+    (save-excursion
+      (with-current-buffer (marker-buffer marker)
+        (goto-char marker)
+        (org-store-link nil t)
+        (let*
+            ((link-entry (car org-stored-links))
+             (link (car link-entry))
+             (desc (cadr link-entry))
+             (link-str (format "[[%s][%s]]" link (if custom-prefix (concat custom-prefix desc) desc))))
+          link-str))))
+#+end_src
+
+A function to link to an open TODO, and, backlink to current heading.
+
+#+begin_src emacs-lisp
+  (defun my:org-link-and-backlink-to-open-task ()
+    (interactive)
+    (let ((marker (my:org-ql-completing-read-for-query "Link to Task: " (org-agenda-files) '(todo)))
+          (custom-desc (read-string "Link Description: ")))
+      (org-store-link nil t)
+      (let*
+          ((link-entry (car org-stored-links))
+           (link (car link-entry))
+           (desc (cadr link-entry))
+           (link-str (format "[[%s][%s: %s]]" link custom-desc desc)))
+        (when (markerp marker)
+          (my:org-append-to-body marker link-str)
+          (insert (my:org-link-from-marker marker "Linked Task: "))))))
 #+end_src
 
 *** Babel
