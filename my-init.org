@@ -153,6 +153,7 @@ These just need to be required.
   (require 'dired-x)               ; Dired improvements (distributed with emacs, but manually loaded)
   (require 'uniquify)              ; rename buffers of same name intelligently
   (require 'org-inlinetask)        ; support for tasks which are not structural to the document's format
+  (require 'org-roles)             ; Manage contributor relationships for tasks in org-mode and org-ql
   (unless-on-windows
    (use-package org-notmuch
      :after (org notmuch)
@@ -1055,16 +1056,6 @@ shown quickly when the ORDERED property is set to t for a heading.
     (org-agenda-redo))
 #+END_SRC
 
-Assign task under point
-
-#+begin_src emacs-lisp
-  (defun my:org-assign-todo ()
-    "Set ASSIGNEE property for heading under point to a value using completing-read on the hashtags.ogr content"
-    (interactive)
-    (let ((assignee (completing-read "Assign To: " (my:org-hashtags-all))))
-      (org-set-property "ASSIGNEE" assignee)))
-#+end_src
-
 And also support assignment in agenda views
 
 #+begin_src emacs-lisp
@@ -1432,7 +1423,8 @@ backends during experimentation.
                       "oa"               'org-agenda
 
                       ;; "ot" -> Org Todo
-                      "ota"              'my:org-assign-todo
+                      "ota"              'org-roles-assign
+                      "otA"              'org-roles-unassign
                       "otp"              'my:org-add-participant
                       "otP"              'my:org-remove-participant
                       "ots"              'my:org-make-sensitive
@@ -4843,7 +4835,9 @@ org-agenda-files.
       (split-string (buffer-string) "\n" t)))
 
   (defun my:org-hashtags-all ()
-    (my:read-lines-from-file my:org-hashtags-file))
+    (let ((results (my:read-lines-from-file my:org-hashtags-file)))
+      (setq org-roles-known-handles results) ;; hack as I transition code into org-roles
+      results))
 #+end_src
 
 Add org C-c C-c handler for hsahtags that calls =my:org-hashtag-query-tag-under-point=.
