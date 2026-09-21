@@ -1103,7 +1103,7 @@ Add, remove, and get participants
 #+begin_src emacs-lisp
   (defun my:org-add-participant ()
     (interactive)
-    (let* ((new-participant (completing-read "[+] Participant: " (my:org-hashtags-all)))
+    (let* ((new-participant (completing-read "[+] Participant: " org-roles-known-handles))
            (current-prop (org-entry-get (point) "PARTICIPANTS"))
            (current-participants (if current-prop (split-string current-prop) '()))
            (new-participants (delete-dups (append current-participants (list new-participant))))
@@ -4349,7 +4349,7 @@ Function to find all tasks assigned to a person, broken by category
 #+begin_src emacs-lisp
   (defun my:tasks-for-assignee-by-category (assignee)
     (interactive
-     (list (completing-read "Tasks Assigned To: " (my:org-hashtags-all))))
+     (list (completing-read "Tasks Assigned To: " org-roles-known-handles)))
     (org-ql-search org-agenda-files
       `(and (or (todo) (done))
             (assigned ,assignee))
@@ -4767,72 +4767,6 @@ Install and run code from previous block
   (add-hook 'org-mode-hook
             (lambda ()
               (add-hook 'before-save-hook 'my:org-add-or-remove-current-buffer-agenda-index nil t)))
-#+end_src
-
-*Hashtags.org* -- maintain a set of all know #hashtag-things so that
-autocomplete always works for them, even if they aren't in
-org-agenda-files.
-
-#+begin_src emacs-lisp
-  (defcustom my:org-hashtags-file (concat org-directory "/hashtags.org")
-    "Path to a file storing the set of all unique hashtags in org-directory"
-    :type 'file
-    :group 'org)
-
-  (defun my:extract-hashtags-from-buffer ()
-    "Extract all unique hashtags from buffer."
-    (save-excursion
-      (goto-char (point-min))
-      (let ((tags '())
-            (regex "\\(?:^\\|\\s-\\)\\(\\(?:#[a-zA-Z0-9_-]+\\)+\\)\\b"))
-        (while (re-search-forward regex nil t)
-          (push (match-string-no-properties 1) tags))
-        (delete-dups tags))))
-
-
-  (defun my:sync-hashtags-on-save ()
-    "Extract hashtags in current buffer, merge with master list, sort alphabetically, and save to hashtags file."
-    ;; Do not attempt to sync when saving the master hashtags file iteself
-    (when (and (eq major-mode 'org-mode)
-               (buffer-file-name)
-               (not (file-equal-p (buffer-file-name) (expand-file-name my:org-hashtags-file))))
-      (let ((buffer-tags (my:extract-hashtags-from-buffer)))
-        (when buffer-tags
-          (let* ((target-file   (expand-file-name my:org-hashtags-file))
-                 (existing-tags (if (file-exists-p target-file)
-                                    (with-temp-buffer
-                                      (insert-file-contents target-file)
-                                      (split-string (buffer-string) "\n" t "\\s-+"))
-                                  '()))
-                 (all-tags (sort (delete-dups (append buffer-tags existing-tags))
-                                 #'string-collate-lessp))
-                 (new-count (- (length all-tags) (length existing-tags))))
-            (when (> new-count 0)
-              (with-temp-file target-file
-                (insert (string-join all-tags "\n") "\n"))
-              (message "Found %s new hashtags." new-count)))))))
-
-  (defun my:org-fully-cache-hashtags ()
-    "Manually rescan and rebuild the org hashtag index"
-    (interactive)
-    (dolist (file (directory-files-recursively org-directory ".*\\.org$"))
-      (with-current-buffer (find-file-noselect file)
-        (my:sync-hashtags-on-save))))
-
-  (add-hook 'org-mode-hook
-            (lambda ()
-              (add-hook 'before-save-hook #'my:sync-hashtags-on-save nil t)))
-
-  (defun my:read-lines-from-file (file-path)
-    "Read lines from file and return as list of strings"
-    (with-temp-buffer
-      (insert-file-contents file-path)
-      (split-string (buffer-string) "\n" t)))
-
-  (defun my:org-hashtags-all ()
-    (let ((results (my:read-lines-from-file my:org-hashtags-file)))
-      (setq org-roles-known-handles results) ;; hack as I transition code into org-roles
-      results))
 #+end_src
 
 Add org C-c C-c handler for hsahtags that calls =my:org-hashtag-query-tag-under-point=.

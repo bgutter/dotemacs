@@ -83,7 +83,10 @@
 (defvar org-roles-known-handles nil
   "List of all known handles. Persisted in
 `org-roles-handle-cache-file-path', and can be rebuilt using
-`org-roles-scan-for-handles'.")
+`org-roles--scan-buffer-for-new-handles'.")
+
+(defvar org-roles--first-handle-cache-read nil
+  "Flag identifying if handle cache has yet been read.")
 
 ;;
 ;; Minor Modes
@@ -96,15 +99,26 @@
   :lighter " Roles"
   :buffer-local t
   (if (bound-and-true-p org-roles-minor-mode)
-      (font-lock-add-keywords nil `((,org-roles-handle-regexp . 'org-roles-handle-face)))
-    (font-lock-remove-keywords nil `((,org-roles-handle-regexp . 'org-roles-handle-face))))
+      (progn
+        ;; Add handle highlighting and save-hooks
+        (font-lock-add-keywords nil `((,org-roles-handle-regexp . 'org-roles-handle-face)))
+        (add-hook 'before-save-hook #'org-roles--scan-buffer-for-new-handles-and-save nil t))
+    (progn
+      ;; Remove handle highlighting and save-hooks
+      (font-lock-remove-keywords nil `((,org-roles-handle-regexp . 'org-roles-handle-face)))
+      (remove-hook 'before-save-hook #'org-roles--scan-buffer-for-new-handles-and-save t)))
+
+  ;; Force fontlock to re-run
   (if (fboundp 'font-lock-fontify-buffer)
-      (font-lock-fontify-buffer))
-  ;; TODO save hooks
-  )
+      (font-lock-fontify-buffer)))
 
 (defun org-roles-minor-mode--turn-on ()
   "Handle global en/disable of `org-roles-minor-mode'."
+  (unless org-roles--first-handle-cache-read
+    (with-temp-buffer
+      (insert-file-contents org-roles-handle-cache-file-path)
+      (setq org-roles-known-handles (read (current-buffer))))
+    (setq org-roles--first-handle-cache-read t))
   (if (derived-mode-p 'org-mode)
       (org-roles-minor-mode 1)))
 
@@ -139,17 +153,49 @@
 ;; Utility functions
 ;;
 
-(defun org-roles-scan-for-handles (files)
+(defun org-roles--scan-buffer-for-new-handles ()
+  "Scan current buffer for all handles and, if new, add them to
+`org-roles-known-handles'."
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward org-roles-handle-regexp nil t)
+      (add-to-list 'org-roles-known-handles (match-string-no-properties 0)))))
+
+(defun org-roles--scan-buffer-for-new-handles-and-save ()
+  "Call `org-roles--scan-buffer-for-new-handles' and then save them to
+`org-roles-handle-cache-file-path' if any were found."
+  (let ((orig-len (length org-roles-known-handles)))
+    (org-roles--scan-buffer-for-new-handles)
+    (when (> (length org-roles-known-handles) orig-len)
+      (message "Saving new handles...")
+      (with-temp-file org-roles-handle-cache-file-path
+        (print org-roles-known-handles (current-buffer))))))
+
+(defun org-roles-scan-files-for-new-handles (files)
   "Visit a set of files and scan for new handles. Add any new handles into
 `org-roles-known-handles'. If not-nil,
 `org-roles-handle-cache-file-path' is then updated."
-  ;; TODO
-  )
+  (let ((orig-len (length org-roles-known-handles)))
+    (dolist (file files)
+      (with-temp-buffer
+        (insert-file-contents file)
+        (org-roles--scan-buffer-for-new-handles)))
+    (when (> (length org-roles-known-handles) orig-len)
+      (message "Saving new handles...")
+      (with-temp-file org-roles-handle-cache-file-path
+        (print org-roles-known-handles (current-buffer))))))
 
 ;;;###autoload
 (defun org-roles-find-handles-in-agenda-files ()
-  "Wrapper for `org-roles-scan-for-handles' that just scans `org-agenda-files'."
-  (org-roles-scan-for-handles org-agenda-files))
+  "Wrapper for `org-roles-scan-files-for-new-handles' that just scans `org-agenda-files'."
+  (interactive)
+  (org-roles-scan-files-for-new-handles org-agenda-files))
+
+;;;###autoload
+(defun org-roles-find-handles-in-org-directory ()
+  "Wrapper for `org-roles-scan-files-for-new-handles' that just scans `org-directory' recursively."
+  (interactive)
+  (org-roles-scan-files-for-new-handles (directory-files-recursively org-directory ".*\\.org$")))
 
 (provide 'org-roles)
 
