@@ -115,9 +115,11 @@
 (defun org-roles-minor-mode--turn-on ()
   "Handle global en/disable of `org-roles-minor-mode'."
   (unless org-roles--first-handle-cache-read
-    (with-temp-buffer
-      (insert-file-contents org-roles-handle-cache-file-path)
-      (setq org-roles-known-handles (read (current-buffer))))
+    (if (file-exists-p org-roles-handle-cache-file-path)
+        (with-temp-buffer
+          (insert-file-contents org-roles-handle-cache-file-path)
+          (setq org-roles-known-handles (read (current-buffer)))))
+    ;; Set true even if file didn't exist so we don't keep trying
     (setq org-roles--first-handle-cache-read t))
   (if (derived-mode-p 'org-mode)
       (org-roles-minor-mode 1)))
