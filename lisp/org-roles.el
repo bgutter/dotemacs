@@ -37,24 +37,84 @@
 ;;   Completed painting today. #olive-cotard commented that it was
 ;;   very nice. #caden-cotard will drop it off tomorrow.
 ;;
+;; `org-roles' has both a global minor-mode (`org-roles-mode') and a
+;; buffer-local minor-mode (`org-roles-minor-mode'). Users should
+;; usually just enable the global mode.You may trigger the local
+;; minor-mode directly yourself on a per-buffer basis if you prefer.
+;;
 ;; For more thorough documentation, please see the README.org.
 ;;
 ;;; Code:
 
 (require 'org)
-(require 'org-ql)
+;?? (require 'org-ql)
 
-;; Variales
+;;
+;; Variables
+;;
 
 (defcustom org-roles-handle-cache-file-path (locate-user-emacs-file ".org-roles-handle-cache.el")
   "File where known handles can be persisted. Used for autocompletion."
   :type 'file
   :group 'org-roles)
 
-(defvar org-roles-known-handles nil
-  "List of all known handles.")
+(defcustom org-roles-handle-regexp "[#@][a-zA-Z0-9-]+"
+  "Regular expression used to identify handles. Default matches either
+@this-pattern or #that-pattern."
+  :type 'regexp
+  :group 'org-roles
+  :set (lambda (symbol value)
+         ;; go through all current buffers and clear out the old regexp from font-lock
+         ;; THEN set the new one
+         (dolist (buffer (buffer-list))
+           (with-current-buffer buffer
+             (when (bound-and-true-p org-roles-minor-mode)
+               (font-lock-remove-keywords nil `((,org-roles-handle-regexp . 'org-roles-handle-face)))
+               (font-lock-add-keywords nil `((,value . 'org-roles-handle-face)))
+               (if (fboundp 'font-lock-fontify-buffer)
+                   (font-lock-fontify-buffer)))))
+         (set-default symbol value)))
 
+(defface org-roles-handle-face
+  '((t :inherit font-lock-constant-face))
+  "Face used to distinguise role handles, identified by `org-roles-handle-regexp'"
+  :group 'org-roles)
+
+(defvar org-roles-known-handles nil
+  "List of all known handles. Persisted in
+`org-roles-handle-cache-file-path', and can be rebuilt using
+`org-roles-scan-for-handles'.")
+
+;;
+;; Minor Modes
+;;
+
+(define-minor-mode org-roles-minor-mode
+  "Add fontlock settings for handles, and, save-hooks to maintain
+`org-roles-known-handles' and its persitence file
+`org-roles-handle-cache-file-path'"
+  :lighter " Roles"
+  :buffer-local t
+  (if (bound-and-true-p org-roles-minor-mode)
+      (font-lock-add-keywords nil `((,org-roles-handle-regexp . 'org-roles-handle-face)))
+    (font-lock-remove-keywords nil `((,org-roles-handle-regexp . 'org-roles-handle-face))))
+  (if (fboundp 'font-lock-fontify-buffer)
+      (font-lock-fontify-buffer))
+  ;; TODO save hooks
+  )
+
+(defun org-roles-minor-mode--turn-on ()
+  "Handle global en/disable of `org-roles-minor-mode'."
+  (if (derived-mode-p 'org-mode)
+      (org-roles-minor-mode 1)))
+
+(define-globalized-minor-mode org-roles-mode
+  org-roles-minor-mode
+  org-roles-minor-mode--turn-on)
+
+;;
 ;; Basic setters and getters for heading properties
+;;
 
 ;;;###autoload
 (defun org-roles-assign (assignee)
@@ -74,6 +134,22 @@
 (defun org-roles-get-assignee (&optional skip-inherit)
   "Get assignee for heading under point."
   (org-entry-get nil "ASSIGNEE" (not skip-inherit)))
+
+;;
+;; Utility functions
+;;
+
+(defun org-roles-scan-for-handles (files)
+  "Visit a set of files and scan for new handles. Add any new handles into
+`org-roles-known-handles'. If not-nil,
+`org-roles-handle-cache-file-path' is then updated."
+  ;; TODO
+  )
+
+;;;###autoload
+(defun org-roles-find-handles-in-agenda-files ()
+  "Wrapper for `org-roles-scan-for-handles' that just scans `org-agenda-files'."
+  (org-roles-scan-for-handles org-agenda-files))
 
 (provide 'org-roles)
 

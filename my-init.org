@@ -157,7 +157,7 @@ These just need to be required.
   (unless-on-windows
    (use-package org-notmuch
      :after (org notmuch)
-     :straight nil))           ; linking to individual emails from notmuch
+     :straight nil))               ; linking to individual emails from notmuch
 #+end_src
 
 *** Packages from Servers
@@ -3656,6 +3656,12 @@ Assume sqlite.
 ** org-mode
 *** General Configs
 
+Enable org-roles-mode.
+
+#+begin_src emacs-lisp
+  (org-roles-mode 1)
+#+end_src
+
 Ensure that org-mode starts up using indentation.
 
 #+BEGIN_SRC emacs-lisp
@@ -4255,17 +4261,6 @@ Also -- don't show trailing whitespace here.
                     org-agenda-start-day "-7d"
                     show-trailing-whitespace nil)))
 #+END_SRC
-
-Highlight #firstname-lastname tags.
-
-#+begin_src elisp
-  (defun my-org-add-font-lock-keywords ()
-    (font-lock-add-keywords nil
-      '(("#[a-zA-Z-]+" . font-lock-constant-face))))
-
-  (add-hook 'org-mode-hook 'my-org-add-font-lock-keywords)
-#+end_src
-
 
 **** More Org-QL
 
