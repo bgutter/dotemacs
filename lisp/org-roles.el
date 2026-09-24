@@ -58,7 +58,7 @@
   :type 'file
   :group 'org-roles)
 
-(defcustom org-roles-handle-regexp "[#@][a-zA-Z0-9-]+"
+(defcustom org-roles-handle-regexp "[#@][a-zA-Z0-9-]\\{3,\\}+"
   "Regular expression used to identify handles. Default matches either
 @this-pattern or #that-pattern."
   :type 'regexp
