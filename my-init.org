@@ -4509,10 +4509,10 @@ A function to link to an open TODO, and, backlink to current heading.
           ((link-entry (car org-stored-links))
            (link (car link-entry))
            (desc (cadr link-entry))
-           (link-str (format "[[%s][%s: %s]]" link custom-desc desc)))
+           (link-str (format "[[%s][🔗 %s ]]" link custom-desc))) ;; spaces enable braces in link desc
         (when (markerp marker)
           (my:org-append-to-body marker link-str)
-          (insert (my:org-link-from-marker marker "Linked Task: "))))))
+          (insert (my:org-link-from-marker marker "✅ Task Mention: "))))))
 #+end_src
 
 *** Babel

@@ -75,6 +75,9 @@
                    (font-lock-fontify-buffer)))))
          (set-default symbol value)))
 
+;; TODO: defcustom for default task scan files, 'org-agenda-files or
+;; 'org-directory or custom list target for queries
+
 (defface org-roles-handle-face
   '((t :inherit font-lock-constant-face))
   "Face used to distinguise role handles, identified by `org-roles-handle-regexp'"
@@ -198,6 +201,31 @@
   "Wrapper for `org-roles-scan-files-for-new-handles' that just scans `org-directory' recursively."
   (interactive)
   (org-roles-scan-files-for-new-handles (directory-files-recursively org-directory ".*\\.org$")))
+
+;;
+;; Canned Queries
+;;
+
+;; Open Tasks by Assignee
+;; Unassigned Open Tasks
+;; Summary for Handle (assigned & open, stakeholde,r participant & Open, recently closed & assignee, recently closed & participant)
+;;
+
+;;
+;; Task editing transient
+;;
+;; add remove set assingee, participants, stakeholders
+;; show inherited values when unset or multiple-permitting
+;; Inherited  Stakholders @some-huy (^2) @some-other (^3)
+
+;;
+;; Task query transient
+; q task for (comleting read handle)
+;;
+
+;;
+;; Keybinds
+;;
 
 (provide 'org-roles)
 
