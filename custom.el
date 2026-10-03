@@ -5,4 +5,5 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(default ((t (:inherit nil :extend nil :stipple nil :background "Black" :foreground "White" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight regular :height 90 :width normal :family "Inconsolata Nerd Fonts Mono"))))
+ '(org-date ((t (:foreground "Cyan"))))
  '(org-link ((t (:foreground "dark salmon" :box (:line-width (2 . 2) :color "dark red" :style flat-button) :underline nil)))))
