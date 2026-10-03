@@ -1417,7 +1417,7 @@ backends during experimentation.
                       "odd"              'my-org-journal-open-today
                       "odt"              'my-org-journal-open-tomorrow
                       "ody"              'my-org-journal-open-yesterday
-                      "od?"              'my:open-journal ;; ask
+                      "od?"              'my:org-journal-open-date ;; ask
 
                       ;; "oa" -> Org Agenda
                       "oa"               'org-agenda
@@ -4860,7 +4860,9 @@ Functions for creating and opening daily journal pages.
 
   (defun my-org-journal-make-if-missing (&optional time)
     "Unless already present, create a journal ORG file for today from the existing template."
-    (interactive)
+    (interactive "sEnter date (YYYY-MM-DD): ")
+    (if (stringp time)
+        (setq time (date-to-time time)))
     (setq time (or time (current-time)))
     (let
         '(path (my-org-journal-path time))
@@ -4875,6 +4877,12 @@ Functions for creating and opening daily journal pages.
               (save-buffer)
               (kill-buffer))))
         path)))
+
+  (defun my:org-journal-open-date ()
+    "Open or create an arbitrary date"
+    (interactive)
+    (let ((path (call-interactively #'my-org-journal-make-if-missing)))
+      (find-file path)))
 
   (defun my-org-journal-open-today ()
     "Open today's journal file, creating it if missing."
@@ -4921,12 +4929,6 @@ Functions for creating and opening daily journal pages.
                             (if newest-first
                                 (not (time-less-p (car a) (car b)))
                               (time-less-p (car a) (car b)))))))
-
-  (defun my:open-journal ()
-    "Interactively open a journal file"
-    (interactive)
-    (let ((pages (my:list-journal-pages t)))
-      (find-file (completing-read "Journal: " (mapcar #'cdr pages)))))
 
   (defun my:visit-previous-journal-page ()
     "Open the newest journal page before current."
