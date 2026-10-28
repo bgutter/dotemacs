@@ -4975,7 +4975,8 @@ Advise org-save-all-org-buffers to autocommit any changes in my org folder
     (prin1-to-string
      (string-join
       (list
-       (downcase (format-time-string "%Y-%m-%d %I:%M %p (%S-%3N)"))
+       (system-name)
+       (downcase (format-time-string " %Y-%m-%d %I:%M %p (%S-%3N)"))
        ""
        (shell-command-to-string (concat "cd " org-directory " && git status --porcelain")))
       "\n")))
