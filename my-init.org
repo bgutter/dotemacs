@@ -4382,7 +4382,7 @@ Tasks completed in past three weeks
         '(and (todo "DONE" "CANCELLED" "MIGRATED" "HIATUS")
               (closed :from -21))
         :title "Recently Completed Tasks Grouped by Date"
-        :sort '(date)
+        :sort '(closed)
         :super-groups '((:auto-ts t)))))
 #+end_src
 
