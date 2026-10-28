@@ -4107,7 +4107,10 @@ Now the actual agenda templates.
           (org-ql-block '((and
                            (todo "TODO" "NEXT" "WAIT")
                            (assigned)
-                           (not (tags "NOAGENDA" "UNFILED" "ARCHIVE" "milestone")))
+                           (not (tags "NOAGENDA" "UNFILED" "ARCHIVE" "milestone"))
+                           (or (not (deadline))                  ;; no deadline, or
+                               (deadline auto)                   ;; deadline in warning interval, or
+                               (not (tags "hide_before_warn")))) ;; not limited to warning interval
                           :sort (deadline priority))
                         ((org-ql-block-header "Assigned Tasks (No Filters)")
                          (org-super-agenda-groups '((:auto-property "ASSIGNEE")))))
